@@ -12,11 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_UTILS__INTERFACE_UTILS_HPP_
-#define INTERFACE_UTILS__INTERFACE_UTILS_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#define COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
 
-#include "./rclcpp/create_interface.hpp"
-#include "./rclcpp/service_server.hpp"
-#include "./response.hpp"
+#include "autoware_ad_api_msgs/msg/response_status.hpp"
+#include "autoware_ad_api_msgs/msg/response_status_detail.hpp"
 
-#endif  // INTERFACE_UTILS__INTERFACE_UTILS_HPP_
+namespace interface_utils::response
+{
+
+using ResponseStatusDetail = autoware_ad_api_msgs::msg::ResponseStatusDetail;
+
+ResponseStatusDetail success()
+{
+  ResponseStatusDetail status;
+  status.code = ResponseStatusDetail::SUCCESS;
+  return status;
+}
+
+}  // namespace interface_utils::response
+
+#endif  // COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
