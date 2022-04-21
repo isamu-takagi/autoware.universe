@@ -15,7 +15,10 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 
+#include <component_interface_utils/rclcpp/service_client.hpp>
 #include <component_interface_utils/rclcpp/service_server.hpp>
+#include <component_interface_utils/rclcpp/topic_publisher.hpp>
+#include <component_interface_utils/rclcpp/topic_subscription.hpp>
 #include <component_interface_utils/specs.hpp>
 #include <rclcpp/rclcpp.hpp>
 

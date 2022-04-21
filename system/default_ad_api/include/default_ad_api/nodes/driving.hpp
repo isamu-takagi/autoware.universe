@@ -17,6 +17,9 @@
 
 #include "default_ad_api/specs/driving/engage.hpp"
 #include "default_ad_api/specs/driving/state.hpp"
+#include "default_ad_api/specs/internal/autoware/get_engage.hpp"
+#include "default_ad_api/specs/internal/autoware/get_state.hpp"
+#include "default_ad_api/specs/internal/autoware/set_engage.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -31,16 +34,25 @@ public:
 
 private:
   using DrivingEngage = autoware_ad_api_msgs::srv::DrivingEngage;
-  using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
 
-  component_interface_utils::Service<ad_api::driving::engage::T>::SharedPtr srv_;
+  // API driving engage
+  component_interface_utils::Service<ad_api::driving::engage::T>::SharedPtr srv_api_engage_;
   void onDrivingEngage(
     const DrivingEngage::Request::SharedPtr request,
     const DrivingEngage::Response::SharedPtr response);
 
-  rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<DrivingState>::SharedPtr pub_;
-  void onTimer();
+  // API driving state
+  component_interface_utils::Publisher<ad_api::driving::state::T>::SharedPtr pub_api_state_;
+
+  // autoware engage
+  component_interface_utils::Client<internal_api::autoware::set_engage::T>::SharedPtr
+    cli_autoware_engage_;
+  component_interface_utils::Subscription<internal_api::autoware::get_engage::T>::SharedPtr
+    sub_autoware_engage_;
+
+  // autoware state
+  component_interface_utils::Subscription<internal_api::autoware::get_state::T>::SharedPtr
+    sub_autoware_state_;
 };
 
 }  // namespace default_ad_api

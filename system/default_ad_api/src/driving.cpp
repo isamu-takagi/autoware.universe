@@ -16,19 +16,19 @@
 
 #include <component_interface_utils/response.hpp>
 
-#include <chrono>
-
 namespace default_ad_api
 {
 
 DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", options)
 {
-  srv_ = component_interface_utils::create_service<ad_api::driving::engage::T>(
+  srv_api_engage_ = component_interface_utils::create_service<ad_api::driving::engage::T>(
     this, &DrivingNode::onDrivingEngage);
 
-  using namespace std::literals::chrono_literals;
-  timer_ = rclcpp::create_timer(this, get_clock(), 200ms, std::bind(&DrivingNode::onTimer, this));
-  pub_ = component_interface_utils::create_publisher<ad_api::driving::state::T>(this);
+  pub_api_state_ = component_interface_utils::create_publisher<ad_api::driving::state::T>(this);
+
+  // using namespace std::literals::chrono_literals;
+  // timer_ = rclcpp::create_timer(this, get_clock(), 200ms, std::bind(&DrivingNode::onTimer,
+  // this));
 }
 
 void DrivingNode::onDrivingEngage(
@@ -38,8 +38,6 @@ void DrivingNode::onDrivingEngage(
   RCLCPP_INFO(get_logger(), "engage: %s", request->engage ? "true" : "false");
   response->status.summary = component_interface_utils::response::success();
 }
-
-void DrivingNode::onTimer() { RCLCPP_INFO(get_logger(), "timer"); }
 
 }  // namespace default_ad_api
 
