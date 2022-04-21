@@ -12,24 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
-#define COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#ifndef DEFAULT_AD_API__SPECS__DRIVING__ENGAGE_HPP_
+#define DEFAULT_AD_API__SPECS__DRIVING__ENGAGE_HPP_
 
-#include <autoware_ad_api_msgs/msg/response_status.hpp>
-#include <autoware_ad_api_msgs/msg/response_status_detail.hpp>
+#include <autoware_ad_api_msgs/srv/driving_engage.hpp>
 
-namespace component_interface_utils::response
+namespace ad_api::driving::engage
 {
 
-using ResponseStatusDetail = autoware_ad_api_msgs::msg::ResponseStatusDetail;
-
-ResponseStatusDetail success()
+struct T
 {
-  ResponseStatusDetail status;
-  status.code = ResponseStatusDetail::SUCCESS;
-  return status;
-}
+  using Service = autoware_ad_api_msgs::srv::DrivingEngage;
+  static constexpr char name[] = "/api/driving/engage";
+};
 
-}  // namespace component_interface_utils::response
+}  // namespace ad_api::driving::engage
 
-#endif  // COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#endif  // DEFAULT_AD_API__SPECS__DRIVING__ENGAGE_HPP_

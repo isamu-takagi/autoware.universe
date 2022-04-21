@@ -15,7 +15,7 @@
 #ifndef DEFAULT_AD_API__SPECS__INTERFACE__VERSION_HPP_
 #define DEFAULT_AD_API__SPECS__INTERFACE__VERSION_HPP_
 
-#include "autoware_ad_api_msgs/srv/interface_version.hpp"
+#include <autoware_ad_api_msgs/srv/interface_version.hpp>
 
 namespace ad_api::interface::version
 {

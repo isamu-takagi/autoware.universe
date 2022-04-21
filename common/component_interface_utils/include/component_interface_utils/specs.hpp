@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
-#define COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__SPECS_HPP_
+#define COMPONENT_INTERFACE_UTILS__SPECS_HPP_
 
-#include <autoware_ad_api_msgs/msg/response_status.hpp>
-#include <autoware_ad_api_msgs/msg/response_status_detail.hpp>
+#include <rclcpp/qos.hpp>
 
-namespace component_interface_utils::response
+namespace component_interface_utils
 {
 
-using ResponseStatusDetail = autoware_ad_api_msgs::msg::ResponseStatusDetail;
-
-ResponseStatusDetail success()
+template <class SpecT>
+rclcpp::QoS get_qos()
 {
-  ResponseStatusDetail status;
-  status.code = ResponseStatusDetail::SUCCESS;
-  return status;
+  rclcpp::QoS qos(SpecT::depth);
+  qos.reliability(SpecT::reliability);
+  qos.durability(SpecT::durability);
+  return qos;
 }
 
-}  // namespace component_interface_utils::response
+}  // namespace component_interface_utils
 
-#endif  // COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#endif  // COMPONENT_INTERFACE_UTILS__SPECS_HPP_

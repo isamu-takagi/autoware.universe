@@ -16,6 +16,7 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__CREATE_INTERFACE_HPP_
 
 #include <component_interface_utils/rclcpp/service_server.hpp>
+#include <component_interface_utils/specs.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <utility>
@@ -49,6 +50,12 @@ typename Service<SpecT>::SharedPtr create_service(
   using std::placeholders::_1;
   using std::placeholders::_2;
   return create_service_impl<SpecT>(node, std::bind(callback, node, _1, _2), group);
+}
+
+template <class SpecT, class NodeT>
+typename rclcpp::Publisher<typename SpecT::Message>::SharedPtr create_publisher(NodeT * node)
+{
+  return node->template create_publisher<typename SpecT::Message>(SpecT::name, get_qos<SpecT>());
 }
 
 }  // namespace component_interface_utils
