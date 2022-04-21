@@ -26,9 +26,16 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
 
   pub_api_state_ = component_interface_utils::create_publisher<ad_api::driving::state::T>(this);
 
-  // using namespace std::literals::chrono_literals;
-  // timer_ = rclcpp::create_timer(this, get_clock(), 200ms, std::bind(&DrivingNode::onTimer,
-  // this));
+  cli_autoware_engage_ =
+    component_interface_utils::create_client<internal_api::autoware::set_engage::T>(this);
+
+  sub_autoware_engage_ =
+    component_interface_utils::create_subscription<internal_api::autoware::get_engage::T>(
+      this, &DrivingNode::onAutowareEngage);
+
+  sub_autoware_state_ =
+    component_interface_utils::create_subscription<internal_api::autoware::get_state::T>(
+      this, &DrivingNode::onAutowareState);
 }
 
 void DrivingNode::onDrivingEngage(
@@ -37,6 +44,20 @@ void DrivingNode::onDrivingEngage(
 {
   RCLCPP_INFO(get_logger(), "engage: %s", request->engage ? "true" : "false");
   response->status.summary = component_interface_utils::response::success();
+}
+
+void DrivingNode::onAutowareEngage(
+  const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr message)
+{
+  (void)message;
+  RCLCPP_INFO(get_logger(), "onAutowareEngage");
+}
+
+void DrivingNode::onAutowareState(
+  const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr message)
+{
+  (void)message;
+  RCLCPP_INFO(get_logger(), "onAutowareState");
 }
 
 }  // namespace default_ad_api

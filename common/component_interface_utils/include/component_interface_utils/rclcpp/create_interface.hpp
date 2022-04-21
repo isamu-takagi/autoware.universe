@@ -27,6 +27,16 @@
 namespace component_interface_utils
 {
 
+/// Create a client wrapper for logging.
+template <class SpecT, class NodeT>
+typename Client<SpecT>::SharedPtr create_client(
+  NodeT * node, rclcpp::CallbackGroup::SharedPtr group = nullptr)
+{
+  auto client = node->template create_client<typename SpecT::Service>(
+    SpecT::name, rmw_qos_profile_services_default, group);
+  return Client<SpecT>::make_shared(client);
+}
+
 /// Create a service wrapper for logging. This is a private implementation.
 template <class SpecT, class NodeT, class CallbackT>
 typename Service<SpecT>::SharedPtr create_service_impl(
@@ -58,10 +68,40 @@ typename Service<SpecT>::SharedPtr create_service(
   return create_service_impl<SpecT>(node, std::bind(callback, node, _1, _2), group);
 }
 
+/// Create a publisher using traits like services.
 template <class SpecT, class NodeT>
 typename rclcpp::Publisher<typename SpecT::Message>::SharedPtr create_publisher(NodeT * node)
 {
-  return node->template create_publisher<typename SpecT::Message>(SpecT::name, get_qos<SpecT>());
+  auto publisher =
+    node->template create_publisher<typename SpecT::Message>(SpecT::name, get_qos<SpecT>());
+  return publisher;
+}
+
+/// Create a subscription using traits like services. This is a private implementation.
+template <class SpecT, class NodeT, class CallbackT>
+typename rclcpp::Subscription<typename SpecT::Message>::SharedPtr create_subscription_impl(
+  NodeT * node, CallbackT && callback)
+{
+  auto subscription = node->template create_subscription<typename SpecT::Message>(
+    SpecT::name, get_qos<SpecT>(), std::forward<CallbackT>(callback));
+  return subscription;
+}
+
+/// Create a subscription using traits like services. This is for lambda or bound function.
+template <class SpecT, class NodeT, class CallbackT>
+typename rclcpp::Subscription<typename SpecT::Message>::SharedPtr create_subscription(
+  NodeT * node, CallbackT && callback)
+{
+  return create_subscription_impl<SpecT>(node, std::forward<CallbackT>(callback));
+}
+
+/// Create a subscription using traits like services. This is for member function of node.
+template <class SpecT, class NodeT>
+typename rclcpp::Subscription<typename SpecT::Message>::SharedPtr create_subscription(
+  NodeT * node, SubscriptionCallbackType<SpecT, NodeT> callback)
+{
+  using std::placeholders::_1;
+  return create_subscription_impl<SpecT>(node, std::bind(callback, node, _1));
 }
 
 }  // namespace component_interface_utils

@@ -15,6 +15,8 @@
 #ifndef DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__GET_ENGAGE_HPP_
 #define DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__GET_ENGAGE_HPP_
 
+#include <rclcpp/qos.hpp>
+
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 
 namespace internal_api::autoware::get_engage
@@ -24,6 +26,9 @@ struct T
 {
   using Message = autoware_auto_vehicle_msgs::msg::Engage;
   static constexpr char name[] = "/api/autoware/get/engage";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
 }  // namespace internal_api::autoware::get_engage

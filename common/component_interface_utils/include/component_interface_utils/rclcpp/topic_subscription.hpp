@@ -20,6 +20,9 @@
 namespace component_interface_utils
 {
 
+template <class SpecT, class NodeT>
+using SubscriptionCallbackType = void (NodeT::*)(typename SpecT::Message::ConstSharedPtr message);
+
 template <class SpecT>
 using Subscription = rclcpp::Subscription<typename SpecT::Message>;
 

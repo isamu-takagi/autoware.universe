@@ -20,8 +20,23 @@
 namespace component_interface_utils
 {
 
+/// The wrapper class of rclcpp::Client for logging.
 template <class SpecT>
-using Client = rclcpp::Client<typename SpecT::Service>;
+class Client
+{
+public:
+  RCLCPP_SMART_PTR_DEFINITIONS(Client)
+
+  /// Constructor.
+  explicit Client(typename rclcpp::Client<typename SpecT::Service>::SharedPtr client)
+  {
+    client_ = client;
+  }
+
+private:
+  RCLCPP_DISABLE_COPY(Client)
+  typename rclcpp::Client<typename SpecT::Service>::SharedPtr client_;
+};
 
 }  // namespace component_interface_utils
 

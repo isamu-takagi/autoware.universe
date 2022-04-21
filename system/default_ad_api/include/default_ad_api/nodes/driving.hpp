@@ -44,15 +44,19 @@ private:
   // API driving state
   component_interface_utils::Publisher<ad_api::driving::state::T>::SharedPtr pub_api_state_;
 
-  // autoware engage
+  // set autoware engage
   component_interface_utils::Client<internal_api::autoware::set_engage::T>::SharedPtr
     cli_autoware_engage_;
+
+  // get autoware engage
   component_interface_utils::Subscription<internal_api::autoware::get_engage::T>::SharedPtr
     sub_autoware_engage_;
+  void onAutowareEngage(const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr message);
 
-  // autoware state
+  // get autoware state
   component_interface_utils::Subscription<internal_api::autoware::get_state::T>::SharedPtr
     sub_autoware_state_;
+  void onAutowareState(const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr message);
 };
 
 }  // namespace default_ad_api
