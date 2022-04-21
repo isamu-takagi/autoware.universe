@@ -31,6 +31,7 @@ def _create_api_node(node_name, class_name, **kwargs):
 def generate_launch_description():
     components = [
         _create_api_node("interface_version", "InterfaceVersionNode"),
+        _create_api_node("driving", "DrivingNode"),
     ]
     container = ComposableNodeContainer(
         namespace="default_ad_api",
