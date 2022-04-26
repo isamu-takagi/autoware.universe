@@ -12,20 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "component_interface_state/machine.hpp"
+#include "component_state_machine/machine.hpp"
 
-#include <iostream>
-
-namespace TestState
+namespace component_state_machine
 {
-constexpr uint16_t NORMAL = 101;
-}
 
-int main()
-{
-  using component_interface_state::Machine;
-  Machine machine;
-
-  auto state = machine.get();
-  std::cout << state.value << std::endl;
-}
+}  // namespace component_state_machine

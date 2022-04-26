@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_STATE__TYPES_HPP_
-#define COMPONENT_INTERFACE_STATE__TYPES_HPP_
+#ifndef COMPONENT_STATE_MACHINE__TYPES_HPP_
+#define COMPONENT_STATE_MACHINE__TYPES_HPP_
 
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
 
-namespace component_interface_state
+namespace component_state_machine
 {
 
 struct StateID
@@ -27,6 +27,6 @@ struct StateID
   uint16_t value;
 };
 
-}  // namespace component_interface_state
+}  // namespace component_state_machine
 
-#endif  // COMPONENT_INTERFACE_STATE__TYPES_HPP_
+#endif  // COMPONENT_STATE_MACHINE__TYPES_HPP_
