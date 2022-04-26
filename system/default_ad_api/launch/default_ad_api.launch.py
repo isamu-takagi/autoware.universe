@@ -39,11 +39,10 @@ def generate_launch_description():
         package="rclcpp_components",
         executable="component_container_mt",
         composable_node_descriptions=components,
-        output="screen",
     )
-    server = Node(
+    web_server = Node(
         package="default_ad_api",
-        name="server",
-        executable="server.py",
+        name="web_server",
+        executable="web_server.py",
     )
-    return launch.LaunchDescription([container, server])
+    return launch.LaunchDescription([container, web_server])
