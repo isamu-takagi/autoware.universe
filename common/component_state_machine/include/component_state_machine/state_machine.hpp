@@ -18,6 +18,7 @@
 #include "component_state_machine/types.hpp"
 
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 namespace component_state_machine
@@ -59,12 +60,25 @@ public:
   StateID GetState() const;
   void Initialize();
   void HandleEvent(EventID eid);
+  void Dump();
 
 private:
   StateID initial_state_;
   StateID current_state_;
   std::unordered_map<StateID, StateData> states_;
   std::unordered_map<EventID, EventData> events_;
+};
+
+class StateMachineLoader
+{
+public:
+  void BindState(uint16_t value, std::string name);
+  void BindEvent(uint16_t value, std::string name);
+  void LoadYAML(StateMachine & machine, std::string path);
+
+private:
+  std::unordered_map<std::string, StateID> states_;
+  std::unordered_map<std::string, EventID> events_;
 };
 
 }  // namespace component_state_machine

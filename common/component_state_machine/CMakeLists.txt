@@ -17,6 +17,7 @@ ament_auto_find_build_dependencies()
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/state_machine.cpp
 )
+target_link_libraries(${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
 
 ament_auto_add_executable(main
   test/main.cpp

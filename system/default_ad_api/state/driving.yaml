@@ -1,0 +1,19 @@
+states:
+  - preparing
+  - ready
+  - driving
+
+events:
+  - engage
+  - disengage
+  - ready
+  - unready
+
+initial:
+  - preparing
+
+transitions:
+  - { event: ready, src: preparing, dst: ready }
+  - { event: unready, src: ready, dst: preparing }
+  - { event: engage, src: ready, dst: driving }
+  - { event: disengage, src: driving, dst: preparing }

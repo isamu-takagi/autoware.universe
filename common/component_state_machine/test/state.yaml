@@ -1,9 +1,0 @@
-states:
-  - preparing
-  - ready
-  - driving
-events:
-  - engage
-  - disengage/arrived
-  - ready
-  - unready

@@ -16,7 +16,24 @@
 
 #include <iostream>
 
-using namespace component_state_machine;
+using component_state_machine::EventID;
+using component_state_machine::StateMachine;
+using component_state_machine::StateMachineLoader;
+
+namespace Message
+{
+constexpr uint16_t PREPARE = 1;
+constexpr uint16_t READY = 2;
+constexpr uint16_t DRIVING = 3;
+}  // namespace Message
+
+namespace Event
+{
+constexpr auto ENGAGE = EventID{1};
+constexpr auto DISENGAGE = EventID{2};
+constexpr auto READY = EventID{3};
+constexpr auto UNREADY = EventID{4};
+}  // namespace Event
 
 void print_state(const StateMachine & machine)
 {
@@ -27,14 +44,28 @@ void print_state(const StateMachine & machine)
 int main()
 {
   StateMachine machine;
-  machine.CreateState(StateID{1});
-  machine.CreateState(StateID{2});
-  machine.SetTransition(EventID{1}, StateID{1}, StateID{2});
-  machine.SetInitialState(StateID{1});
+  {
+    StateMachineLoader loader;
+    loader.BindState(Message::PREPARE, "preparing");
+    loader.BindState(Message::READY, "ready");
+    loader.BindState(Message::DRIVING, "driving");
+    loader.BindEvent(Event::ENGAGE.value, "engage");
+    loader.BindEvent(Event::DISENGAGE.value, "disengage");
+    loader.BindEvent(Event::READY.value, "ready");
+    loader.BindEvent(Event::UNREADY.value, "unready");
+    loader.LoadYAML(machine, "");
+  }
+  machine.Dump();
 
   machine.Initialize();
   print_state(machine);
 
-  machine.HandleEvent(EventID{1});
+  machine.HandleEvent(Event::READY);
+  print_state(machine);
+
+  machine.HandleEvent(Event::ENGAGE);
+  print_state(machine);
+
+  machine.HandleEvent(Event::DISENGAGE);
   print_state(machine);
 }
