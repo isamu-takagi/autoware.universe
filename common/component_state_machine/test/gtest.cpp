@@ -14,21 +14,11 @@
 //  limitations under the License.
 //
 
-#include "component_state_machine/machine.hpp"
-
 #include <gtest/gtest.h>
-
-enum class MyStates : uint16_t { STATE1 };
-
-enum class MyEvents : uint16_t { EVENT1 };
 
 TEST(tests, case1)
 {
-  using component_state_machine::Machine;
-  Machine<MyStates, MyEvents> machine;
 
-  auto state = machine.GetState();
-  EXPECT_EQ(static_cast<std::underlying_type_t<MyStates>>(state), 0);
 }
 
 int main(int argc, char ** argv)

@@ -12,27 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "component_state_machine/machine.hpp"
+#include "component_state_machine/state_machine.hpp"
 
 #include <iostream>
 
-enum class MyStates : uint16_t { NORMAL, ERROR, STATE3 };
+using namespace component_state_machine;
 
-enum class MyEvents : uint16_t { EVENT1, EVENT2 };
+void print_state(const StateMachine & machine)
+{
+  auto state = machine.GetState();
+  std::cout << state.value << std::endl;
+}
 
 int main()
 {
-  using component_state_machine::Machine;
-  Machine<MyStates, MyEvents> machine;
+  StateMachine machine;
+  machine.CreateState(StateID{1});
+  machine.CreateState(StateID{2});
+  machine.SetTransition(EventID{1}, StateID{1}, StateID{2});
+  machine.SetInitialState(StateID{1});
 
-  machine.CreateState(MyStates::NORMAL);
-  machine.CreateState(MyStates::ERROR);
-  machine.SetTransition(MyEvents::EVENT1, MyStates::NORMAL, MyStates::ERROR);
-
-  machine.SetInitialState(MyStates::NORMAL);
   machine.Initialize();
-  machine.HandleEvent(MyEvents::EVENT1);
+  print_state(machine);
 
-  auto state = machine.GetState();
-  std::cout << static_cast<std::underlying_type_t<MyStates>>(state) << std::endl;
+  machine.HandleEvent(EventID{1});
+  print_state(machine);
 }
