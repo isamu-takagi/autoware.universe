@@ -15,11 +15,13 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/diagnostics.cpp
   src/driving.cpp
   src/interface_version.cpp
 )
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
+rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DiagnosticsNode")
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DrivingNode")
+rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

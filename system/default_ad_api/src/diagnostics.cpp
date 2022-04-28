@@ -12,27 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_VERSION_HPP_
-#define INTERFACE_VERSION_HPP_
-
-#include "default_ad_api/specs/interface/version.hpp"
-#include "utils/types.hpp"
-
-#include <component_interface_utils/rclcpp.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include "diagnostics.hpp"
 
 namespace default_ad_api
 {
 
-class InterfaceVersionNode : public rclcpp::Node
+DiagnosticsNode::DiagnosticsNode(const rclcpp::NodeOptions & options) : Node("diagnostics", options)
 {
-public:
-  explicit InterfaceVersionNode(const rclcpp::NodeOptions & options);
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
-private:
-  Service<ad_api::interface::version::T>::SharedPtr srv_;
-};
+  const auto on_diagnostics = [](MESSAGE_ARG(DiagnosticArray)) { (void)message; };
+
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_sub(sub_, on_diagnostics);
+}
 
 }  // namespace default_ad_api
 
-#endif  // INTERFACE_VERSION_HPP_
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::DiagnosticsNode)

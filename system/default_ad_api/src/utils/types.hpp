@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TYPES_HPP_
-#define TYPES_HPP_
+#ifndef UTILS__TYPES_HPP_
+#define UTILS__TYPES_HPP_
 
 #include <component_interface_utils/rclcpp.hpp>
 
@@ -37,4 +37,4 @@ using Service = component_interface_utils::Service<T>;
 
 }  // namespace default_ad_api
 
-#endif  // TYPES_HPP_
+#endif  // UTILS__TYPES_HPP_

@@ -25,27 +25,30 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
   using AutowareEngage = autoware_auto_vehicle_msgs::msg::Engage;
   using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
 
-  const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage)) {
+  const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage))
+  {
     RCLCPP_INFO_STREAM(get_logger(), "API Engage: " << (request->engage ? "true" : "false"));
     response->status.summary = component_interface_utils::response::success();
   };
 
-  const auto on_autoware_engage = [this](MESSAGE_ARG(AutowareEngage)) {
+  const auto on_autoware_engage = [this](MESSAGE_ARG(AutowareEngage))
+  {
     // Temp
     RCLCPP_INFO_STREAM(get_logger(), "Autoware Engage: " << message->engage);
   };
 
-  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
+  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState))
+  {
     // Temp
     RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << message->state);
   };
 
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_service(srv_api_engage_, on_driving_engage);
-  node.init_publisher(pub_api_state_);
-  node.init_client(cli_autoware_engage_);
-  node.init_subscription(sub_autoware_engage_, on_autoware_engage);
-  node.init_subscription(sub_autoware_state_, on_autoware_state);
+  node.init_srv(srv_api_engage_, on_driving_engage);
+  node.init_pub(pub_api_state_);
+  node.init_cli(cli_autoware_engage_);
+  node.init_sub(sub_autoware_engage_, on_autoware_engage);
+  node.init_sub(sub_autoware_state_, on_autoware_state);
 }
 
 }  // namespace default_ad_api

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_VERSION_HPP_
-#define INTERFACE_VERSION_HPP_
+#ifndef DIAGNOSTICS_HPP_
+#define DIAGNOSTICS_HPP_
 
-#include "default_ad_api/specs/interface/version.hpp"
+#include "default_ad_api/specs/internal/autoware/diagnostics.hpp"
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
@@ -24,15 +24,15 @@
 namespace default_ad_api
 {
 
-class InterfaceVersionNode : public rclcpp::Node
+class DiagnosticsNode : public rclcpp::Node
 {
 public:
-  explicit InterfaceVersionNode(const rclcpp::NodeOptions & options);
+  explicit DiagnosticsNode(const rclcpp::NodeOptions & options);
 
 private:
-  Service<ad_api::interface::version::T>::SharedPtr srv_;
+  Subscription<internal_api::diagnostics::T>::SharedPtr sub_;
 };
 
 }  // namespace default_ad_api
 
-#endif  // INTERFACE_VERSION_HPP_
+#endif  // DIAGNOSTICS_HPP_
