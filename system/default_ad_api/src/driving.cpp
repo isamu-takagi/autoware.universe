@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "default_ad_api/nodes/driving.hpp"
+#include "driving.hpp"
 
 #include <component_interface_utils/response.hpp>
 
@@ -21,43 +21,31 @@ namespace default_ad_api
 
 DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", options)
 {
-  srv_api_engage_ = component_interface_utils::create_service<ad_api::driving::engage::T>(
-    this, &DrivingNode::onDrivingEngage);
+  using DrivingEngage = autoware_ad_api_msgs::srv::DrivingEngage;
+  using AutowareEngage = autoware_auto_vehicle_msgs::msg::Engage;
+  using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
 
-  pub_api_state_ = component_interface_utils::create_publisher<ad_api::driving::state::T>(this);
+  const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage)) {
+    RCLCPP_INFO_STREAM(get_logger(), "API Engage: " << (request->engage ? "true" : "false"));
+    response->status.summary = component_interface_utils::response::success();
+  };
 
-  cli_autoware_engage_ =
-    component_interface_utils::create_client<internal_api::autoware::set_engage::T>(this);
+  const auto on_autoware_engage = [this](MESSAGE_ARG(AutowareEngage)) {
+    // Temp
+    RCLCPP_INFO_STREAM(get_logger(), "Autoware Engage: " << message->engage);
+  };
 
-  sub_autoware_engage_ =
-    component_interface_utils::create_subscription<internal_api::autoware::get_engage::T>(
-      this, &DrivingNode::onAutowareEngage);
+  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
+    // Temp
+    RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << message->state);
+  };
 
-  sub_autoware_state_ =
-    component_interface_utils::create_subscription<internal_api::autoware::get_state::T>(
-      this, &DrivingNode::onAutowareState);
-}
-
-void DrivingNode::onDrivingEngage(
-  const DrivingEngage::Request::SharedPtr request,
-  const DrivingEngage::Response::SharedPtr response)
-{
-  RCLCPP_INFO(get_logger(), "engage: %s", request->engage ? "true" : "false");
-  response->status.summary = component_interface_utils::response::success();
-}
-
-void DrivingNode::onAutowareEngage(
-  const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr message)
-{
-  (void)message;
-  RCLCPP_INFO(get_logger(), "onAutowareEngage");
-}
-
-void DrivingNode::onAutowareState(
-  const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr message)
-{
-  (void)message;
-  RCLCPP_INFO(get_logger(), "onAutowareState");
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_service(srv_api_engage_, on_driving_engage);
+  node.init_publisher(pub_api_state_);
+  node.init_client(cli_autoware_engage_);
+  node.init_subscription(sub_autoware_engage_, on_autoware_engage);
+  node.init_subscription(sub_autoware_state_, on_autoware_state);
 }
 
 }  // namespace default_ad_api

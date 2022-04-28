@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DEFAULT_AD_API__NODES__INTERFACE_VERSION_HPP_
-#define DEFAULT_AD_API__NODES__INTERFACE_VERSION_HPP_
+#ifndef INTERFACE_VERSION_HPP_
+#define INTERFACE_VERSION_HPP_
 
 #include "default_ad_api/specs/interface/version.hpp"
+#include "types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -29,14 +30,9 @@ public:
   explicit InterfaceVersionNode(const rclcpp::NodeOptions & options);
 
 private:
-  using InterfaceVersion = autoware_ad_api_msgs::srv::InterfaceVersion;
-
-  component_interface_utils::Service<ad_api::interface::version::T>::SharedPtr srv_;
-  void onInterfaceVersion(
-    const InterfaceVersion::Request::SharedPtr request,
-    const InterfaceVersion::Response::SharedPtr response);
+  Service<ad_api::interface::version::T>::SharedPtr srv_;
 };
 
 }  // namespace default_ad_api
 
-#endif  // DEFAULT_AD_API__NODES__INTERFACE_VERSION_HPP_
+#endif  // INTERFACE_VERSION_HPP_

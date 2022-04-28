@@ -17,26 +17,34 @@
 
 #include <component_interface_utils/rclcpp/create_interface.hpp>
 
+#include <utility>
+
 namespace component_interface_utils
 {
 
 class NodeAdaptor
 {
+private:
+  using CallbackGroup = rclcpp::CallbackGroup::SharedPtr;
+
 public:
   /// Constructor.
   explicit NodeAdaptor(rclcpp::Node * node) : node_(node) {}
 
-  /// Create a service wrapper for logging. This is for member function of node.
-  template <class SharedPtrT, class ClassT>
-  void init_service(
-    SharedPtrT & srv, ClassT * instance,
-    typename SharedPtrT::element_type::template CallbackType<ClassT> callback,
-    rclcpp::CallbackGroup::SharedPtr group = nullptr) const
+  /// Create a client wrapper for logging. This is for member function of node.
+  template <class SharedPtrT>
+  void init_client(SharedPtrT & cli, CallbackGroup group = nullptr) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    srv = create_service_impl<SpecT>(node_, std::bind(callback, instance, _1, _2), group);
+    cli = create_client_impl<SpecT>(node_, group);
+  }
+
+  /// Create a service wrapper for logging.
+  template <class SharedPtrT, class CallbackT>
+  void init_service(SharedPtrT & srv, CallbackT && callback, CallbackGroup group = nullptr) const
+  {
+    using SpecT = typename SharedPtrT::element_type::SpecType;
+    srv = create_service_impl<SpecT>(node_, std::forward<CallbackT>(callback), group);
   }
 
   /// Create a publisher using traits like services.
@@ -45,6 +53,14 @@ public:
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
     pub = create_publisher_impl<SpecT>(node_);
+  }
+
+  /// Create a subscription using traits like services.
+  template <class SharedPtrT, class CallbackT>
+  void init_subscription(SharedPtrT & sub, CallbackT && callback) const
+  {
+    using SpecT = typename SharedPtrT::element_type::SpecType;
+    sub = create_subscription_impl<SpecT>(node_, std::forward<CallbackT>(callback));
   }
 
 private:

@@ -15,16 +15,29 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_SUBSCRIPTION_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/subscription.hpp>
 
 namespace component_interface_utils
 {
 
-template <class SpecT, class NodeT>
-using SubscriptionCallbackType = void (NodeT::*)(typename SpecT::Message::ConstSharedPtr message);
-
 template <class SpecT>
-using Subscription = rclcpp::Subscription<typename SpecT::Message>;
+class Subscription
+{
+public:
+  RCLCPP_SMART_PTR_DEFINITIONS(Subscription)
+  using SpecType = SpecT;
+  using WrapType = rclcpp::Subscription<typename SpecT::Message>;
+
+  /// Constructor.
+  explicit Subscription(typename WrapType::SharedPtr subscription)
+  {
+    subscription_ = subscription;  // to keep the reference count
+  }
+
+private:
+  RCLCPP_DISABLE_COPY(Subscription)
+  typename WrapType::SharedPtr subscription_;
+};
 
 }  // namespace component_interface_utils
 

@@ -15,7 +15,7 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__TOPIC_PUBLISHER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/publisher.hpp>
 
 namespace component_interface_utils
 {

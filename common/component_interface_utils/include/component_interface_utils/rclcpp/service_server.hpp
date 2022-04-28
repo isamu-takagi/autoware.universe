@@ -15,7 +15,7 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/service.hpp>
 
 namespace component_interface_utils
 {
@@ -28,10 +28,6 @@ public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
   using SpecType = SpecT;
   using WrapType = rclcpp::Service<typename SpecT::Service>;
-
-  template <class ClassT>
-  using CallbackType = void (ClassT::*)(
-    typename SpecT::Service::Request::SharedPtr, typename SpecT::Service::Response::SharedPtr);
 
   /// Constructor.
   explicit Service(typename WrapType::SharedPtr service)

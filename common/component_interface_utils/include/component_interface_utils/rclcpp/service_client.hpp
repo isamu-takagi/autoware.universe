@@ -15,7 +15,7 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/client.hpp>
 
 namespace component_interface_utils
 {
@@ -27,16 +27,17 @@ class Client
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Client)
   using SpecType = SpecT;
+  using WrapType = rclcpp::Client<typename SpecT::Service>;
 
   /// Constructor.
-  explicit Client(typename rclcpp::Client<typename SpecT::Service>::SharedPtr client)
+  explicit Client(typename WrapType::SharedPtr client)
   {
-    client_ = client;
+    client_ = client;  // to keep the reference count
   }
 
 private:
   RCLCPP_DISABLE_COPY(Client)
-  typename rclcpp::Client<typename SpecT::Service>::SharedPtr client_;
+  typename WrapType::SharedPtr client_;
 };
 
 }  // namespace component_interface_utils

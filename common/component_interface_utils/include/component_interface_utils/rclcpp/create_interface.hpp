@@ -61,32 +61,13 @@ typename Publisher<SpecT>::SharedPtr create_publisher_impl(NodeT * node)
 
 /// Create a subscription using traits like services. This is a private implementation.
 template <class SpecT, class NodeT, class CallbackT>
-typename rclcpp::Subscription<typename SpecT::Message>::SharedPtr create_subscription_impl(
+typename Subscription<SpecT>::SharedPtr create_subscription_impl(
   NodeT * node, CallbackT && callback)
 {
   auto subscription = node->template create_subscription<typename SpecT::Message>(
     SpecT::name, get_qos<SpecT>(), std::forward<CallbackT>(callback));
-  return subscription;
+  return Subscription<SpecT>::make_shared(subscription);
 }
-
-/*
-/// Create a subscription using traits like services. This is for lambda or bound function.
-template <class SpecT, class NodeT, class CallbackT>
-typename rclcpp::Subscription<typename SpecT::Message>::SharedPtr create_subscription(
-  NodeT * node, CallbackT && callback)
-{
-  return create_subscription_impl<SpecT>(node, std::forward<CallbackT>(callback));
-}
-
-/// Create a subscription using traits like services. This is for member function of node.
-template <class SpecT, class NodeT>
-typename rclcpp::Subscription<typename SpecT::Message>::SharedPtr create_subscription(
-  NodeT * node, SubscriptionCallbackType<SpecT, NodeT> callback)
-{
-  using std::placeholders::_1;
-  return create_subscription_impl<SpecT>(node, std::bind(callback, node, _1));
-}
-*/
 
 }  // namespace component_interface_utils
 

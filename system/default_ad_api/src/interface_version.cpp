@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "default_ad_api/nodes/interface_version.hpp"
+#include "interface_version.hpp"
 
 namespace default_ad_api
 {
@@ -20,16 +20,16 @@ namespace default_ad_api
 InterfaceVersionNode::InterfaceVersionNode(const rclcpp::NodeOptions & options)
 : Node("interface_version", options)
 {
-  srv_ = component_interface_utils::create_service<ad_api::interface::version::T>(
-    this, &InterfaceVersionNode::onInterfaceVersion);
-}
+  using InterfaceVersion = autoware_ad_api_msgs::srv::InterfaceVersion;
 
-void InterfaceVersionNode::onInterfaceVersion(
-  const InterfaceVersion::Request::SharedPtr, const InterfaceVersion::Response::SharedPtr response)
-{
-  response->major = 0;
-  response->minor = 1;
-  response->patch = 0;
+  const auto on_interface_version = [](SERVICE_ARG_NO_REQ(InterfaceVersion)) {
+    response->major = 0;
+    response->minor = 1;
+    response->patch = 0;
+  };
+
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_service(srv_, on_interface_version);
 }
 
 }  // namespace default_ad_api
