@@ -21,7 +21,23 @@ namespace component_interface_utils
 {
 
 template <class SpecT>
-using Publisher = rclcpp::Publisher<typename SpecT::Message>;
+class Publisher
+{
+public:
+  RCLCPP_SMART_PTR_DEFINITIONS(Publisher)
+  using SpecType = SpecT;
+  using WrapType = rclcpp::Publisher<typename SpecT::Message>;
+
+  /// Constructor.
+  explicit Publisher(typename WrapType::SharedPtr publisher)
+  {
+    publisher_ = publisher;  // to keep the reference count
+  }
+
+private:
+  RCLCPP_DISABLE_COPY(Publisher)
+  typename WrapType::SharedPtr publisher_;
+};
 
 }  // namespace component_interface_utils
 

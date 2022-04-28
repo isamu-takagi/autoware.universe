@@ -26,6 +26,7 @@ class Client
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Client)
+  using SpecType = SpecT;
 
   /// Constructor.
   explicit Client(typename rclcpp::Client<typename SpecT::Service>::SharedPtr client)

@@ -26,13 +26,15 @@ class Service
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
+  using SpecType = SpecT;
+  using WrapType = rclcpp::Service<typename SpecT::Service>;
 
-  template <class NodeT>
-  using CallbackType = void (NodeT::*)(
+  template <class ClassT>
+  using CallbackType = void (ClassT::*)(
     typename SpecT::Service::Request::SharedPtr, typename SpecT::Service::Response::SharedPtr);
 
   /// Constructor.
-  explicit Service(typename rclcpp::Service<typename SpecT::Service>::SharedPtr service)
+  explicit Service(typename WrapType::SharedPtr service)
   {
     service_ = service;  // to keep the reference count
   }
@@ -54,7 +56,7 @@ public:
 
 private:
   RCLCPP_DISABLE_COPY(Service)
-  typename rclcpp::Service<typename SpecT::Service>::SharedPtr service_;
+  typename WrapType::SharedPtr service_;
 };
 
 }  // namespace component_interface_utils

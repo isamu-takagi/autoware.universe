@@ -16,6 +16,42 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
 
 #include <component_interface_utils/rclcpp/create_interface.hpp>
-#include <component_interface_utils/rclcpp/service_server.hpp>
+
+namespace component_interface_utils
+{
+
+class NodeAdaptor
+{
+public:
+  /// Constructor.
+  explicit NodeAdaptor(rclcpp::Node * node) : node_(node) {}
+
+  /// Create a service wrapper for logging. This is for member function of node.
+  template <class SharedPtrT, class ClassT>
+  void init_service(
+    SharedPtrT & srv, ClassT * instance,
+    typename SharedPtrT::element_type::template CallbackType<ClassT> callback,
+    rclcpp::CallbackGroup::SharedPtr group = nullptr) const
+  {
+    using SpecT = typename SharedPtrT::element_type::SpecType;
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    srv = create_service_impl<SpecT>(node_, std::bind(callback, instance, _1, _2), group);
+  }
+
+  /// Create a publisher using traits like services.
+  template <class SharedPtrT>
+  void init_publisher(SharedPtrT & pub) const
+  {
+    using SpecT = typename SharedPtrT::element_type::SpecType;
+    pub = create_publisher_impl<SpecT>(node_);
+  }
+
+private:
+  // Use a node pointer because shared_from_this cannot be used in constructor.
+  rclcpp::Node * node_;
+};
+
+}  // namespace component_interface_utils
 
 #endif  // COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
