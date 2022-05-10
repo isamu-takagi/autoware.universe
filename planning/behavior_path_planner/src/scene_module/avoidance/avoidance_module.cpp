@@ -77,8 +77,6 @@ bool AvoidanceModule::isExecutionReady() const
   {
     DebugData debug;
     static_cast<void>(calcAvoidancePlanningData(debug));
-    debug_avoidance_msg_array_ptr_ =
-      std::make_shared<AvoidanceDebugMsgArray>(debug.avoidance_debug_msg_array);
   }
 
   if (current_state_ == BT::NodeStatus::RUNNING) {
@@ -95,8 +93,6 @@ BT::NodeStatus AvoidanceModule::updateState()
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
   const bool has_avoidance_target = !avoid_data.objects.empty();
-  debug_avoidance_msg_array_ptr_ =
-    std::make_shared<AvoidanceDebugMsgArray>(debug.avoidance_debug_msg_array);
   if (!is_plan_running && !has_avoidance_target) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
@@ -298,8 +294,13 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
 
   // debug
   {
-    debug_avoidance_initializer_for_object = avoidance_debug_msg_array;
-    debug.avoidance_debug_msg_array.avoidance_info = std::move(avoidance_debug_msg_array);
+    auto & debug_data_avoidance = debug_data_.avoidance_debug_msg_array.avoidance_info;
+    debug_data_avoidance = avoidance_debug_msg_array;
+    debug_data_avoidance.insert(
+      debug_data_avoidance.end(), debug_avoidance_initializer_for_shift_point_.begin(),
+      debug_avoidance_initializer_for_shift_point_.end());
+    debug_avoidance_msg_array_ptr_ =
+      std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
     debug.farthest_linestring_from_overhang =
       std::make_shared<lanelet::ConstLineStrings3d>(debug_linestring);
     debug.current_lanelets = std::make_shared<lanelet::ConstLanelets>(current_lanes);
@@ -595,14 +596,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
     avoidance_debug_msg_array.push_back(avoidance_debug_msg);
   }
 
-  {
-    debug_avoidance_initializer_for_shift_point = std::move(avoidance_debug_msg_array);
-    auto & debug_data_avoidance = debug_data_.avoidance_debug_msg_array.avoidance_info;
-    debug_data_avoidance = debug_avoidance_initializer_for_object;
-    debug_data_avoidance.insert(
-      debug_data_avoidance.end(), debug_avoidance_initializer_for_shift_point.begin(),
-      debug_avoidance_initializer_for_shift_point.end());
-  }
+  debug_avoidance_initializer_for_shift_point_ = std::move(avoidance_debug_msg_array);
   fillAdditionalInfoFromLongitudinal(avoid_points);
 
   return avoid_points;
@@ -1945,8 +1939,8 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
     std::sqrt(v0 * v0 + 2.0 * s * parameters_.max_avoidance_acceleration));
 
   // apply velocity limit
-  constexpr size_t VLIM_APPLY_IDX_MARGIN = 0;
-  for (size_t i = ego_idx + VLIM_APPLY_IDX_MARGIN; i < N; ++i) {
+  constexpr size_t V_LIM_APPLY_IDX_MARGIN = 0;
+  for (size_t i = ego_idx + V_LIM_APPLY_IDX_MARGIN; i < N; ++i) {
     path.path.points.at(i).point.longitudinal_velocity_mps =
       std::min(path.path.points.at(i).point.longitudinal_velocity_mps, static_cast<float>(vmax));
   }
@@ -2177,8 +2171,6 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
   out.path_candidate = std::make_shared<PathWithLaneId>(planCandidate());
-  debug_avoidance_msg_array_ptr_ =
-    std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
   return out;
 }
 
@@ -2401,9 +2393,6 @@ void AvoidanceModule::updateData()
 {
   debug_data_ = DebugData();
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
-  const auto avoidance_debug_msgs = debug_data_.avoidance_debug_msg_array.avoidance_info;
-  debug_avoidance_msg_array_ptr_ =
-    std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
 
   // TODO(Horibe): this is not tested yet, disable now.
   updateRegisteredObject(avoidance_data_.objects);
@@ -2551,6 +2540,7 @@ void AvoidanceModule::initVariables()
   path_shifter_ = PathShifter{};
 
   debug_avoidance_msg_array_ptr_.reset();
+  debug_avoidance_initializer_for_shift_point_.clear();
   debug_data_ = DebugData();
 
   registered_raw_shift_points_ = {};
@@ -2629,7 +2619,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   using marker_utils::createAvoidPointMarkerArray;
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createOvehangFurthestLineStringMarkerArray;
+  using marker_utils::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
@@ -2662,7 +2652,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
   add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
   add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects));
-  add(createOvehangFurthestLineStringMarkerArray(
+  add(createOverhangFurthestLineStringMarkerArray(
     *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
   // parent object info
