@@ -21,7 +21,17 @@ DiagnosticsNode::DiagnosticsNode(const rclcpp::NodeOptions & options) : Node("di
 {
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
-  const auto on_diagnostics = [](MESSAGE_ARG(DiagnosticArray)) { (void)message; };
+  const auto on_diagnostics = [this](MESSAGE_ARG(DiagnosticArray))
+  {
+    RCLCPP_INFO_STREAM(get_logger(), "====================");
+    RCLCPP_INFO_STREAM(get_logger(), message->header.stamp.sec);
+    RCLCPP_INFO_STREAM(get_logger(), message->header.stamp.nanosec);
+    RCLCPP_INFO_STREAM(get_logger(), message->header.frame_id);
+
+    for (const auto & data : message->status) {
+      RCLCPP_INFO_STREAM(get_logger(), data.name << " " << data.hardware_id);
+    }
+  };
 
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_sub(sub_, on_diagnostics);

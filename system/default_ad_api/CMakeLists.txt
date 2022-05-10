@@ -21,13 +21,12 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DiagnosticsNode")
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DrivingNode")
+rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
 
 # workaround to allow deprecated function to build on both galactic and rolling
 if(${rosidl_generator_cpp_VERSION} VERSION_LESS 2.5.0)
   target_compile_definitions(${PROJECT_NAME} PRIVATE USE_DEPRECATED_TO_YAML)
 endif()
-
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
