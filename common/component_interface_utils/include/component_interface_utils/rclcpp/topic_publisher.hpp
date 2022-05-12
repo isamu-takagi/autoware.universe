@@ -20,6 +20,7 @@
 namespace component_interface_utils
 {
 
+/// The wrapper class of rclcpp::Publisher.
 template <class SpecT>
 class Publisher
 {

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__GET_STATE_HPP_
-#define DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__GET_STATE_HPP_
+#ifndef DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__STATE_HPP_
+#define DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__STATE_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
 
-namespace internal_api::autoware::get_state
+namespace internal_api::autoware::state
 {
 
 struct T
@@ -31,6 +31,6 @@ struct T
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace internal_api::autoware::get_state
+}  // namespace internal_api::autoware::state
 
-#endif  // DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__GET_STATE_HPP_
+#endif  // DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__STATE_HPP_

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__SET_ENGAGE_HPP_
-#define DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__SET_ENGAGE_HPP_
+#ifndef DEFAULT_AD_API__SPECS__INTERNAL__ENGAGE__SET_HPP_
+#define DEFAULT_AD_API__SPECS__INTERNAL__ENGAGE__SET_HPP_
 
 #include <tier4_external_api_msgs/srv/engage.hpp>
 
-namespace internal_api::autoware::set_engage
+namespace internal_api::engage::set
 {
 
 struct T
@@ -26,6 +26,6 @@ struct T
   static constexpr char name[] = "/api/autoware/set/engage";
 };
 
-}  // namespace internal_api::autoware::set_engage
+}  // namespace internal_api::engage::set
 
-#endif  // DEFAULT_AD_API__SPECS__INTERNAL__AUTOWARE__SET_ENGAGE_HPP_
+#endif  // DEFAULT_AD_API__SPECS__INTERNAL__ENGAGE__SET_HPP_

@@ -16,7 +16,7 @@ if(BUILD_TESTING)
 endif()
 
 install(
-  PROGRAMS script/server.py
+  PROGRAMS script/web_server.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

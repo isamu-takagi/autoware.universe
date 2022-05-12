@@ -17,9 +17,9 @@
 
 #include "default_ad_api/specs/driving/engage.hpp"
 #include "default_ad_api/specs/driving/state.hpp"
-#include "default_ad_api/specs/internal/autoware/get_engage.hpp"
-#include "default_ad_api/specs/internal/autoware/get_state.hpp"
-#include "default_ad_api/specs/internal/autoware/set_engage.hpp"
+#include "default_ad_api/specs/internal/autoware/state.hpp"
+#include "default_ad_api/specs/internal/engage/get.hpp"
+#include "default_ad_api/specs/internal/engage/set.hpp"
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
@@ -39,9 +39,9 @@ private:
   Publisher<ad_api::driving::state::T>::SharedPtr pub_api_state_;
 
   // interfaces
-  Client<internal_api::autoware::set_engage::T>::SharedPtr cli_autoware_engage_;
-  Subscription<internal_api::autoware::get_engage::T>::SharedPtr sub_autoware_engage_;
-  Subscription<internal_api::autoware::get_state::T>::SharedPtr sub_autoware_state_;
+  Client<internal_api::engage::set::T>::SharedPtr cli_autoware_engage_;
+  Subscription<internal_api::engage::get::T>::SharedPtr sub_autoware_engage_;
+  Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
 };
 
 }  // namespace default_ad_api
