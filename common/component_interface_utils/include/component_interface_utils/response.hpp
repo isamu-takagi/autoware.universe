@@ -23,7 +23,7 @@ namespace component_interface_utils::response
 
 using ResponseStatusDetail = autoware_ad_api_msgs::msg::ResponseStatusDetail;
 
-ResponseStatusDetail success()
+inline ResponseStatusDetail success()
 {
   ResponseStatusDetail status;
   status.code = ResponseStatusDetail::SUCCESS;

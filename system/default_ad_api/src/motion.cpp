@@ -12,37 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "driving.hpp"
+#include "motion.hpp"
 
 #include <component_interface_utils/response.hpp>
 
 namespace default_ad_api
 {
 
-DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", options)
+MotionNode::MotionNode(const rclcpp::NodeOptions & options) : Node("motion", options)
 {
-  using DrivingEngage = autoware_ad_api_msgs::srv::DrivingEngage;
-  using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
+  using AutowareEngage = autoware_auto_vehicle_msgs::msg::Engage;
+  using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
 
-  const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage))
-  {
-    RCLCPP_INFO_STREAM(get_logger(), "API Engage: " << (request->engage ? "true" : "false"));
-    response->status.summary = component_interface_utils::response::success();
-  };
-
-  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState))
+  const auto on_autoware_engage = [this](MESSAGE_ARG(AutowareEngage))
   {
     // Temp
-    RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << message->state);
+    RCLCPP_INFO_STREAM(get_logger(), "Autoware Engage: " << message->engage);
+  };
+
+  const auto on_driving_state = [this](MESSAGE_ARG(DrivingState))
+  {
+    // Temp
+    RCLCPP_INFO_STREAM(get_logger(), "Driving State" << message->state);
   };
 
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_srv(srv_driving_engage_, on_driving_engage);
-  node.init_pub(pub_driving_state_);
-  node.init_sub(sub_autoware_state_, on_autoware_state);
+  node.init_pub(pub_motion_state_);
+  node.init_cli(cli_autoware_engage_);
+  node.init_sub(sub_autoware_engage_, on_autoware_engage);
+  node.init_sub(sub_driving_state_, on_driving_state);
 }
 
 }  // namespace default_ad_api
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::DrivingNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::MotionNode)

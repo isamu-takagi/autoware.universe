@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVING_HPP_
-#define DRIVING_HPP_
+#ifndef MOTION_HPP_
+#define MOTION_HPP_
 
-#include "default_ad_api/specs/driving/engage.hpp"
 #include "default_ad_api/specs/driving/state.hpp"
-#include "default_ad_api/specs/internal/autoware/state.hpp"
+#include "default_ad_api/specs/internal/engage/get.hpp"
+#include "default_ad_api/specs/internal/engage/set.hpp"
+#include "default_ad_api/specs/motion/state.hpp"
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
@@ -26,20 +27,21 @@
 namespace default_ad_api
 {
 
-class DrivingNode : public rclcpp::Node
+class MotionNode : public rclcpp::Node
 {
 public:
-  explicit DrivingNode(const rclcpp::NodeOptions & options);
+  explicit MotionNode(const rclcpp::NodeOptions & options);
 
 private:
   // AD API
-  Service<ad_api::driving::engage::T>::SharedPtr srv_driving_engage_;
-  Publisher<ad_api::driving::state::T>::SharedPtr pub_driving_state_;
+  Publisher<ad_api::motion::state::T>::SharedPtr pub_motion_state_;
 
   // interfaces
-  Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
+  Client<internal_api::engage::set::T>::SharedPtr cli_autoware_engage_;
+  Subscription<internal_api::engage::get::T>::SharedPtr sub_autoware_engage_;
+  Subscription<ad_api::driving::state::T>::SharedPtr sub_driving_state_;
 };
 
 }  // namespace default_ad_api
 
-#endif  // DRIVING_HPP_
+#endif  // MOTION_HPP_
