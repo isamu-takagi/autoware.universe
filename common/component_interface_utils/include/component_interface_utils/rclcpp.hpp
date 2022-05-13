@@ -16,6 +16,10 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
 
 #include <component_interface_utils/rclcpp/create_interface.hpp>
+#include <component_interface_utils/rclcpp/service_client.hpp>
+#include <component_interface_utils/rclcpp/service_server.hpp>
+#include <component_interface_utils/rclcpp/topic_publisher.hpp>
+#include <component_interface_utils/rclcpp/topic_subscription.hpp>
 
 #include <utility>
 
@@ -31,7 +35,7 @@ public:
   /// Constructor.
   explicit NodeAdaptor(rclcpp::Node * node) : node_(node) {}
 
-  /// Create a client wrapper for logging. This is for member function of node.
+  /// Create a client wrapper for logging.
   template <class SharedPtrT>
   void init_cli(SharedPtrT & cli, CallbackGroup group = nullptr) const
   {

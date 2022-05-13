@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interface_version.hpp"
+#include "interface.hpp"
 
 namespace default_ad_api
 {
 
-InterfaceVersionNode::InterfaceVersionNode(const rclcpp::NodeOptions & options)
-: Node("interface_version", options)
+InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interface", options)
 {
   using InterfaceVersion = autoware_ad_api_msgs::srv::InterfaceVersion;
 
-  const auto on_interface_version = [](SERVICE_ARG_NO_REQ(InterfaceVersion))
-  {
+  const auto on_interface_version = [](SERVICE_ARG_NO_REQ(InterfaceVersion)) {
     response->major = 0;
     response->minor = 1;
     response->patch = 0;
@@ -36,4 +34,4 @@ InterfaceVersionNode::InterfaceVersionNode(const rclcpp::NodeOptions & options)
 }  // namespace default_ad_api
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::InterfaceVersionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::InterfaceNode)

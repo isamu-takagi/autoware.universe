@@ -5,12 +5,12 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/interface.cpp
   src/driving.cpp
-  src/interface_version.cpp
   src/motion.cpp
 )
+rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceNode")
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DrivingNode")
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceVersionNode")
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::MotionNode")
 
 if(BUILD_TESTING)

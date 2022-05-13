@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERFACE_VERSION_HPP_
-#define INTERFACE_VERSION_HPP_
+#ifndef INTERFACE_HPP_
+#define INTERFACE_HPP_
 
 #include "default_ad_api/specs/interface/version.hpp"
 #include "utils/types.hpp"
@@ -24,10 +24,10 @@
 namespace default_ad_api
 {
 
-class InterfaceVersionNode : public rclcpp::Node
+class InterfaceNode : public rclcpp::Node
 {
 public:
-  explicit InterfaceVersionNode(const rclcpp::NodeOptions & options);
+  explicit InterfaceNode(const rclcpp::NodeOptions & options);
 
 private:
   Service<ad_api::interface::version::T>::SharedPtr srv_;
@@ -35,4 +35,4 @@ private:
 
 }  // namespace default_ad_api
 
-#endif  // INTERFACE_VERSION_HPP_
+#endif  // INTERFACE_HPP_
