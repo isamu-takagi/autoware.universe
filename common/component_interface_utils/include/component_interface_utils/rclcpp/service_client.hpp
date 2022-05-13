@@ -17,6 +17,8 @@
 
 #include <rclcpp/client.hpp>
 
+#include <utility>
+
 namespace component_interface_utils
 {
 
@@ -33,6 +35,20 @@ public:
   explicit Client(typename WrapType::SharedPtr client)
   {
     client_ = client;  // to keep the reference count
+  }
+
+  /// Send request.
+  typename WrapType::SharedFuture async_send_request(typename WrapType::SharedRequest request)
+  {
+    return client_->async_send_request(request);
+  }
+
+  /// Send request.
+  template <class CallbackT>
+  typename WrapType::SharedFuture async_send_request(
+    typename WrapType::SharedRequest request, CallbackT && callback)
+  {
+    return client_->async_send_request(request, std::forward<CallbackT>(callback));
   }
 
 private:

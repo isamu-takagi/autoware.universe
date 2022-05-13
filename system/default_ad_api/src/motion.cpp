@@ -16,24 +16,46 @@
 
 #include <component_interface_utils/response.hpp>
 
+#include <memory>
+
 namespace default_ad_api
 {
 
 MotionNode::MotionNode(const rclcpp::NodeOptions & options) : Node("motion", options)
 {
   using AutowareEngage = autoware_auto_vehicle_msgs::msg::Engage;
-  using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
-
   const auto on_autoware_engage = [this](MESSAGE_ARG(AutowareEngage))
   {
+    (void)message;
     // Temp
-    RCLCPP_INFO_STREAM(get_logger(), "Autoware Engage: " << message->engage);
+    // RCLCPP_INFO_STREAM(get_logger(), "Autoware Engage: " << message->engage);
   };
 
+  using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
   const auto on_driving_state = [this](MESSAGE_ARG(DrivingState))
   {
-    // Temp
-    RCLCPP_INFO_STREAM(get_logger(), "Driving State" << message->state);
+    if (driving_state_.state != message->state) {
+      RCLCPP_INFO_STREAM(get_logger(), "Driving State" << message->state);
+
+      using EngageRequest = tier4_external_api_msgs::srv::Engage::Request;
+      const auto service_callback =
+        [this](rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedFuture future)
+      {
+        RCLCPP_INFO_STREAM(
+          get_logger(), future.get()->status.code << " " << future.get()->status.message);
+      };
+
+      if (message->state == DrivingState::DRIVING) {
+        const auto request = std::make_shared<EngageRequest>();
+        request->engage = true;
+        cli_autoware_engage_->async_send_request(request, service_callback);
+      } else {
+        const auto request = std::make_shared<EngageRequest>();
+        request->engage = false;
+        cli_autoware_engage_->async_send_request(request, service_callback);
+      }
+    }
+    driving_state_ = *message;
   };
 
   const auto node = component_interface_utils::NodeAdaptor(this);
@@ -41,6 +63,14 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options) : Node("motion", opt
   node.init_cli(cli_autoware_engage_);
   node.init_sub(sub_autoware_engage_, on_autoware_engage);
   node.init_sub(sub_driving_state_, on_driving_state);
+
+  // initialize state machine
+  {
+    using MotionState = autoware_ad_api_msgs::msg::MotionState;
+    temp_state_ = MotionState::STOPPED;
+
+    driving_state_.state = DrivingState::UNKNOWN;
+  }
 }
 
 }  // namespace default_ad_api

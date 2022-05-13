@@ -43,9 +43,12 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
     using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
     const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState))
     {
-      using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
-      RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << static_cast<int>(message->state));
+      if (autoware_state_.state != message->state) {
+        RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << static_cast<int>(message->state));
+      }
+      autoware_state_ = *message;
 
+      using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
       switch (message->state) {
         case AutowareState::WAITING_FOR_ENGAGE:
           if (temp_state_ == DrivingState::PREPARING) {
@@ -84,6 +87,9 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
     loader.BindState(DrivingState::DRIVING, "driving");
     loader.LoadYAML(driving_state_machine_, path + "/state/driving.yaml");
     */
+
+    using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
+    autoware_state_.state = AutowareState::INITIALIZING;
   }
 }
 

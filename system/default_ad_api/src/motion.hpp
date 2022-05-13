@@ -22,6 +22,7 @@
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
+#include <component_state_machine/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace default_ad_api
@@ -40,6 +41,12 @@ private:
   Client<internal_api::engage::set::T>::SharedPtr cli_autoware_engage_;
   Subscription<internal_api::engage::get::T>::SharedPtr sub_autoware_engage_;
   Subscription<ad_api::driving::state::T>::SharedPtr sub_driving_state_;
+
+  // states
+  using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
+  DrivingState driving_state_;
+  uint16_t temp_state_;
+  component_state_machine::StateMachine motion_state_machine_;
 };
 
 }  // namespace default_ad_api

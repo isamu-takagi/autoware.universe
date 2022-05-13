@@ -1,3 +1,4 @@
+uint32 UNKNOWN = 0
 uint32 PREPARING = 1
 uint32 READY = 2
 uint32 DRIVING = 3
