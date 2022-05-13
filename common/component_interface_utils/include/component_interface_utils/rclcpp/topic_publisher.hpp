@@ -35,6 +35,9 @@ public:
     publisher_ = publisher;  // to keep the reference count
   }
 
+  /// Publish a message.
+  void publish(const typename SpecT::Message & msg) { publisher_->publish(msg); }
+
 private:
   RCLCPP_DISABLE_COPY(Publisher)
   typename WrapType::SharedPtr publisher_;

@@ -21,6 +21,7 @@
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
+#include <component_state_machine/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace default_ad_api
@@ -38,6 +39,10 @@ private:
 
   // interfaces
   Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
+
+  // states
+  uint16_t temp_state_;
+  component_state_machine::StateMachine driving_state_machine_;
 };
 
 }  // namespace default_ad_api

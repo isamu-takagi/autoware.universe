@@ -11,10 +11,12 @@
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>ament_index_cpp</depend>
   <depend>autoware_ad_api_msgs</depend>
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>component_interface_utils</depend>
+  <depend>component_state_machine</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tier4_external_api_msgs</depend>

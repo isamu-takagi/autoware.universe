@@ -14,6 +14,7 @@
 
 #include "driving.hpp"
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <component_interface_utils/response.hpp>
 
 namespace default_ad_api
@@ -21,25 +22,69 @@ namespace default_ad_api
 
 DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", options)
 {
-  using DrivingEngage = autoware_ad_api_msgs::srv::DrivingEngage;
-  using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
-
-  const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage))
+  // initialize ros interface
   {
-    RCLCPP_INFO_STREAM(get_logger(), "API Engage: " << (request->engage ? "true" : "false"));
-    response->status.summary = component_interface_utils::response::success();
-  };
+    using DrivingEngage = autoware_ad_api_msgs::srv::DrivingEngage;
+    const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage))
+    {
+      using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
+      RCLCPP_INFO_STREAM(get_logger(), "API Engage: " << (request->engage ? "true" : "false"));
 
-  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState))
+      if (request->engage) {
+        if (temp_state_ == DrivingState::READY) {
+          temp_state_ = DrivingState::DRIVING;
+        }
+      } else {
+        temp_state_ = DrivingState::PREPARING;
+      }
+      response->status.summary = component_interface_utils::response::success();
+    };
+
+    using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
+    const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState))
+    {
+      using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
+      RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << static_cast<int>(message->state));
+
+      switch (message->state) {
+        case AutowareState::WAITING_FOR_ENGAGE:
+          if (temp_state_ == DrivingState::PREPARING) {
+            temp_state_ = DrivingState::READY;
+          }
+          break;
+        case AutowareState::DRIVING:
+          temp_state_ = DrivingState::DRIVING;
+          break;
+        default:
+          temp_state_ = DrivingState::PREPARING;
+          break;
+      }
+
+      // TODO(Takagi, Isamu): callback from state machine
+      DrivingState msg;
+      msg.state = temp_state_;
+      pub_driving_state_->publish(msg);
+    };
+
+    const auto node = component_interface_utils::NodeAdaptor(this);
+    node.init_srv(srv_driving_engage_, on_driving_engage);
+    node.init_pub(pub_driving_state_);
+    node.init_sub(sub_autoware_state_, on_autoware_state);
+  }
+
+  // initialize state machine
   {
-    // Temp
-    RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << message->state);
-  };
-
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_srv(srv_driving_engage_, on_driving_engage);
-  node.init_pub(pub_driving_state_);
-  node.init_sub(sub_autoware_state_, on_autoware_state);
+    using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
+    temp_state_ = DrivingState::PREPARING;
+    /*
+    const auto path = ament_index_cpp::get_package_share_directory("default_ad_api");
+    component_state_machine::StateMachineLoader loader;
+    loader.BindState(DrivingState::PREPARING, "preparing");
+    loader.BindState(DrivingState::READY, "ready");
+    loader.BindState(DrivingState::DRIVING, "driving");
+    loader.LoadYAML(driving_state_machine_, path + "/state/driving.yaml");
+    */
+  }
 }
 
 }  // namespace default_ad_api
