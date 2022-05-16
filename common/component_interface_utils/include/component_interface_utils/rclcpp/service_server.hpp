@@ -15,6 +15,7 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
+#include <rclcpp/logging.hpp>
 #include <rclcpp/service.hpp>
 
 namespace component_interface_utils
@@ -41,8 +42,7 @@ public:
   {
     auto wrapped = [logger, callback](
                      typename SpecT::Service::Request::SharedPtr request,
-                     typename SpecT::Service::Response::SharedPtr response)
-    {
+                     typename SpecT::Service::Response::SharedPtr response) {
 #ifdef ROS_DISTRO_GALACTIC
       using rosidl_generator_traits::to_yaml;
 #endif
