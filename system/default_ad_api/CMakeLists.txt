@@ -9,6 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/driving.cpp
   src/motion.cpp
 )
+
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceNode")
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DrivingNode")
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::MotionNode")
