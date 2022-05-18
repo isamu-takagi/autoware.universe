@@ -15,8 +15,6 @@
 #ifndef COMPONENT_STATE_MACHINE__STATE_MACHINE_HPP_
 #define COMPONENT_STATE_MACHINE__STATE_MACHINE_HPP_
 
-#include "component_state_machine/types.hpp"
-
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -24,32 +22,36 @@
 namespace component_state_machine
 {
 
-struct StateData
+template <class StateID, class EventID>
+struct StateDataBase
 {
-  explicit StateData(const StateID id) : id(id) {}
+  explicit StateDataBase(const StateID id) : id(id) {}
   const StateID id;
   std::unordered_map<EventID, StateID> transitions;
 
   // non-copyable
-  StateData(const StateData &) = delete;
-  StateData & operator=(const StateData &) = delete;
+  StateDataBase(const StateDataBase &) = delete;
+  StateDataBase & operator=(const StateDataBase &) = delete;
 };
 
-struct EventData
+template <class StateID, class EventID>
+struct EventDataBase
 {
-  explicit EventData(const EventID id) : id(id) {}
+  explicit EventDataBase(const EventID id) : id(id) {}
   const EventID id;
 
   // non-copyable
-  EventData(const EventData &) = delete;
-  EventData & operator=(const EventData &) = delete;
+  EventDataBase(const EventDataBase &) = delete;
+  EventDataBase & operator=(const EventDataBase &) = delete;
 };
 
+template <class StateID, class EventID>
 class StateMachine
 {
 public:
   static constexpr StateID kStateUnknown = StateID{0};
-  static constexpr EventID kEventUnknown = EventID{0};
+  using StateData = StateDataBase<StateID, EventID>;
+  using EventData = EventDataBase<StateID, EventID>;
 
   StateMachine();
   void CreateState(StateID sid);
@@ -69,12 +71,13 @@ private:
   std::unordered_map<EventID, EventData> events_;
 };
 
+template <class StateID, class EventID, StateID kStateUnknown = 0>
 class StateMachineLoader
 {
 public:
-  void BindState(uint16_t value, std::string name);
-  void BindEvent(uint16_t value, std::string name);
-  void LoadYAML(StateMachine & machine, std::string path);
+  void BindState(StateID value, std::string name);
+  void BindEvent(EventID value, std::string name);
+  void LoadYAML(StateMachine<StateID, EventID> & machine, std::string path);
 
 private:
   std::unordered_map<std::string, StateID> states_;

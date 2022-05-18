@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/*
 #include "component_state_machine/state_machine.hpp"
 
 #include <yaml-cpp/yaml.h>
@@ -159,3 +160,5 @@ void StateMachine::Dump()
 }
 
 }  // namespace component_state_machine
+
+*/

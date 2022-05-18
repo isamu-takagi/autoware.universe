@@ -16,7 +16,6 @@
 
 #include <iostream>
 
-using component_state_machine::EventID;
 using component_state_machine::StateMachine;
 using component_state_machine::StateMachineLoader;
 
@@ -27,32 +26,26 @@ constexpr uint16_t READY = 2;
 constexpr uint16_t DRIVING = 3;
 }  // namespace Message
 
-namespace Event
-{
-constexpr auto ENGAGE = EventID{1};
-constexpr auto DISENGAGE = EventID{2};
-constexpr auto READY = EventID{3};
-constexpr auto UNREADY = EventID{4};
-}  // namespace Event
+enum class Event { ENGAGE, DISENGAGE, READY, UNREADY };
 
-void print_state(const StateMachine & machine)
+void print_state(const StateMachine<uint16_t, Event> & machine)
 {
   auto state = machine.GetState();
-  std::cout << state.value << std::endl;
+  std::cout << state << std::endl;
 }
 
 int main()
 {
-  StateMachine machine;
+  StateMachine<uint16_t, Event> machine;
   {
-    StateMachineLoader loader;
+    StateMachineLoader<uint16_t, Event> loader;
     loader.BindState(Message::PREPARE, "preparing");
     loader.BindState(Message::READY, "ready");
     loader.BindState(Message::DRIVING, "driving");
-    loader.BindEvent(Event::ENGAGE.value, "engage");
-    loader.BindEvent(Event::DISENGAGE.value, "disengage");
-    loader.BindEvent(Event::READY.value, "ready");
-    loader.BindEvent(Event::UNREADY.value, "unready");
+    loader.BindEvent(Event::ENGAGE, "engage");
+    loader.BindEvent(Event::DISENGAGE, "disengage");
+    loader.BindEvent(Event::READY, "ready");
+    loader.BindEvent(Event::UNREADY, "unready");
     loader.LoadYAML(machine, "");
   }
   machine.Dump();
