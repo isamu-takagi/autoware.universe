@@ -5,12 +5,17 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  srv/InterfaceVersion.srv
-  srv/DrivingEngage.srv
-  msg/DrivingState.msg
-  msg/MotionState.msg
-  msg/ResponseStatus.msg
-  msg/ResponseStatusDetail.msg
+  common/msg/ResponseStatus.msg
+  common/msg/ResponseData.msg
+  interface/srv/InterfaceVersion.srv
+  driving/srv/DrivingEngage.srv
+  driving/msg/DrivingState.msg
+  route/msg/Route.msg
+  route/msg/RouteNotice.msg
+  route/msg/RouteState.msg
+  route/srv/RouteClear.srv
+  route/srv/RouteSet.srv
+  motion/msg/MotionState.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs
