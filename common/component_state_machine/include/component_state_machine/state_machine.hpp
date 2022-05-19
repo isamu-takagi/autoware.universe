@@ -15,6 +15,8 @@
 #ifndef COMPONENT_STATE_MACHINE__STATE_MACHINE_HPP_
 #define COMPONENT_STATE_MACHINE__STATE_MACHINE_HPP_
 
+#include "component_state_machine/impl/errors.hpp"
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -23,37 +25,41 @@ namespace component_state_machine
 {
 
 template <class StateID, class EventID>
-struct StateDataBase
+struct BaseStateData
 {
-  explicit StateDataBase(const StateID id) : id(id) {}
+  explicit BaseStateData(const StateID id) : id(id) {}
   const StateID id;
   std::unordered_map<EventID, StateID> transitions;
 
   // non-copyable
-  StateDataBase(const StateDataBase &) = delete;
-  StateDataBase & operator=(const StateDataBase &) = delete;
+  BaseStateData(const BaseStateData &) = delete;
+  BaseStateData & operator=(const BaseStateData &) = delete;
 };
 
 template <class StateID, class EventID>
-struct EventDataBase
+struct BaseEventData
 {
-  explicit EventDataBase(const EventID id) : id(id) {}
+  explicit BaseEventData(const EventID id) : id(id) {}
   const EventID id;
 
   // non-copyable
-  EventDataBase(const EventDataBase &) = delete;
-  EventDataBase & operator=(const EventDataBase &) = delete;
+  BaseEventData(const BaseEventData &) = delete;
+  BaseEventData & operator=(const BaseEventData &) = delete;
 };
 
 template <class StateID, class EventID>
 class StateMachine
 {
 public:
-  static constexpr StateID kStateUnknown = StateID{0};
-  using StateData = StateDataBase<StateID, EventID>;
-  using EventData = EventDataBase<StateID, EventID>;
+  using StateData = BaseStateData<StateID, EventID>;
+  using EventData = BaseEventData<StateID, EventID>;
 
-  StateMachine();
+  explicit StateMachine(StateID initial_state)
+  {
+    current_state_ = initial_state;
+    initial_state_ = initial_state;
+  }
+
   void CreateState(StateID sid);
   void CreateEvent(EventID eid);
   void SetInitialState(StateID sid);
@@ -71,7 +77,7 @@ private:
   std::unordered_map<EventID, EventData> events_;
 };
 
-template <class StateID, class EventID, StateID kStateUnknown = 0>
+template <class StateID, class EventID>
 class StateMachineLoader
 {
 public:
