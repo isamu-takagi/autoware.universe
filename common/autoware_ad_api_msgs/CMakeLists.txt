@@ -10,12 +10,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   interface/srv/InterfaceVersion.srv
   driving/srv/DrivingEngage.srv
   driving/msg/DrivingState.msg
+  motion/msg/MotionState.msg
   route/msg/Route.msg
   route/msg/RouteNotice.msg
   route/msg/RouteState.msg
   route/srv/RouteClear.srv
   route/srv/RouteSet.srv
-  motion/msg/MotionState.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs

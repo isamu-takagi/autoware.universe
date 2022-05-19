@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DRIVING_HPP_
-#define DRIVING_HPP_
+#ifndef ROUTE_HPP_
+#define ROUTE_HPP_
 
-#include "default_ad_api/specs/driving/engage.hpp"
-#include "default_ad_api/specs/driving/state.hpp"
 #include "default_ad_api/specs/internal/autoware/state.hpp"
+#include "default_ad_api/specs/route/state.hpp"
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
@@ -26,24 +25,16 @@
 namespace default_ad_api
 {
 
-class DrivingNode : public rclcpp::Node
+class RouteNode : public rclcpp::Node
 {
 public:
-  explicit DrivingNode(const rclcpp::NodeOptions & options);
+  explicit RouteNode(const rclcpp::NodeOptions & options);
 
 private:
-  // AD API
-  Service<ad_api::driving::engage::T>::SharedPtr srv_driving_engage_;
-  Publisher<ad_api::driving::state::T>::SharedPtr pub_driving_state_;
-
-  // interfaces
+  Publisher<ad_api::route::state::T>::SharedPtr pub_state_;
   Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
-
-  // states
-  autoware_auto_system_msgs::msg::AutowareState autoware_state_;
-  uint16_t temp_state_;
 };
 
 }  // namespace default_ad_api
 
-#endif  // DRIVING_HPP_
+#endif  // ROUTE_HPP_

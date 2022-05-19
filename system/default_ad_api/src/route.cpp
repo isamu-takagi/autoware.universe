@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
-#define COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#include "route.hpp"
 
-#include <autoware_ad_api_msgs/msg/response_status.hpp>
-
-namespace component_interface_utils::response
+namespace default_ad_api
 {
 
-using ResponseData = autoware_ad_api_msgs::msg::ResponseData;
-
-inline ResponseData success()
+RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", options)
 {
-  ResponseData response;
-  response.code = ResponseData::SUCCESS;
-  return response;
+  using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
+  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {}
+
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_pub(pub_state_);
+  node.init_sub(sub_autoware_state_, on_autoware_state);
 }
 
-}  // namespace component_interface_utils::response
+}  // namespace default_ad_api
 
-#endif  // COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::RouteNode)
