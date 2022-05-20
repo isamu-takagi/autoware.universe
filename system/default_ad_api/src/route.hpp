@@ -31,8 +31,11 @@ public:
   explicit RouteNode(const rclcpp::NodeOptions & options);
 
 private:
-  Publisher<ad_api::route::state::T>::SharedPtr pub_state_;
+  Publisher<ad_api::route::state::T>::SharedPtr pub_route_state_;
   Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
+
+  using RouteState = autoware_ad_api_msgs::msg::RouteState;
+  RouteState route_state_;
 };
 
 }  // namespace default_ad_api

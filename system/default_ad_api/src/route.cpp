@@ -20,11 +20,36 @@ namespace default_ad_api
 RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", options)
 {
   using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
-  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {}
+  const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
+    // TODO(Takagi, Isamu): This is a temporary logic, use the component interface later.
+    RouteState prev_state = route_state_;
+
+    switch (message->state) {
+      case AutowareState::WAITING_FOR_ENGAGE:
+      case AutowareState::DRIVING:
+        if (route_state_.state == RouteState::UNSET) {
+          route_state_.state = RouteState::SET;
+        }
+        break;
+
+      case AutowareState::ARRIVED_GOAL:
+        if (route_state_.state == RouteState::SET) {
+          route_state_.state = RouteState::ARRIVED;
+        }
+        break;
+    }
+    route_state_.is_planning = (message->state == AutowareState::PLANNING);
+
+    if (route_state_ != prev_state) {
+      pub_route_state_->publish(route_state_);
+    }
+  };
 
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_pub(pub_state_);
+  node.init_pub(pub_route_state_);
   node.init_sub(sub_autoware_state_, on_autoware_state);
+
+  route_state_.state = RouteState::UNSET;
 }
 
 }  // namespace default_ad_api
