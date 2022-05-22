@@ -31,7 +31,6 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
           route_state_.state = RouteState::SET;
         }
         break;
-
       case AutowareState::ARRIVED_GOAL:
         if (route_state_.state == RouteState::SET) {
           route_state_.state = RouteState::ARRIVED;
@@ -50,6 +49,7 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
   node.init_sub(sub_autoware_state_, on_autoware_state);
 
   route_state_.state = RouteState::UNSET;
+  pub_route_state_->publish(route_state_);
 }
 
 }  // namespace default_ad_api
