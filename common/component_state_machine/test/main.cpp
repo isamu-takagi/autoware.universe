@@ -36,7 +36,7 @@ void print_state(const StateMachine<uint16_t, Event> & machine)
 
 int main()
 {
-  StateMachine<uint16_t, Event> machine;
+  StateMachine<uint16_t, Event> machine(Message::PREPARE);
   {
     StateMachineLoader<uint16_t, Event> loader;
     loader.BindState(Message::PREPARE, "preparing");

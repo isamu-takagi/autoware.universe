@@ -16,18 +16,17 @@
 #define COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_
 
 #include <autoware_ad_api_msgs/msg/response_status.hpp>
-#include <autoware_ad_api_msgs/msg/response_status_detail.hpp>
 
 namespace component_interface_utils::response
 {
 
-using ResponseStatusDetail = autoware_ad_api_msgs::msg::ResponseStatusDetail;
+using ResponseData = autoware_ad_api_msgs::msg::ResponseData;
 
-inline ResponseStatusDetail success()
+inline ResponseData success()
 {
-  ResponseStatusDetail status;
-  status.code = ResponseStatusDetail::SUCCESS;
-  return status;
+  ResponseData response;
+  response.code = ResponseData::SUCCESS;
+  return response;
 }
 
 }  // namespace component_interface_utils::response

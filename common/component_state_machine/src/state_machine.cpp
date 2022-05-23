@@ -20,44 +20,6 @@
 namespace component_state_machine
 {
 
-struct ErrorUnknownID : public std::runtime_error
-{
-  ErrorUnknownID() : std::runtime_error("unknown id") {}
-};
-
-struct ErrorExistID : public std::runtime_error
-{
-  ErrorExistID() : std::runtime_error("exist id") {}
-};
-
-template <class T, class U>
-void check_empty(T & map, const U & id)
-{
-  if (id == U{0}) {
-    throw ErrorUnknownID();
-  }
-  if (map.count(id)) {
-    throw ErrorExistID();
-  }
-}
-
-template <class T, class U>
-void check_exist(T & map, const U & id)
-{
-  if (id == U{0}) {
-    throw ErrorUnknownID();
-  }
-  if (!map.count(id)) {
-    throw ErrorExistID();
-  }
-}
-
-StateMachine::StateMachine()
-{
-  current_state_ = kStateUnknown;
-  initial_state_ = kStateUnknown;
-}
-
 void StateMachine::CreateState(StateID sid)
 {
   check_empty(states_, sid);

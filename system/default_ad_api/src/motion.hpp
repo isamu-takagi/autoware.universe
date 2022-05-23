@@ -22,7 +22,6 @@
 #include "utils/types.hpp"
 
 #include <component_interface_utils/rclcpp.hpp>
-#include <component_state_machine/state_machine.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace default_ad_api
@@ -46,7 +45,6 @@ private:
   using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
   DrivingState driving_state_;
   uint16_t temp_state_;
-  component_state_machine::StateMachine motion_state_machine_;
 };
 
 }  // namespace default_ad_api
