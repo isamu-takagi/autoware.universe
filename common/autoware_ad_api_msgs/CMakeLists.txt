@@ -6,7 +6,6 @@ autoware_package()
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   common/msg/ResponseStatus.msg
-  common/msg/ResponseData.msg
   interface/srv/InterfaceVersion.srv
   driving/srv/DrivingEngage.srv
   driving/msg/DrivingState.msg
