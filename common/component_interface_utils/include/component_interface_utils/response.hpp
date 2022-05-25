@@ -20,13 +20,24 @@
 namespace component_interface_utils::response
 {
 
-using ResponseData = autoware_ad_api_msgs::msg::ResponseData;
+using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
 
-inline ResponseData success()
+inline ResponseStatus success()
 {
-  ResponseData response;
-  response.code = ResponseData::SUCCESS;
-  return response;
+  ResponseStatus status;
+  status.level = ResponseStatus::SUCCESS;
+  status.code = 0;
+  status.message = "";
+  return status;
+}
+
+inline ResponseStatus error(uint16_t code = 0, const std::string & message = "")
+{
+  ResponseStatus status;
+  status.level = ResponseStatus::ERROR;
+  status.code = code;
+  status.message = message;
+  return status;
 }
 
 }  // namespace component_interface_utils::response

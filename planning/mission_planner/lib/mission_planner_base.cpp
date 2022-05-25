@@ -47,7 +47,7 @@ MissionPlanner::MissionPlanner(
   checkpoint_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/checkpoint", 10, std::bind(&MissionPlanner::checkpointCallback, this, _1));
   route_set_service_ = create_service<autoware_ad_api_msgs::srv::RouteSet>(
-    "~/route/set", std::bind(&MissionPlanner::routeSetCallback, this, _1, _2));
+    "~/api/route/set", std::bind(&MissionPlanner::routeSetCallback, this, _1, _2));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -146,6 +146,7 @@ void MissionPlanner::routeSetCallback(
   const autoware_ad_api_msgs::srv::RouteSet::Request::SharedPtr request,
   autoware_ad_api_msgs::srv::RouteSet::Response::SharedPtr response)
 {
+  namespace api = component_interface_utils;
   std::vector<geometry_msgs::msg::PoseStamped> waypoints;
   std::vector<geometry_msgs::msg::PoseStamped> transformed_waypoints;
 
@@ -185,8 +186,7 @@ void MissionPlanner::routeSetCallback(
   for (const auto & waypoint : waypoints) {
     geometry_msgs::msg::PoseStamped transformed;
     if (!transformPose(waypoint, &transformed, map_frame_)) {
-      RCLCPP_ERROR(get_logger(), "Failed to get checkpoint pose in map frame. Aborting mission planning");
-      response->status.level = component_interface_utils
+      response->status = api::response::error(0, "Failed to transform waypoints.");
       return;
     }
     transformed_waypoints.push_back(transformed);
@@ -198,15 +198,13 @@ void MissionPlanner::routeSetCallback(
   checkpoints_ = transformed_waypoints;
 
   if (!isRoutingGraphReady()) {
-    RCLCPP_ERROR(get_logger(), "RoutingGraph is not ready. Aborting mission planning");
+    response->status = api::response::error(0, "RoutingGraph is not ready.");
     return;
   }
 
   autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
-
-  (void)request;
-  (void)response;
+  response->status = api::response::success();
 }
 
 void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
