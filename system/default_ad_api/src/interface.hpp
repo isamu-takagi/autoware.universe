@@ -18,7 +18,6 @@
 #include "default_ad_api/specs/interface/version.hpp"
 #include "utils/types.hpp"
 
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 namespace default_ad_api

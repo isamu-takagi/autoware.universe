@@ -14,6 +14,8 @@
 
 #include "route.hpp"
 
+#include <component_interface_utils/response.hpp>
+
 namespace default_ad_api
 {
 
@@ -45,10 +47,13 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
 
   using RouteSet = autoware_ad_api_msgs::srv::RouteSet;
   const auto on_route_set = [this](SERVICE_ARG(RouteSet)) {
-    const auto resp = cli_route_set_->call(request);
-    if (resp) {
-      *response = *resp;
+    namespace api = component_interface_utils;
+    if (route_state_.state != RouteState::UNSET || route_state_.is_planning) {
+      response->status = api::response::error(0, "invalid state");
+      return;
     }
+    const auto res = cli_route_set_->call(request);
+    response->status = res->status;
   };
 
   const auto group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);

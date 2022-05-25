@@ -71,11 +71,11 @@ public:
           callback(request, response);
         } catch (const ServiceUnready & error) {
           response->status.level = ResponseStatus::ERROR;
-          response->status.code = 123;
+          response->status.code = ResponseStatus::INTERNAL_SERVICE_UNREADY;
           response->status.message = error.what();
         } catch (const ServiceTimeout & error) {
           response->status.level = ResponseStatus::ERROR;
-          response->status.code = 456;
+          response->status.code = ResponseStatus::INTERNAL_SERVICE_TIMEOUT;
           response->status.message = error.what();
         }
       }
