@@ -15,8 +15,11 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
+#include <component_interface_utils/rclcpp/exceptions.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp/service.hpp>
+
+#include <autoware_ad_api_msgs/msg/response_status.hpp>
 
 namespace component_interface_utils
 {
@@ -29,6 +32,19 @@ public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
   using SpecType = SpecT;
   using WrapType = rclcpp::Service<typename SpecT::Service>;
+
+  template <class, template <class> class, class = std::void_t<>>
+  struct detect : std::false_type
+  {
+  };
+  template <class T, template <class> class Check>
+  struct detect<T, Check, std::void_t<Check<T>>> : std::true_type
+  {
+  };
+  template <class T>
+  using has_status_impl = decltype(std::declval<T>().status);
+  template <class T>
+  using has_status_type = detect<T, has_status_impl>;
 
   /// Constructor.
   explicit Service(typename WrapType::SharedPtr service)
@@ -47,7 +63,22 @@ public:
       using rosidl_generator_traits::to_yaml;
 #endif
       RCLCPP_INFO_STREAM(logger, "service call: " << SpecT::name << "\n" << to_yaml(*request));
-      callback(request, response);
+      if constexpr (!has_status_type<typename SpecT::Service::Response>::value) {
+        callback(request, response);
+      } else {
+        using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
+        try {
+          callback(request, response);
+        } catch (const ServiceUnready & error) {
+          response->status.level = ResponseStatus::ERROR;
+          response->status.code = 123;
+          response->status.message = error.what();
+        } catch (const ServiceTimeout & error) {
+          response->status.level = ResponseStatus::ERROR;
+          response->status.code = 456;
+          response->status.message = error.what();
+        }
+      }
       RCLCPP_INFO_STREAM(logger, "service exit: " << SpecT::name << "\n" << to_yaml(*response));
     };
     return wrapped;

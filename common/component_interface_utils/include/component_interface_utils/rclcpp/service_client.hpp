@@ -48,13 +48,13 @@ public:
     const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout);
     if (!client_->service_is_ready()) {
       RCLCPP_INFO_STREAM(logger_, "client unready: " << SpecT::name);
-      throw new ServiceUnready(SpecT::name);
+      throw ServiceUnready(SpecT::name);
     }
 
     const auto future = this->async_send_request(request);
     if (future.wait_for(duration) != std::future_status::ready) {
       RCLCPP_INFO_STREAM(logger_, "client timeout: " << SpecT::name);
-      throw new ServiceTimeout(SpecT::name);
+      throw ServiceTimeout(SpecT::name);
     }
 
     return future.get();
