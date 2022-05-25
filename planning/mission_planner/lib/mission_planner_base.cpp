@@ -14,9 +14,11 @@
 
 #include "mission_planner/mission_planner_base.hpp"
 
+#include <component_interface_utils/response.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
+
 
 #include <lanelet2_routing/Route.h>
 #ifdef ROS_DISTRO_GALACTIC
@@ -38,11 +40,14 @@ MissionPlanner::MissionPlanner(
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
 
   using std::placeholders::_1;
+  using std::placeholders::_2;
 
   goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/goal_pose", 10, std::bind(&MissionPlanner::goalPoseCallback, this, _1));
   checkpoint_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/checkpoint", 10, std::bind(&MissionPlanner::checkpointCallback, this, _1));
+  route_set_service_ = create_service<autoware_ad_api_msgs::srv::RouteSet>(
+    "~/route/set", std::bind(&MissionPlanner::routeSetCallback, this, _1, _2));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -111,7 +116,7 @@ void MissionPlanner::goalPoseCallback(
 
   autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
-}  // namespace mission_planner
+}
 
 void MissionPlanner::checkpointCallback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr)
@@ -135,6 +140,73 @@ void MissionPlanner::checkpointCallback(
 
   autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
+}
+
+void MissionPlanner::routeSetCallback(
+  const autoware_ad_api_msgs::srv::RouteSet::Request::SharedPtr request,
+  autoware_ad_api_msgs::srv::RouteSet::Response::SharedPtr response)
+{
+  std::vector<geometry_msgs::msg::PoseStamped> waypoints;
+  std::vector<geometry_msgs::msg::PoseStamped> transformed_waypoints;
+
+  // set start pose
+  if (request->route.start.empty())
+  {
+    geometry_msgs::msg::PoseStamped base_link;
+    base_link.header.frame_id = base_link_frame_;
+    base_link.pose.orientation.w = 1;
+    waypoints.push_back(base_link);
+  }
+  else
+  {
+    geometry_msgs::msg::PoseStamped start;
+    start.header = request->route.header;
+    start.pose = request->route.start[0];
+    waypoints.push_back(start);
+  }
+
+  // set waypoint poses
+  for (const auto & pose : request->route.waypoints) {
+    geometry_msgs::msg::PoseStamped waypoint;
+    waypoint.header = request->route.header;
+    waypoint.pose = pose;
+    waypoints.push_back(waypoint);
+  }
+
+  // set goal pose
+  {
+    geometry_msgs::msg::PoseStamped goal;
+    goal.header = request->route.header;
+    goal.pose = request->route.goal;
+    waypoints.push_back(goal);
+  }
+
+  // transform waypoints
+  for (const auto & waypoint : waypoints) {
+    geometry_msgs::msg::PoseStamped transformed;
+    if (!transformPose(waypoint, &transformed, map_frame_)) {
+      RCLCPP_ERROR(get_logger(), "Failed to get checkpoint pose in map frame. Aborting mission planning");
+      response->status.level = component_interface_utils
+      return;
+    }
+    transformed_waypoints.push_back(transformed);
+  }
+
+  RCLCPP_INFO(get_logger(), "New route is set. Reset checkpoints.");
+  start_pose_ = transformed_waypoints.front();
+  goal_pose_ = transformed_waypoints.back();
+  checkpoints_ = transformed_waypoints;
+
+  if (!isRoutingGraphReady()) {
+    RCLCPP_ERROR(get_logger(), "RoutingGraph is not ready. Aborting mission planning");
+    return;
+  }
+
+  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
+  publishRoute(route);
+
+  (void)request;
+  (void)response;
 }
 
 void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const

@@ -30,6 +30,7 @@
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <autoware_ad_api_msgs/srv/route_set.hpp>
 
 namespace mission_planner
 {
@@ -57,6 +58,7 @@ private:
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_publisher_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_subscriber_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr checkpoint_subscriber_;
+  rclcpp::Service<autoware_ad_api_msgs::srv::RouteSet>::SharedPtr route_set_service_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -64,6 +66,9 @@ private:
   bool getEgoVehiclePose(geometry_msgs::msg::PoseStamped * ego_vehicle_pose);
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr);
   void checkpointCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr);
+  void routeSetCallback(
+    const autoware_ad_api_msgs::srv::RouteSet::Request::SharedPtr request,
+    autoware_ad_api_msgs::srv::RouteSet::Response::SharedPtr response);
   bool transformPose(
     const geometry_msgs::msg::PoseStamped & input_pose,
     geometry_msgs::msg::PoseStamped * output_pose, const std::string target_frame);
