@@ -15,6 +15,7 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 
+#include <component_interface_utils/rclcpp/exceptions.hpp>
 #include <rclcpp/client.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
@@ -38,6 +39,25 @@ public:
   : logger_(logger)
   {
     client_ = client;  // to keep the reference count
+  }
+
+  /// Send request.
+  typename WrapType::SharedResponse call(
+    const typename WrapType::SharedRequest request, double timeout = 1.0)
+  {
+    const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout);
+    if (!client_->service_is_ready()) {
+      RCLCPP_INFO_STREAM(logger_, "client unready: " << SpecT::name);
+      throw new ServiceUnready(SpecT::name);
+    }
+
+    const auto future = this->async_send_request(request);
+    if (future.wait_for(duration) != std::future_status::ready) {
+      RCLCPP_INFO_STREAM(logger_, "client timeout: " << SpecT::name);
+      throw new ServiceTimeout(SpecT::name);
+    }
+
+    return future.get();
   }
 
   /// Send request.

@@ -45,8 +45,10 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
 
   using RouteSet = autoware_ad_api_msgs::srv::RouteSet;
   const auto on_route_set = [this](SERVICE_ARG(RouteSet)) {
-    const auto future = cli_route_set_->async_send_request(request);
-    *response = *future.get();
+    const auto resp = cli_route_set_->call(request);
+    if (resp) {
+      *response = *resp;
+    }
   };
 
   const auto group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
