@@ -1,13 +1,13 @@
-import rclpy
-from rclpy.node import Node
 from autoware_ad_api_msgs.srv import RouteSet
 from geometry_msgs.msg import Pose
+import rclpy
+from rclpy.node import Node
+
 
 class RouteTestNode(Node):
-
     def __init__(self):
         super().__init__("route_test_node")
-        self.cli = self.create_client(RouteSet, "/planning/mission_planning/mission_planner/api/route/set")
+        self.cli = self.create_client(RouteSet, "/api/route/set")
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info("service not available, waiting again...")
         self.future = self.send_request()
@@ -71,12 +71,14 @@ class RouteTestNode(Node):
 
 
 def spin(node):
+    print("spin start")
     while rclpy.ok():
         rclpy.spin_once(node)
         if node.future.done():
             response = node.future.result()
             print(response)
             break
+    print("spin exit")
 
 
 def main(args=None):
@@ -88,5 +90,7 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    try: main()
-    except KeyboardInterrupt: pass
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass

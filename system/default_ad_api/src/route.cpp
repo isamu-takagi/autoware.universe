@@ -23,7 +23,6 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
   const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
     // TODO(Takagi, Isamu): This is a temporary logic, use the component interface later.
     RouteState prev_state = route_state_;
-
     switch (message->state) {
       case AutowareState::WAITING_FOR_ENGAGE:
       case AutowareState::DRIVING:
@@ -44,9 +43,19 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
     }
   };
 
+  using RouteSet = autoware_ad_api_msgs::srv::RouteSet;
+  const auto on_route_set = [this](SERVICE_ARG(RouteSet)) {
+    const auto future = cli_route_set_->async_send_request(request);
+    *response = *future.get();
+  };
+
+  const auto group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  group_ = group;
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_pub(pub_route_state_);
   node.init_sub(sub_autoware_state_, on_autoware_state);
+  node.init_cli(cli_route_set_);
+  node.init_srv(srv_route_set_, on_route_set, group);
 
   route_state_.state = RouteState::UNSET;
   pub_route_state_->publish(route_state_);
