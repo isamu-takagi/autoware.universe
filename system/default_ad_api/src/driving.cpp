@@ -25,48 +25,40 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
   // initialize ros interface
   {
     using DrivingEngage = autoware_ad_api_msgs::srv::DrivingEngage;
-    const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage))
-    {
+    const auto on_driving_engage = [this](SERVICE_ARG(DrivingEngage)) {
       using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
-      RCLCPP_INFO_STREAM(get_logger(), "API Engage: " << (request->engage ? "true" : "false"));
-
       if (request->engage) {
-        if (temp_state_ == DrivingState::READY) {
-          temp_state_ = DrivingState::DRIVING;
+        if (driving_state_.state == DrivingState::READY) {
+          driving_state_.state = DrivingState::DRIVING;
         }
       } else {
-        temp_state_ = DrivingState::PREPARING;
+        driving_state_.state = DrivingState::PREPARING;
       }
       response->status = component_interface_utils::response::success();
     };
 
     using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
-    const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState))
-    {
-      if (autoware_state_.state != message->state) {
-        RCLCPP_INFO_STREAM(get_logger(), "Autoware State" << static_cast<int>(message->state));
-      }
-      autoware_state_ = *message;
-
+    const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
       using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
+      const auto prev_state = driving_state_;
+
       switch (message->state) {
         case AutowareState::WAITING_FOR_ENGAGE:
-          if (temp_state_ == DrivingState::PREPARING) {
-            temp_state_ = DrivingState::READY;
+          if (driving_state_.state == DrivingState::PREPARING) {
+            driving_state_.state = DrivingState::READY;
           }
           break;
         case AutowareState::DRIVING:
-          temp_state_ = DrivingState::DRIVING;
+          driving_state_.state = DrivingState::DRIVING;
           break;
         default:
-          temp_state_ = DrivingState::PREPARING;
+          driving_state_.state = DrivingState::PREPARING;
           break;
       }
 
-      // TODO(Takagi, Isamu): callback from state machine
-      DrivingState msg;
-      msg.state = temp_state_;
-      pub_driving_state_->publish(msg);
+      if (driving_state_ != prev_state) {
+        pub_driving_state_->publish(driving_state_);
+      }
     };
 
     const auto node = component_interface_utils::NodeAdaptor(this);
@@ -78,18 +70,7 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
   // initialize state machine
   {
     using DrivingState = autoware_ad_api_msgs::msg::DrivingState;
-    temp_state_ = DrivingState::PREPARING;
-    /*
-    const auto path = ament_index_cpp::get_package_share_directory("default_ad_api");
-    component_state_machine::StateMachineLoader loader;
-    loader.BindState(DrivingState::PREPARING, "preparing");
-    loader.BindState(DrivingState::READY, "ready");
-    loader.BindState(DrivingState::DRIVING, "driving");
-    loader.LoadYAML(driving_state_machine_, path + "/state/driving.yaml");
-    */
-
-    using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
-    autoware_state_.state = AutowareState::INITIALIZING;
+    driving_state_.state = DrivingState::PREPARING;
   }
 }
 

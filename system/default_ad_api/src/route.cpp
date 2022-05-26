@@ -27,7 +27,7 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
 
   using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
   const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
-    RouteState prev_state = route_state_;
+    const auto prev_state = route_state_;
     switch (message->state) {
       case AutowareState::WAITING_FOR_ENGAGE:
       case AutowareState::DRIVING:

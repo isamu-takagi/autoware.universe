@@ -39,8 +39,7 @@ private:
   Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
 
   // states
-  autoware_auto_system_msgs::msg::AutowareState autoware_state_;
-  uint16_t temp_state_;
+  autoware_ad_api_msgs::msg::DrivingState driving_state_;
 };
 
 }  // namespace default_ad_api
