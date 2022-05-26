@@ -17,6 +17,8 @@
 
 #include <autoware_ad_api_msgs/msg/response_status.hpp>
 
+#include <string>
+
 namespace component_interface_utils::response
 {
 
@@ -28,6 +30,15 @@ inline ResponseStatus success()
   status.level = ResponseStatus::SUCCESS;
   status.code = 0;
   status.message = "";
+  return status;
+}
+
+inline ResponseStatus warning(uint16_t code = 0, const std::string & message = "")
+{
+  ResponseStatus status;
+  status.level = ResponseStatus::WARNING;
+  status.code = code;
+  status.message = message;
   return status;
 }
 

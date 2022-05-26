@@ -71,14 +71,12 @@ class RouteTestNode(Node):
 
 
 def spin(node):
-    print("spin start")
     while rclpy.ok():
         rclpy.spin_once(node)
         if node.future.done():
             response = node.future.result()
             print(response)
             break
-    print("spin exit")
 
 
 def main(args=None):

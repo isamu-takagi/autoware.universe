@@ -16,14 +16,17 @@
 
 #include <component_interface_utils/response.hpp>
 
+#include <memory>
+
 namespace default_ad_api
 {
 
 RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", options)
 {
+  // TODO(Takagi, Isamu): This is a temporary logic, use the component interface later.
+
   using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
   const auto on_autoware_state = [this](MESSAGE_ARG(AutowareState)) {
-    // TODO(Takagi, Isamu): This is a temporary logic, use the component interface later.
     RouteState prev_state = route_state_;
     switch (message->state) {
       case AutowareState::WAITING_FOR_ENGAGE:
@@ -38,7 +41,6 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
         }
         break;
     }
-    route_state_.is_planning = (message->state == AutowareState::PLANNING);
 
     if (route_state_ != prev_state) {
       pub_route_state_->publish(route_state_);
@@ -48,12 +50,31 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
   using RouteSet = autoware_ad_api_msgs::srv::RouteSet;
   const auto on_route_set = [this](SERVICE_ARG(RouteSet)) {
     namespace api = component_interface_utils;
-    if (route_state_.state != RouteState::UNSET || route_state_.is_planning) {
+    if (route_state_.state != RouteState::UNSET) {
       response->status = api::response::error(0, "invalid state");
       return;
     }
     const auto res = cli_route_set_->call(request);
     response->status = res->status;
+  };
+
+  using RouteClear = autoware_ad_api_msgs::srv::RouteClear;
+  const auto on_route_clear = [this](SERVICE_ARG_NO_REQ(RouteClear)) {
+    namespace api = component_interface_utils;
+    if (route_state_.state == RouteState::UNSET) {
+      response->status = api::response::warning(0, "invalid state");
+      return;
+    }
+
+    const auto req = std::make_shared<std_srvs::srv::Trigger::Request>();
+    const auto res = cli_route_reset_->call(req);
+    if (res->success) {
+      route_state_.state = RouteState::UNSET;
+      pub_route_state_->publish(route_state_);
+      response->status = api::response::success();
+    } else {
+      response->status = api::response::error(0, res->message);
+    }
   };
 
   const auto group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -63,6 +84,8 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
   node.init_sub(sub_autoware_state_, on_autoware_state);
   node.init_cli(cli_route_set_);
   node.init_srv(srv_route_set_, on_route_set, group);
+  node.init_cli(cli_route_reset_);
+  node.init_srv(srv_route_clear_, on_route_clear, group);
 
   route_state_.state = RouteState::UNSET;
   pub_route_state_->publish(route_state_);
