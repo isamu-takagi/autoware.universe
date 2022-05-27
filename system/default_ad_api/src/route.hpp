@@ -16,7 +16,6 @@
 #define ROUTE_HPP_
 
 #include "default_ad_api/specs/internal/autoware/state.hpp"
-#include "default_ad_api/specs/internal/route/reset.hpp"
 #include "default_ad_api/specs/internal/route/set.hpp"
 #include "default_ad_api/specs/route/clear.hpp"
 #include "default_ad_api/specs/route/set.hpp"
@@ -39,14 +38,13 @@ private:
   Publisher<ad_api::route::state::T>::SharedPtr pub_route_state_;
   Subscription<internal_api::autoware::state::T>::SharedPtr sub_autoware_state_;
 
-  Service<ad_api::route::set::T>::SharedPtr srv_route_set_;
   Client<internal_api::route::set::T>::SharedPtr cli_route_set_;
-
+  Service<ad_api::route::set::T>::SharedPtr srv_route_set_;
   Service<ad_api::route::clear::T>::SharedPtr srv_route_clear_;
-  Client<internal_api::route::reset::T>::SharedPtr cli_route_reset_;
 
   using RouteState = autoware_ad_api_msgs::msg::RouteState;
   RouteState route_state_;
+  void UpdateRouteState(RouteState::_state_type state);
 };
 
 }  // namespace default_ad_api

@@ -34,7 +34,7 @@ DrivingNode::DrivingNode(const rclcpp::NodeOptions & options) : Node("driving", 
       } else {
         driving_state_.state = DrivingState::PREPARING;
       }
-      response->status = component_interface_utils::response::success();
+      response->status = component_interface_utils::response_success();
     };
 
     using AutowareState = autoware_auto_system_msgs::msg::AutowareState;

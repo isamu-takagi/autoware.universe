@@ -19,12 +19,12 @@
 
 #include <string>
 
-namespace component_interface_utils::response
+namespace component_interface_utils
 {
 
 using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
 
-inline ResponseStatus success()
+inline ResponseStatus response_success()
 {
   ResponseStatus status;
   status.level = ResponseStatus::SUCCESS;
@@ -33,7 +33,7 @@ inline ResponseStatus success()
   return status;
 }
 
-inline ResponseStatus warning(uint16_t code = 0, const std::string & message = "")
+inline ResponseStatus response_warning(uint16_t code = 0, const std::string & message = "")
 {
   ResponseStatus status;
   status.level = ResponseStatus::WARNING;
@@ -42,7 +42,7 @@ inline ResponseStatus warning(uint16_t code = 0, const std::string & message = "
   return status;
 }
 
-inline ResponseStatus error(uint16_t code = 0, const std::string & message = "")
+inline ResponseStatus response_error(uint16_t code = 0, const std::string & message = "")
 {
   ResponseStatus status;
   status.level = ResponseStatus::ERROR;
@@ -51,6 +51,11 @@ inline ResponseStatus error(uint16_t code = 0, const std::string & message = "")
   return status;
 }
 
-}  // namespace component_interface_utils::response
+inline bool is_response_failure(const ResponseStatus & status)
+{
+  return (status.level != ResponseStatus::SUCCESS) && (status.level != ResponseStatus::WARNING);
+}
+
+}  // namespace component_interface_utils
 
 #endif  // COMPONENT_INTERFACE_UTILS__RESPONSE_HPP_

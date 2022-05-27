@@ -19,7 +19,6 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 
-
 #include <lanelet2_routing/Route.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -146,20 +145,18 @@ void MissionPlanner::routeSetCallback(
   const autoware_ad_api_msgs::srv::RouteSet::Request::SharedPtr request,
   autoware_ad_api_msgs::srv::RouteSet::Response::SharedPtr response)
 {
-  namespace api = component_interface_utils;
+  using component_interface_utils::response_error;
+  using component_interface_utils::response_success;
   std::vector<geometry_msgs::msg::PoseStamped> waypoints;
   std::vector<geometry_msgs::msg::PoseStamped> transformed_waypoints;
 
   // set start pose
-  if (request->route.start.empty())
-  {
+  if (request->route.start.empty()) {
     geometry_msgs::msg::PoseStamped base_link;
     base_link.header.frame_id = base_link_frame_;
     base_link.pose.orientation.w = 1;
     waypoints.push_back(base_link);
-  }
-  else
-  {
+  } else {
     geometry_msgs::msg::PoseStamped start;
     start.header = request->route.header;
     start.pose = request->route.start[0];
@@ -186,7 +183,7 @@ void MissionPlanner::routeSetCallback(
   for (const auto & waypoint : waypoints) {
     geometry_msgs::msg::PoseStamped transformed;
     if (!transformPose(waypoint, &transformed, map_frame_)) {
-      response->status = api::response::error(0, "Failed to transform waypoints.");
+      response->status = response_error(0, "Failed to transform waypoints.");
       return;
     }
     transformed_waypoints.push_back(transformed);
@@ -198,13 +195,13 @@ void MissionPlanner::routeSetCallback(
   checkpoints_ = transformed_waypoints;
 
   if (!isRoutingGraphReady()) {
-    response->status = api::response::error(0, "RoutingGraph is not ready.");
+    response->status = response_error(0, "RoutingGraph is not ready.");
     return;
   }
 
   autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
-  response->status = api::response::success();
+  response->status = response_success();
 }
 
 void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
