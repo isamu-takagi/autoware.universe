@@ -7,14 +7,15 @@ autoware_package()
 rosidl_generate_interfaces(${PROJECT_NAME}
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
-  driving/srv/DrivingEngage.srv
   driving/msg/DrivingState.msg
+  driving/srv/DrivingEngage.srv
   motion/msg/MotionState.msg
-  route/msg/Route.msg
-  route/msg/RouteNotice.msg
   route/msg/RouteState.msg
   route/srv/RouteClear.srv
   route/srv/RouteSet.srv
+  pose_reset/msg/PoseResetState.msg
+  pose_reset/srv/PoseResetRequest.srv
+  fail_safe/msg/FailSafeState.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs
