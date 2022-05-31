@@ -10,6 +10,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   driving/msg/DrivingState.msg
   driving/srv/DrivingEngage.srv
   motion/msg/MotionState.msg
+  motion/msg/MotionFactor.msg
+  motion/msg/MotionFactorArray.msg
   route/msg/RouteState.msg
   route/srv/RouteClear.srv
   route/srv/RouteSet.srv

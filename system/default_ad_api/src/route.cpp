@@ -65,9 +65,8 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
     response->status = response_success();
   };
 
-  const auto group = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  group_ = group;
   const auto node = component_interface_utils::NodeAdaptor(this);
+  group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_route_state_);
   node.init_sub(sub_autoware_state_, on_autoware_state);
   node.init_cli(cli_route_set_);
