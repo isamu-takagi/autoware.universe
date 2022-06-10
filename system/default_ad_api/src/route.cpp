@@ -25,7 +25,6 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
 {
   // TODO(Takagi, Isamu): This is a temporary logic, use the component interface later.
 
-  using component_interface_utils::is_response_failure;
   using component_interface_utils::response_error;
   using component_interface_utils::response_success;
   using component_interface_utils::response_warning;
@@ -45,7 +44,7 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
     }
 
     const auto res = cli_route_set_->call(request);
-    if (is_response_failure(res->status)) {
+    if (!res->status.success) {
       response->status = res->status;
       return;
     }
@@ -70,8 +69,8 @@ RouteNode::RouteNode(const rclcpp::NodeOptions & options) : Node("route", option
   node.init_pub(pub_route_state_);
   node.init_sub(sub_autoware_state_, on_autoware_state);
   node.init_cli(cli_route_set_);
-  node.init_srv(srv_route_set_, on_route_set, group);
-  node.init_srv(srv_route_clear_, on_route_clear, group);
+  node.init_srv(srv_route_set_, on_route_set, group_);
+  node.init_srv(srv_route_clear_, on_route_clear, group_);
 
   // Initial setting. Do not use UpdateRouteState.
   route_state_.state = RouteState::UNSET;

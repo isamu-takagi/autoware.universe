@@ -27,7 +27,7 @@ using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
 inline ResponseStatus response_success()
 {
   ResponseStatus status;
-  status.level = ResponseStatus::SUCCESS;
+  status.success = true;
   status.code = 0;
   status.message = "";
   return status;
@@ -36,7 +36,7 @@ inline ResponseStatus response_success()
 inline ResponseStatus response_warning(uint16_t code = 0, const std::string & message = "")
 {
   ResponseStatus status;
-  status.level = ResponseStatus::WARNING;
+  status.success = true;
   status.code = code;
   status.message = message;
   return status;
@@ -45,15 +45,10 @@ inline ResponseStatus response_warning(uint16_t code = 0, const std::string & me
 inline ResponseStatus response_error(uint16_t code = 0, const std::string & message = "")
 {
   ResponseStatus status;
-  status.level = ResponseStatus::ERROR;
+  status.success = false;
   status.code = code;
   status.message = message;
   return status;
-}
-
-inline bool is_response_failure(const ResponseStatus & status)
-{
-  return (status.level != ResponseStatus::SUCCESS) && (status.level != ResponseStatus::WARNING);
 }
 
 }  // namespace component_interface_utils

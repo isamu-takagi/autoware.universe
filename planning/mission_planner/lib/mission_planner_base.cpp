@@ -151,22 +151,22 @@ void MissionPlanner::routeSetCallback(
   std::vector<geometry_msgs::msg::PoseStamped> transformed_waypoints;
 
   // set start pose
-  if (request->route.start.empty()) {
+  if (request->start.empty()) {
     geometry_msgs::msg::PoseStamped base_link;
     base_link.header.frame_id = base_link_frame_;
     base_link.pose.orientation.w = 1;
     waypoints.push_back(base_link);
   } else {
     geometry_msgs::msg::PoseStamped start;
-    start.header = request->route.header;
-    start.pose = request->route.start[0];
+    start.header = request->header;
+    start.pose = request->start[0];
     waypoints.push_back(start);
   }
 
   // set waypoint poses
-  for (const auto & pose : request->route.waypoints) {
+  for (const auto & pose : request->waypoints) {
     geometry_msgs::msg::PoseStamped waypoint;
-    waypoint.header = request->route.header;
+    waypoint.header = request->header;
     waypoint.pose = pose;
     waypoints.push_back(waypoint);
   }
@@ -174,8 +174,8 @@ void MissionPlanner::routeSetCallback(
   // set goal pose
   {
     geometry_msgs::msg::PoseStamped goal;
-    goal.header = request->route.header;
-    goal.pose = request->route.goal;
+    goal.header = request->header;
+    goal.pose = request->goal;
     waypoints.push_back(goal);
   }
 

@@ -70,12 +70,12 @@ public:
         try {
           callback(request, response);
         } catch (const ServiceUnready & error) {
-          response->status.level = ResponseStatus::ERROR;
-          response->status.code = ResponseStatus::INTERNAL_SERVICE_UNREADY;
+          response->status.success = false;
+          response->status.code = ResponseStatus::SERVICE_UNREADY;
           response->status.message = error.what();
         } catch (const ServiceTimeout & error) {
-          response->status.level = ResponseStatus::ERROR;
-          response->status.code = ResponseStatus::INTERNAL_SERVICE_TIMEOUT;
+          response->status.success = false;
+          response->status.code = ResponseStatus::SERVICE_TIMEOUT;
           response->status.message = error.what();
         }
       }
