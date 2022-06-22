@@ -1,0 +1,6 @@
+uint16 UNKNOWN = 0
+uint16 UNAVAILABLE = 1
+uint16 INITIALIZING = 2
+uint16 AVAILABLE = 3
+
+uint16 state
