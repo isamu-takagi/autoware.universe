@@ -99,12 +99,15 @@ public:
 
   void setParams(
     const bool is_showing_debug_info, const double min_behavior_stop_margin,
-    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold)
+    const double nearest_dist_deviation_threshold, const double nearest_yaw_deviation_threshold,
+    const double obstacle_velocity_threshold_from_cruise_to_stop)
   {
     is_showing_debug_info_ = is_showing_debug_info;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
     nearest_dist_deviation_threshold_ = nearest_dist_deviation_threshold;
     nearest_yaw_deviation_threshold_ = nearest_yaw_deviation_threshold;
+    obstacle_velocity_threshold_from_cruise_to_stop_ =
+      obstacle_velocity_threshold_from_cruise_to_stop;
   }
 
   /*
@@ -133,6 +136,10 @@ public:
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_accel", i.min_accel);
     tier4_autoware_utils::updateParam<double>(parameters, "common.max_jerk", i.max_jerk);
     tier4_autoware_utils::updateParam<double>(parameters, "common.min_jerk", i.min_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_accel", i.limit_max_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_accel", i.limit_min_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_jerk", i.limit_max_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_jerk", i.limit_min_jerk);
     tier4_autoware_utils::updateParam<double>(
       parameters, "common.min_ego_accel_for_rss", i.min_ego_accel_for_rss);
     tier4_autoware_utils::updateParam<double>(
@@ -160,6 +167,21 @@ public:
     return std::find(types.begin(), types.end(), label) != types.end();
   }
 
+  // Note: If stop planning is not required, cruise planning will be done instead.
+  bool isStopRequired(const TargetObstacle & obstacle)
+  {
+    const bool is_cruise_obstacle = isCruiseObstacle(obstacle.classification.label);
+    const bool is_stop_obstacle = isStopObstacle(obstacle.classification.label);
+
+    if (is_cruise_obstacle) {
+      return std::abs(obstacle.velocity) < obstacle_velocity_threshold_from_cruise_to_stop_;
+    } else if (is_stop_obstacle && !is_cruise_obstacle) {
+      return true;
+    }
+
+    return false;
+  }
+
 protected:
   // Parameters
   bool is_showing_debug_info_{false};
@@ -167,6 +189,7 @@ protected:
   double min_behavior_stop_margin_;
   double nearest_dist_deviation_threshold_;
   double nearest_yaw_deviation_threshold_;
+  double obstacle_velocity_threshold_from_cruise_to_stop_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;

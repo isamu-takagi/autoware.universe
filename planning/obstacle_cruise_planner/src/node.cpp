@@ -209,24 +209,37 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     const double min_accel = declare_parameter<double>("normal.min_acc");
     const double max_jerk = declare_parameter<double>("normal.max_jerk");
     const double min_jerk = declare_parameter<double>("normal.min_jerk");
+    const double limit_max_accel = declare_parameter<double>("limit.max_acc");
+    const double limit_min_accel = declare_parameter<double>("limit.min_acc");
+    const double limit_max_jerk = declare_parameter<double>("limit.max_jerk");
+    const double limit_min_jerk = declare_parameter<double>("limit.min_jerk");
 
-    const double min_strong_accel = declare_parameter<double>("common.min_strong_accel");
     const double min_ego_accel_for_rss = declare_parameter<double>("common.min_ego_accel_for_rss");
     const double min_object_accel_for_rss =
       declare_parameter<double>("common.min_object_accel_for_rss");
     const double idling_time = declare_parameter<double>("common.idling_time");
     const double safe_distance_margin = declare_parameter<double>("common.safe_distance_margin");
 
-    return LongitudinalInfo(
-      max_accel, min_accel, max_jerk, min_jerk, min_strong_accel, idling_time,
-      min_ego_accel_for_rss, min_object_accel_for_rss, safe_distance_margin);
+    return LongitudinalInfo{
+      max_accel,
+      min_accel,
+      max_jerk,
+      min_jerk,
+      limit_max_accel,
+      limit_min_accel,
+      limit_max_jerk,
+      limit_min_jerk,
+      idling_time,
+      min_ego_accel_for_rss,
+      min_object_accel_for_rss,
+      safe_distance_margin};
   }();
 
   const bool is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");
 
   // low pass filter for ego acceleration
   const double lpf_gain_for_accel = declare_parameter<double>("common.lpf_gain_for_accel");
-  lpf_acc_ptr_ = std::make_shared<LowpassFilter1d>(0.0, lpf_gain_for_accel);
+  lpf_acc_ptr_ = std::make_shared<LowpassFilter1d>(lpf_gain_for_accel);
 
   {  // Obstacle filtering parameters
     obstacle_filtering_param_.rough_detection_area_expand_width =
@@ -301,9 +314,11 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("common.nearest_dist_deviation_threshold");
     nearest_yaw_deviation_threshold_ =
       declare_parameter<double>("common.nearest_yaw_deviation_threshold");
+    obstacle_velocity_threshold_from_cruise_to_stop_ =
+      declare_parameter<double>("common.obstacle_velocity_threshold_from_cruise_to_stop");
     planner_ptr_->setParams(
       is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
-      nearest_yaw_deviation_threshold_);
+      nearest_yaw_deviation_threshold_, obstacle_velocity_threshold_from_cruise_to_stop_);
   }
 
   // wait for first self pose
@@ -335,7 +350,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     parameters, "common.is_showing_debug_info", is_showing_debug_info_);
   planner_ptr_->setParams(
     is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    nearest_yaw_deviation_threshold_, obstacle_velocity_threshold_from_cruise_to_stop_);
 
   // obstacle_filtering
   tier4_autoware_utils::updateParam<double>(
@@ -473,6 +488,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
   const PredictedObjects & predicted_objects, const Trajectory & traj,
   const geometry_msgs::msg::Pose & current_pose, const double current_vel, DebugData & debug_data)
 {
+  const auto current_time = now();
   const auto time_stamp = rclcpp::Time(predicted_objects.header.stamp);
 
   const size_t ego_idx = findExtendedNearestIndex(
@@ -503,7 +519,8 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       continue;
     }
 
-    const auto & object_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    const auto object_pose = obstacle_cruise_utils::getCurrentObjectPoseFromPredictedPath(
+      predicted_object, time_stamp, current_time);
     const auto & object_velocity =
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x;
 
@@ -518,7 +535,9 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
     const double dist_from_obstacle_to_traj = [&]() {
       return tier4_autoware_utils::calcLateralOffset(decimated_traj.points, object_pose.position);
     }();
-    if (dist_from_obstacle_to_traj > obstacle_filtering_param_.rough_detection_area_expand_width) {
+    if (
+      std::fabs(dist_from_obstacle_to_traj) >
+      obstacle_filtering_param_.rough_detection_area_expand_width) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), is_showing_debug_info_,
         "Ignore obstacles since it is far from the trajectory.");
