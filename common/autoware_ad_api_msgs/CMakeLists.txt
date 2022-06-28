@@ -15,8 +15,15 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   route/msg/RouteState.msg
   route/srv/RouteClear.srv
   route/srv/RouteSet.srv
+  route/srv/LaneletRouteSet.srv
+  route/msg/LaneletRoute.msg
+  route/msg/LaneletRouteNotice.msg
+  route/msg/LaneletSegment.msg
+  route/msg/LaneletPrimitive.msg
   pose/msg/PoseState.msg
   pose/srv/PoseInitialize.srv
+  operation/mode/msg/OperationModeNotice.msg
+  operation/mode/srv/ChangeOperationMode.srv
   fail_safe/msg/FailSafeState.msg
   DEPENDENCIES
     builtin_interfaces
