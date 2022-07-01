@@ -12,14 +12,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   motion/msg/MotionState.msg
   motion/msg/MotionFactor.msg
   motion/msg/MotionFactorArray.msg
-  route/msg/RouteState.msg
-  route/srv/RouteClear.srv
-  route/srv/RouteSet.srv
-  route/srv/LaneletRouteSet.srv
-  route/msg/LaneletRoute.msg
-  route/msg/LaneletRouteNotice.msg
-  route/msg/LaneletSegment.msg
-  route/msg/LaneletPrimitive.msg
+  routing/msg/RouteState.msg
+  routing/msg/Route.msg
+  routing/msg/RouteOptional.msg
+  routing/msg/RoutePrimitive.msg
+  routing/msg/RouteSegment.msg
+  routing/srv/ClearRoute.srv
+  routing/srv/SetRoute.srv
+  routing/srv/SetRoutePoints.srv
   pose/msg/PoseState.msg
   pose/srv/PoseInitialize.srv
   operation/mode/msg/OperationModeNotice.msg
