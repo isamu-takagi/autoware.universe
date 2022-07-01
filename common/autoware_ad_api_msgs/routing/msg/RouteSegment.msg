@@ -1,2 +1,2 @@
-autoware_ad_api_msgs/LaneletPrimitive[] preferred
-autoware_ad_api_msgs/LaneletPrimitive[] alternatives
+autoware_ad_api_msgs/RoutePrimitive[] preferred
+autoware_ad_api_msgs/RoutePrimitive[] alternatives

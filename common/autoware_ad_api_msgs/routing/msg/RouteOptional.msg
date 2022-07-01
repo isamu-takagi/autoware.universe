@@ -1,1 +1,1 @@
-autoware_ad_api_msgs/LaneletRoute[<=1] route
+autoware_ad_api_msgs/Route[<=1] route

@@ -1,6 +1,6 @@
 std_msgs/Header header
 geometry_msgs/Pose[<=1] start
 geometry_msgs/Pose goal
-autoware_ad_api_msgs/LaneletSegment[] segments
+autoware_ad_api_msgs/RouteSegment[] segments
 ---
 autoware_ad_api_msgs/ResponseStatus status

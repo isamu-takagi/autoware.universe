@@ -21,6 +21,10 @@ Considering the product life cycle, there may be multiple vehicles using differe
 In that situation, the AD API users such as developers of a web service have to switch the application behavior based on the version that each vehicle uses.
 The version of AD API follows [Semantic Versioning][semver] in order to provide an intuitive understanding of the changes between versions.
 
+## Routing
+
+The route message is optional to detect clearing.
+
 <!-- link -->
 
 [semver]: https://semver.org/
