@@ -7,8 +7,6 @@ autoware_package()
 rosidl_generate_interfaces(${PROJECT_NAME}
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
-  driving/msg/DrivingState.msg
-  driving/srv/DrivingEngage.srv
   motion/msg/MotionState.msg
   motion/msg/MotionFactor.msg
   motion/msg/MotionFactorArray.msg
@@ -22,7 +20,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   routing/srv/SetRoutePoints.srv
   pose/msg/PoseState.msg
   pose/srv/PoseInitialize.srv
-  operation/mode/msg/OperationModeNotice.msg
+  operation/mode/msg/OperationModeState.msg
   operation/mode/srv/ChangeOperationMode.srv
   fail_safe/msg/FailSafeState.msg
   DEPENDENCIES
