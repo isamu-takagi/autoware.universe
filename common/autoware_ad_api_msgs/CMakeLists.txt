@@ -18,8 +18,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   routing/srv/ClearRoute.srv
   routing/srv/SetRoute.srv
   routing/srv/SetRoutePoints.srv
-  pose/msg/PoseState.msg
-  pose/srv/PoseInitialize.srv
+  localization/msg/LocalizationInitializationState.msg
+  localization/srv/InitializeLocalization.srv
   operation/mode/msg/OperationModeState.msg
   operation/mode/srv/ChangeOperationMode.srv
   fail_safe/msg/FailSafeState.msg
