@@ -383,8 +383,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // option
     // TODO(murooka) implement plan_from_ego
-    mpt_param_.plan_from_ego = false;
-    // mpt_param_.plan_from_ego = declare_parameter<bool>("mpt.option.plan_from_ego");
+    mpt_param_.plan_from_ego = declare_parameter<bool>("mpt.option.plan_from_ego");
+    mpt_param_.max_plan_from_ego_length =
+      declare_parameter<double>("mpt.option.max_plan_from_ego_length");
     mpt_param_.steer_limit_constraint =
       declare_parameter<bool>("mpt.option.steer_limit_constraint");
     mpt_param_.fix_points_around_ego = declare_parameter<bool>("mpt.option.fix_points_around_ego");
@@ -643,7 +644,9 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
   {  // mpt param
     // option
-    // updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
+    updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
+    updateParam<double>(
+      parameters, "mpt.option.max_plan_from_ego_length", mpt_param_.max_plan_from_ego_length);
     updateParam<bool>(
       parameters, "mpt.option.steer_limit_constraint", mpt_param_.steer_limit_constraint);
     updateParam<bool>(
@@ -864,16 +867,7 @@ void ObstacleAvoidancePlanner::pathCallback(
     is_showing_calculation_time_, mpt_visualize_sampling_num_, current_ego_pose_,
     mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets);
 
-  // generate optimized trajectory
-  const auto optimized_traj_points = generateOptimizedTrajectory(*path_ptr);
-
-  // generate post processed trajectory
-  const auto post_processed_traj_points =
-    generatePostProcessedTrajectory(path_ptr->points, optimized_traj_points);
-
-  // convert to output msg type
-  auto output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
-  output_traj_msg.header = path_ptr->header;
+  autoware_auto_planning_msgs::msg::Trajectory output_traj_msg = generateTrajectory(*path_ptr);
 
   // publish debug data
   publishDebugDataInMain(*path_ptr);
@@ -893,6 +887,47 @@ void ObstacleAvoidancePlanner::pathCallback(
   prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(current_ego_pose_);
 
   traj_pub_->publish(output_traj_msg);
+}
+
+autoware_auto_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateTrajectory(
+  const autoware_auto_planning_msgs::msg::Path & path)
+{
+  autoware_auto_planning_msgs::msg::Trajectory output_traj_msg;
+
+  // TODO(someone): support backward velocity
+  if (isBackwardPath(path)) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000,
+      "[ObstacleAvoidancePlanner] Negative velocity is NOT supported. Just converting path to "
+      "trajectory");
+    const auto traj_points = points_utils::convertToTrajectoryPoints(path.points);
+    output_traj_msg = tier4_autoware_utils::convertToTrajectory(traj_points);
+    output_traj_msg.header = path.header;
+
+    return output_traj_msg;
+  }
+
+  // generate optimized trajectory
+  const auto optimized_traj_points = generateOptimizedTrajectory(path);
+  // generate post processed trajectory
+  const auto post_processed_traj_points =
+    generatePostProcessedTrajectory(path.points, optimized_traj_points);
+
+  // convert to output msg type
+  output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
+
+  output_traj_msg.header = path.header;
+  return output_traj_msg;
+}
+
+bool ObstacleAvoidancePlanner::isBackwardPath(
+  const autoware_auto_planning_msgs::msg::Path & path) const
+{
+  const bool has_negative_velocity = std::any_of(
+    path.points.begin(), path.points.end(),
+    [&](const auto & p) { return p.longitudinal_velocity_mps < 0; });
+
+  return has_negative_velocity;
 }
 
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
@@ -950,6 +985,14 @@ bool ObstacleAvoidancePlanner::checkReplan(
   if (
     !prev_ego_pose_ptr_ || !latest_replanned_time_ptr_ || !prev_path_points_ptr_ ||
     !prev_optimal_trajs_ptr_) {
+    return true;
+  }
+
+  if (prev_optimal_trajs_ptr_->model_predictive_trajectory.empty()) {
+    RCLCPP_INFO(
+      get_logger(),
+      "Replan with resetting optimization since previous optimized trajectory is empty.");
+    resetPrevOptimization();
     return true;
   }
 

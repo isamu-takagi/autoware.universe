@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
+#include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
@@ -258,7 +259,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.min_nominal_avoidance_speed = dp("min_nominal_avoidance_speed", 5.0);
   p.min_sharp_avoidance_speed = dp("min_sharp_avoidance_speed", 1.0);
 
-  p.road_shoulder_safety_margin = dp("road_shoulder_safety_margin", 0.5);
+  p.road_shoulder_safety_margin = dp("road_shoulder_safety_margin", 0.0);
 
   p.max_right_shift_length = dp("max_right_shift_length", 1.5);
   p.max_left_shift_length = dp("max_left_shift_length", 1.5);
@@ -270,7 +271,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
     dp("longitudinal_collision_margin_min_distance", 0.0);
   p.longitudinal_collision_margin_time = dp("longitudinal_collision_margin_time", 0.0);
 
-  p.object_hold_max_count = dp("object_hold_max_count", 0);
+  p.object_last_seen_threshold = dp("object_last_seen_threshold", 2.0);
 
   p.min_avoidance_speed_for_acc_prevention = dp("min_avoidance_speed_for_acc_prevention", 3.0);
   p.max_avoidance_acceleration = dp("max_avoidance_acceleration", 0.5);
