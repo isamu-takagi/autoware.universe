@@ -7,9 +7,10 @@ autoware_package()
 rosidl_generate_interfaces(${PROJECT_NAME}
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
-  motion/msg/MotionState.msg
-  motion/msg/MotionFactor.msg
-  motion/msg/MotionFactorArray.msg
+  planning/msg/PlanningFactor.msg
+  planning/msg/PlanningFactorArray.msg
+  planning/msg/PlanningState.msg
+  planning/srv/AllowStart.msg
   routing/msg/RouteState.msg
   routing/msg/Route.msg
   routing/msg/RouteOptional.msg
