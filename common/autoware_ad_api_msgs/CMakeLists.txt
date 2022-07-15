@@ -10,7 +10,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   planning/msg/PlanningFactor.msg
   planning/msg/PlanningFactorArray.msg
   planning/msg/PlanningState.msg
-  planning/srv/AllowStart.msg
+  planning/srv/AllowStart.srv
   routing/msg/RouteState.msg
   routing/msg/Route.msg
   routing/msg/RouteOptional.msg
