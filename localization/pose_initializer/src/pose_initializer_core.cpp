@@ -24,6 +24,11 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+const auto kErrorInProgress = ServiceException("Already in progress.", 1);
+const auto kErrorUnsafe = ServiceException("The vehicle is not stopped.", 2);
+const auto kErrorGnssPose = ServiceException("Failed to get the pose from GNSS.", 3);
+const auto kErrorEstimate = ServiceException("NDT alignment failed.", 4);
+
 PoseInitializer::PoseInitializer() : Node("pose_initializer")
 {
   using std::placeholders::_1;
@@ -55,24 +60,25 @@ void PoseInitializer::ChangeState(State::Message::_state_type state)
 void PoseInitializer::OnInitialize(ROS_SERVICE_ARG(Initialize, req, res))
 {
   if (state_.state == State::Message::INITIALIZING) {
-    throw component_interface_utils::ServiceException(
-      "message", 0);  // TODO(Takagi, Isamu): error code
+    throw kErrorInProgress;
   }
 
-  ChangeState(State::Message::INITIALIZING);
-  const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
-  const auto aligned_pose = AlignPose(request_pose);
-  // set output pose cov
-  pub_align_->publish(aligned_pose);
-  ChangeState(State::Message::INITIALIZED);
-
-  res->status = component_interface_utils::response_success();
+  try {
+    ChangeState(State::Message::INITIALIZING);
+    const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
+    const auto aligned_pose = AlignPose(request_pose);
+    pub_align_->publish(aligned_pose);
+    ChangeState(State::Message::INITIALIZED);
+    res->status = component_interface_utils::response_success();
+  } catch (const ServiceException & error) {
+    ChangeState(State::Message::UNINITIALIZED);
+    throw error;
+  }
 }
 
 PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
 {
-  throw component_interface_utils::ServiceException(
-    "No GNSS", 0);  // TODO(Takagi, Isamu): error code
+  throw kErrorGnssPose;
   // PoseWithCovarianceStamped pose;
   // return pose;
 }
@@ -89,8 +95,7 @@ PoseWithCovarianceStamped PoseInitializer::AlignPose(const PoseWithCovarianceSta
 
   if (!res->success) {
     RCLCPP_INFO(get_logger(), "failed NDT Align Server");
-    throw component_interface_utils::ServiceException(
-      "NDT alignment failed", 0);  // TODO(Takagi, Isamu): error code
+    throw kErrorEstimate;
   }
 
   // Overwrite the covariance.

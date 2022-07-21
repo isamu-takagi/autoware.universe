@@ -23,6 +23,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
+using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::initialization::Initialize;
 using State = localization_interface::initialization::State;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
