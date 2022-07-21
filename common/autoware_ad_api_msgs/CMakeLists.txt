@@ -23,7 +23,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   localization/srv/InitializeLocalization.srv
   operation/mode/msg/OperationModeState.msg
   operation/mode/srv/ChangeOperationMode.srv
-  fail_safe/msg/FailSafeState.msg
+  fail_safe/msg/MrmState.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs
