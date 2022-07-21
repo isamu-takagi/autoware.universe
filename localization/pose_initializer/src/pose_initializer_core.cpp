@@ -14,6 +14,10 @@
 
 #include "pose_initializer_core.hpp"
 
+#include <component_interface_utils/response.hpp>
+
+#include <memory>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -22,61 +26,74 @@
 
 PoseInitializer::PoseInitializer() : Node("pose_initializer")
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
   const auto on_initialize = std::bind(&PoseInitializer::OnInitialize, this, _1, _2);
   node.init_pub(pub_state_);
-  node.init_srv(srv_initialize_, on_initialize);
+  node.init_srv(srv_initialize_, on_initialize, service_callback_group_);
+
+  pub_align_ = create_publisher<PoseWithCovarianceStamped>("pub_align", 1);
+  cli_align_ = create_client<RequestPoseAlignment>("srv_align");
+  // while (!cli_align_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
+  //   RCLCPP_INFO(get_logger(), "Waiting for service...");
+  // }
+
+  ChangeState(State::Message::UNINITIALIZED);
 }
 
-void PoseInitializer::OnInitialize(ROS_SERVICE_ARG(Initialize, res, req))
+void PoseInitializer::ChangeState(State::Message::_state_type state)
 {
-  (void)res;
-  (void)req;
+  state_.stamp = now();
+  state_.state = state;
+  pub_state_->publish(state_);
 }
 
-/*
-const auto node = component_interface_utils::NodeAdaptor(this);
-node.init_srv(srv_driving_engage_, on_driving_engage);
-node.init_pub(pub_driving_state_);
-node.init_sub(sub_autoware_state_, on_autoware_state);
-
-bool PoseInitializer::callAlignServiceAndPublishResult(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr input_pose_msg)
+void PoseInitializer::OnInitialize(ROS_SERVICE_ARG(Initialize, req, res))
 {
-  if (request_id_ != response_id_) {
-    RCLCPP_ERROR(get_logger(), "Did not receive response for previous NDT Align Server call");
-    return false;
+  if (state_.state == State::Message::INITIALIZING) {
+    throw component_interface_utils::ServiceException(
+      "message", 0);  // TODO(Takagi, Isamu): error code
   }
-  auto req = std::make_shared<tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request>();
-  req->pose_with_covariance = *input_pose_msg;
-  req->seq = ++request_id_;
+
+  ChangeState(State::Message::INITIALIZING);
+  const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
+  const auto aligned_pose = AlignPose(request_pose);
+  // set output pose cov
+  pub_align_->publish(aligned_pose);
+  ChangeState(State::Message::INITIALIZED);
+
+  res->status = component_interface_utils::response_success();
+}
+
+PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
+{
+  throw component_interface_utils::ServiceException(
+    "No GNSS", 0);  // TODO(Takagi, Isamu): error code
+  // PoseWithCovarianceStamped pose;
+  // return pose;
+}
+
+PoseWithCovarianceStamped PoseInitializer::AlignPose(const PoseWithCovarianceStamped & pose)
+{
+  const auto req = std::make_shared<RequestPoseAlignment::Request>();
+  req->seq = 0;
+  req->pose_with_covariance = pose;
 
   RCLCPP_INFO(get_logger(), "call NDT Align Server");
-  auto result = ndt_client_->async_send_request(req).get();
+  const auto res = cli_align_->async_send_request(req).get();
+  RCLCPP_INFO(get_logger(), "called NDT Align Server");
 
-  if (!result->success) {
+  if (!res->success) {
     RCLCPP_INFO(get_logger(), "failed NDT Align Server");
-    response_id_ = result->seq;
-    return false;
+    throw component_interface_utils::ServiceException(
+      "NDT alignment failed", 0);  // TODO(Takagi, Isamu): error code
   }
 
-  RCLCPP_INFO(get_logger(), "called NDT Align Server");
-  response_id_ = result->seq;
-  // NOTE temporary cov
-  // TODO: output_pose_covariance_
-  geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result->pose_with_covariance;
-  pose_with_cov.pose.covariance[0] = 1.0;
-  pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
-  pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
-  pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
-  pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
-  pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
-  initial_pose_pub_->publish(pose_with_cov);
-  enable_gnss_callback_ = false;
-
-  return true;
+  // Overwrite the covariance.
+  res->pose_with_covariance.pose.covariance = std::array<double, 36>();  // output_pose_covariance_
+  return res->pose_with_covariance;
 }
-*/

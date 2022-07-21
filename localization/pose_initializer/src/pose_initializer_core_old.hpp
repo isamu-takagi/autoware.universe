@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
-#define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
+#ifndef POSE_INITIALIZER_CORE_OLD_HPP_
+#define POSE_INITIALIZER_CORE_OLD_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
@@ -67,11 +67,6 @@ private:
   rclcpp::Subscription<tier4_localization_msgs::msg::PoseInitializationRequest>::SharedPtr
     pose_initialization_request_sub_;
 
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_pub_;
-
-  rclcpp::Client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr ndt_client_;
-
-  rclcpp::CallbackGroup::SharedPtr initialize_pose_service_group_;
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr
     initialize_pose_service_;
   rclcpp::Service<tier4_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
@@ -97,4 +92,4 @@ private:
   std::array<double, 36> output_pose_covariance_;
 };
 
-#endif  // POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
+#endif  // POSE_INITIALIZER_CORE_OLD_HPP_

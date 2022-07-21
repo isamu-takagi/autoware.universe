@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INITIALIZER__COPY_VECTOR_TO_ARRAY_HPP_
-#define POSE_INITIALIZER__COPY_VECTOR_TO_ARRAY_HPP_
+#ifndef COPY_VECTOR_TO_ARRAY_HPP_
+#define COPY_VECTOR_TO_ARRAY_HPP_
 
 #include <fmt/core.h>
 
@@ -34,4 +34,4 @@ void CopyVectorToArray(const std::vector<T> & vector, std::array<T, N> & array)
   std::copy_n(vector.begin(), N, array.begin());
 }
 
-#endif  // POSE_INITIALIZER__COPY_VECTOR_TO_ARRAY_HPP_
+#endif  // COPY_VECTOR_TO_ARRAY_HPP_

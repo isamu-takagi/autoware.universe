@@ -20,18 +20,31 @@
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
+
+using Initialize = localization_interface::initialization::Initialize;
+using State = localization_interface::initialization::State;
+using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
+
 class PoseInitializer : public rclcpp::Node
 {
 public:
   PoseInitializer();
 
 private:
-  using Initialize = localization_interface::initialization::Initialize;
-  using State = localization_interface::initialization::State;
+  rclcpp::CallbackGroup::SharedPtr service_callback_group_;
+  rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_align_;
+  rclcpp::Client<RequestPoseAlignment>::SharedPtr cli_align_;
   component_interface_utils::Publisher<State>::SharedPtr pub_state_;
   component_interface_utils::Service<Initialize>::SharedPtr srv_initialize_;
+  State::Message state_;
 
+  void ChangeState(State::Message::_state_type state);
   void OnInitialize(ROS_SERVICE_ARG(Initialize, res, req));
+  PoseWithCovarianceStamped GetGnssPose();
+  PoseWithCovarianceStamped AlignPose(const PoseWithCovarianceStamped & pose);
 };
 
 #endif  // POSE_INITIALIZER_CORE_HPP_
