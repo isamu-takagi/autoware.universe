@@ -15,19 +15,45 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__EXCEPTIONS_HPP_
 
+#include <autoware_ad_api_msgs/msg/response_status.hpp>
+
 #include <stdexcept>
+#include <string>
 
 namespace component_interface_utils
 {
 
-class ServiceUnready : public std::runtime_error
+class ServiceException : public std::runtime_error
 {
-  using std::runtime_error::runtime_error;
+public:
+  using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
+  using ResponseStatusCode = ResponseStatus::_code_type;
+
+  ServiceException(const std::string & message, ResponseStatusCode code)
+  : std::runtime_error(message)
+  {
+    code_ = code;
+  }
+  ResponseStatusCode code() const { return code_; }
+
+private:
+  ResponseStatusCode code_;
 };
 
-class ServiceTimeout : public std::runtime_error
+class ServiceUnready : public ServiceException
 {
-  using std::runtime_error::runtime_error;
+  explicit ServiceUnready(const std::string & message)
+  : ServiceException(message, ResponseStatus::SERVICE_UNREADY)
+  {
+  }
+};
+
+class ServiceTimeout : public ServiceException
+{
+  explicit ServiceTimeout(const std::string & message)
+  : ServiceException(message, ResponseStatus::SERVICE_TIMEOUT)
+  {
+  }
 };
 
 }  // namespace component_interface_utils

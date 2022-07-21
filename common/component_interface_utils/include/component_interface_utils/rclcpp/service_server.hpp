@@ -19,8 +19,6 @@
 #include <rclcpp/logging.hpp>
 #include <rclcpp/service.hpp>
 
-#include <autoware_ad_api_msgs/msg/response_status.hpp>
-
 namespace component_interface_utils
 {
 
@@ -28,11 +26,8 @@ namespace component_interface_utils
 template <class SpecT>
 class Service
 {
-public:
-  RCLCPP_SMART_PTR_DEFINITIONS(Service)
-  using SpecType = SpecT;
-  using WrapType = rclcpp::Service<typename SpecT::Service>;
-
+private:
+  // Detect if the service response has status.
   template <class, template <class> class, class = std::void_t<>>
   struct detect : std::false_type
   {
@@ -45,6 +40,11 @@ public:
   using has_status_impl = decltype(std::declval<T>().status);
   template <class T>
   using has_status_type = detect<T, has_status_impl>;
+
+public:
+  RCLCPP_SMART_PTR_DEFINITIONS(Service)
+  using SpecType = SpecT;
+  using WrapType = rclcpp::Service<typename SpecT::Service>;
 
   /// Constructor.
   explicit Service(typename WrapType::SharedPtr service)
@@ -62,20 +62,16 @@ public:
 #ifdef ROS_DISTRO_GALACTIC
       using rosidl_generator_traits::to_yaml;
 #endif
+      // If the response has status, convert it from the exception.
       RCLCPP_INFO_STREAM(logger, "service call: " << SpecT::name << "\n" << to_yaml(*request));
       if constexpr (!has_status_type<typename SpecT::Service::Response>::value) {
         callback(request, response);
       } else {
-        using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
         try {
           callback(request, response);
-        } catch (const ServiceUnready & error) {
+        } catch (const ServiceException & error) {
           response->status.success = false;
-          response->status.code = ResponseStatus::SERVICE_UNREADY;
-          response->status.message = error.what();
-        } catch (const ServiceTimeout & error) {
-          response->status.success = false;
-          response->status.code = ResponseStatus::SERVICE_TIMEOUT;
+          response->status.code = error.code();
           response->status.message = error.what();
         }
       }
