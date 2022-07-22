@@ -6,15 +6,15 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/interface.cpp
-  src/driving.cpp
-  src/motion.cpp
-  src/route.cpp
+  #src/driving.cpp
+  #src/motion.cpp
+  #src/route.cpp
 )
 
 rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::InterfaceNode")
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DrivingNode")
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::MotionNode")
-rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::RouteNode")
+#rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::DrivingNode")
+#rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::MotionNode")
+#rclcpp_components_register_nodes(${PROJECT_NAME} "default_ad_api::RouteNode")
 
 if(BUILD_TESTING)
   add_launch_test(test/main.test.py)
