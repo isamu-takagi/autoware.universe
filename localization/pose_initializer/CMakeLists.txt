@@ -9,6 +9,7 @@ find_package(PCL REQUIRED)
 ament_auto_add_library(pose_initializer
   src/pose_initializer_core.cpp
   src/initialpose_rviz_helper.cpp
+  src/initialpose_gnss_helper.cpp
   src/fitting_to_map_height.cpp
 )
 

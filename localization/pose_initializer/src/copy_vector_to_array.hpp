@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <array>
+#include <string>
 #include <vector>
 
 template <typename T, size_t N>
@@ -32,6 +33,15 @@ void CopyVectorToArray(const std::vector<T> & vector, std::array<T, N> & array)
   }
 
   std::copy_n(vector.begin(), N, array.begin());
+}
+
+template <class NodeT>
+std::array<double, 36> GetCovarianceParameter(NodeT * node, const std::string & name)
+{
+  const auto parameter = node->template declare_parameter<std::vector<double>>(name);
+  std::array<double, 36> covariance;
+  CopyVectorToArray(parameter, covariance);
+  return covariance;
 }
 
 #endif  // COPY_VECTOR_TO_ARRAY_HPP_

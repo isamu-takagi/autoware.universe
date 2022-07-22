@@ -35,6 +35,7 @@ private:
   FittingMapHeight fit_map_;
   rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
   component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
+  std::array<double, 36> rviz_particle_covariance_;
 
   void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
 };

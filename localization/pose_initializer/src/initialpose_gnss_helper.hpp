@@ -15,4 +15,26 @@
 #ifndef INITIALPOSE_GNSS_HELPER_HPP_
 #define INITIALPOSE_GNSS_HELPER_HPP_
 
+#include "fitting_to_map_height.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+
+using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+
+class InitialPoseGnssHelper
+{
+public:
+  explicit InitialPoseGnssHelper(rclcpp::Node * node);
+  PoseWithCovarianceStamped GetPose() const;
+
+private:
+  FittingMapHeight fit_map_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_gnss_pose_;
+  PoseWithCovarianceStamped::ConstSharedPtr gnss_pose_;
+
+  void OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+};
+
 #endif  // INITIALPOSE_GNSS_HELPER_HPP_

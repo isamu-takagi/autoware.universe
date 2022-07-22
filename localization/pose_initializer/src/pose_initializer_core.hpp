@@ -23,16 +23,21 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
+#include <memory>
+
 using ServiceException = component_interface_utils::ServiceException;
 using Initialize = localization_interface::initialization::Initialize;
 using State = localization_interface::initialization::State;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
 
+class InitialPoseGnssHelper;
+
 class PoseInitializer : public rclcpp::Node
 {
 public:
   PoseInitializer();
+  ~PoseInitializer();
 
 private:
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
@@ -42,6 +47,8 @@ private:
   component_interface_utils::Service<Initialize>::SharedPtr srv_initialize_;
   State::Message state_;
   std::array<double, 36> output_pose_covariance_;
+  std::array<double, 36> gnss_particle_covariance_;
+  std::unique_ptr<InitialPoseGnssHelper> gnss_;
 
   void ChangeState(State::Message::_state_type state);
   void OnInitialize(API_SERVICE_ARG(Initialize, res, req));

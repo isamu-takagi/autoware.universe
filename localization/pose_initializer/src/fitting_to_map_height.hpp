@@ -32,7 +32,7 @@ class FittingMapHeight
 {
 public:
   explicit FittingMapHeight(rclcpp::Node * node);
-  PoseWithCovarianceStamped FitHeight(const PoseWithCovarianceStamped pose);
+  PoseWithCovarianceStamped FitHeight(const PoseWithCovarianceStamped pose) const;
 
 private:
   rclcpp::Logger logger_;
@@ -43,7 +43,7 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
 
   void OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  double GetGroundHeight(const tf2::Vector3 & point);
+  double GetGroundHeight(const tf2::Vector3 & point) const;
 };
 
 #endif  // FITTING_TO_MAP_HEIGHT_HPP_

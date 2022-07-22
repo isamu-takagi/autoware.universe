@@ -39,7 +39,7 @@ void FittingMapHeight::OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
   pcl::fromROSMsg(*msg, *map_cloud_);
 }
 
-double FittingMapHeight::GetGroundHeight(const tf2::Vector3 & point)
+double FittingMapHeight::GetGroundHeight(const tf2::Vector3 & point) const
 {
   constexpr double radius = 1.0 * 1.0;
   const double x = point.getX();
@@ -58,7 +58,7 @@ double FittingMapHeight::GetGroundHeight(const tf2::Vector3 & point)
   return std::isfinite(height) ? height : point.getZ();
 }
 
-PoseWithCovarianceStamped FittingMapHeight::FitHeight(const PoseWithCovarianceStamped pose)
+PoseWithCovarianceStamped FittingMapHeight::FitHeight(const PoseWithCovarianceStamped pose) const
 {
   const auto & position = pose.pose.pose.position;
   tf2::Vector3 point(position.x, position.y, position.z);

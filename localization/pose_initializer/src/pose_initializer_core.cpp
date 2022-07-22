@@ -15,6 +15,7 @@
 #include "pose_initializer_core.hpp"
 
 #include "copy_vector_to_array.hpp"
+#include "initialpose_gnss_helper.hpp"
 
 #include <memory>
 #include <vector>
@@ -35,11 +36,19 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   cli_align_ = create_client<RequestPoseAlignment>("ndt_align_srv");
 
   // parameters
-  const auto covariance = declare_parameter<std::vector<double>>("output_pose_covariance");
-  CopyVectorToArray(covariance, output_pose_covariance_);
+  output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
+  gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
 
   // other variables
+  if (declare_parameter("gnss_support", true)) {
+    gnss_ = std::make_unique<InitialPoseGnssHelper>(this);
+  }
   ChangeState(State::Message::UNINITIALIZED);
+}
+
+PoseInitializer::~PoseInitializer()
+{
+  // to delete gnss module
 }
 
 void PoseInitializer::ChangeState(State::Message::_state_type state)
@@ -67,9 +76,11 @@ void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
 
 PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
 {
-  // PoseWithCovarianceStamped pose;
-  // return pose;
-  // ServiceException(Initialize::Service::Response::ERROR_GNSS, "");
+  if (gnss_) {
+    PoseWithCovarianceStamped pose = gnss_->GetPose();
+    pose.pose.covariance = gnss_particle_covariance_;
+    return pose;
+  }
   throw ServiceException(
     Initialize::Service::Response::ERROR_GNSS_SUPPORT, "GNSS is not supported.");
 }

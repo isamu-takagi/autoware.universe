@@ -14,6 +14,8 @@
 
 #include "initialpose_rviz_helper.hpp"
 
+#include "copy_vector_to_array.hpp"
+
 #include <memory>
 
 InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper"), fit_map_(this)
@@ -27,6 +29,8 @@ InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper"
   auto on_initial_pose = std::bind(&InitialPoseRvizHelper::OnInitialPose, this, _1);
   sub_initial_pose_ =
     create_subscription<PoseWithCovarianceStamped>("initialpose", rclcpp::QoS(1), on_initial_pose);
+
+  rviz_particle_covariance_ = GetCovarianceParameter(this, "initialpose_particle_covariance");
 }
 
 void InitialPoseRvizHelper::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
@@ -34,7 +38,8 @@ void InitialPoseRvizHelper::OnInitialPose(PoseWithCovarianceStamped::ConstShared
   try {
     const auto req = std::make_shared<Initialize::Service::Request>();
     req->pose.push_back(fit_map_.FitHeight(*msg));
-    // cli_initialize_->async_send_request(req);
+    req->pose.back().pose.covariance = rviz_particle_covariance_;
+    cli_initialize_->async_send_request(req);
   } catch (const component_interface_utils::ServiceException & error) {
     RCLCPP_ERROR_STREAM(get_logger(), error.what());
   }
