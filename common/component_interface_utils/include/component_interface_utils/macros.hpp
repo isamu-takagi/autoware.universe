@@ -15,11 +15,14 @@
 #ifndef COMPONENT_INTERFACE_UTILS__MACROS_HPP_
 #define COMPONENT_INTERFACE_UTILS__MACROS_HPP_
 
-#define ROS_REQ_TYPE(Type) const Type::Service::Request::ConstSharedPtr
-#define ROS_RES_TYPE(Type) const Type::Service::Response::SharedPtr
-#define ROS_MSG_TYPE(Type) const Type::Message::ConstSharedPtr
+#define ROS_REQ_TYPE(Type) const Type::Request::SharedPtr
+#define ROS_RES_TYPE(Type) const Type::Response::SharedPtr
+#define ROS_MSG_TYPE(Type) const Type::ConstSharedPtr
 
 #define ROS_SERVICE_ARG(Type, req, res) ROS_REQ_TYPE(Type) req, ROS_RES_TYPE(Type) res
 #define ROS_MESSAGE_ARG(Type, msg) ROS_MSG_TYPE(Type) msg
+
+#define API_SERVICE_ARG(Type, req, res) ROS_SERVICE_ARG(Type::Service, req, res)
+#define API_MESSAGE_ARG(Type, msg) ROS_MESSAGE_ARG(Type::Message, msg)
 
 #endif  // COMPONENT_INTERFACE_UTILS__MACROS_HPP_

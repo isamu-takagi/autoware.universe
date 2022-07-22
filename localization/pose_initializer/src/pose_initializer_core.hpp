@@ -44,7 +44,7 @@ private:
   std::array<double, 36> output_pose_covariance_;
 
   void ChangeState(State::Message::_state_type state);
-  void OnInitialize(ROS_SERVICE_ARG(Initialize, res, req));
+  void OnInitialize(API_SERVICE_ARG(Initialize, res, req));
   PoseWithCovarianceStamped GetGnssPose();
   PoseWithCovarianceStamped AlignPose(const PoseWithCovarianceStamped & pose);
 };

@@ -55,7 +55,7 @@ void PoseInitializer::ChangeState(State::Message::_state_type state)
   pub_state_->publish(state_);
 }
 
-void PoseInitializer::OnInitialize(ROS_SERVICE_ARG(Initialize, req, res))
+void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
 {
   // NOTE: This function is not executed during initialization because mutually exclusive.
   try {

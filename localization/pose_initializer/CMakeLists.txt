@@ -11,6 +11,10 @@ ament_auto_add_executable(pose_initializer
   src/pose_initializer_core.cpp
 )
 
+ament_auto_add_executable(pose_initializer_mock
+  src/mock.cpp
+)
+
 # fmt often fails to automatically link so manually specify here
 target_link_libraries(pose_initializer ${PCL_LIBRARIES} fmt)
 
