@@ -29,12 +29,19 @@ public:
   using ResponseStatus = autoware_ad_api_msgs::msg::ResponseStatus;
   using ResponseStatusCode = ResponseStatus::_code_type;
 
-  ServiceException(const std::string & message, ResponseStatusCode code)
+  ServiceException(ResponseStatusCode code, const std::string & message)
   : std::runtime_error(message)
   {
     code_ = code;
   }
-  ResponseStatusCode code() const { return code_; }
+  ResponseStatus status() const
+  {
+    ResponseStatus status;
+    status.success = false;
+    status.code = code_;
+    status.message = what();
+    return status;
+  }
 
 private:
   ResponseStatusCode code_;
@@ -42,16 +49,18 @@ private:
 
 class ServiceUnready : public ServiceException
 {
+public:
   explicit ServiceUnready(const std::string & message)
-  : ServiceException(message, ResponseStatus::SERVICE_UNREADY)
+  : ServiceException(ResponseStatus::SERVICE_UNREADY, message)
   {
   }
 };
 
 class ServiceTimeout : public ServiceException
 {
+public:
   explicit ServiceTimeout(const std::string & message)
-  : ServiceException(message, ResponseStatus::SERVICE_TIMEOUT)
+  : ServiceException(ResponseStatus::SERVICE_TIMEOUT, message)
   {
   }
 };

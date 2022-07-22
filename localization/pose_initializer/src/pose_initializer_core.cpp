@@ -14,20 +14,16 @@
 
 #include "pose_initializer_core.hpp"
 
-#include <component_interface_utils/response.hpp>
+#include "copy_vector_to_array.hpp"
 
 #include <memory>
+#include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-
-const auto kErrorInProgress = ServiceException("Already in progress.", 1);
-const auto kErrorUnsafe = ServiceException("The vehicle is not stopped.", 2);
-const auto kErrorGnssPose = ServiceException("Failed to get the pose from GNSS.", 3);
-const auto kErrorEstimate = ServiceException("NDT alignment failed.", 4);
 
 PoseInitializer::PoseInitializer() : Node("pose_initializer")
 {
@@ -37,16 +33,18 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   const auto node = component_interface_utils::NodeAdaptor(this);
   service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+  // interfaces
   const auto on_initialize = std::bind(&PoseInitializer::OnInitialize, this, _1, _2);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, on_initialize, service_callback_group_);
-
   pub_align_ = create_publisher<PoseWithCovarianceStamped>("pub_align", 1);
   cli_align_ = create_client<RequestPoseAlignment>("srv_align");
-  // while (!cli_align_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-  //   RCLCPP_INFO(get_logger(), "Waiting for service...");
-  // }
 
+  // parameters
+  const auto covariance = declare_parameter<std::vector<double>>("output_pose_covariance");
+  CopyVectorToArray(covariance, output_pose_covariance_);
+
+  // other variables
   ChangeState(State::Message::UNINITIALIZED);
 }
 
@@ -59,46 +57,47 @@ void PoseInitializer::ChangeState(State::Message::_state_type state)
 
 void PoseInitializer::OnInitialize(ROS_SERVICE_ARG(Initialize, req, res))
 {
-  if (state_.state == State::Message::INITIALIZING) {
-    throw kErrorInProgress;
-  }
-
+  // NOTE: This function is not executed during initialization because mutually exclusive.
   try {
     ChangeState(State::Message::INITIALIZING);
     const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();
     const auto aligned_pose = AlignPose(request_pose);
     pub_align_->publish(aligned_pose);
+    res->status.success = true;
     ChangeState(State::Message::INITIALIZED);
-    res->status = component_interface_utils::response_success();
   } catch (const ServiceException & error) {
+    res->status = error.status();
     ChangeState(State::Message::UNINITIALIZED);
-    throw error;
   }
 }
 
 PoseWithCovarianceStamped PoseInitializer::GetGnssPose()
 {
-  throw kErrorGnssPose;
   // PoseWithCovarianceStamped pose;
   // return pose;
+  // ServiceException(Initialize::Service::Response::ERROR_GNSS, "");
+  throw ServiceException(
+    Initialize::Service::Response::ERROR_GNSS_SUPPORT, "GNSS is not supported.");
 }
 
 PoseWithCovarianceStamped PoseInitializer::AlignPose(const PoseWithCovarianceStamped & pose)
 {
   const auto req = std::make_shared<RequestPoseAlignment::Request>();
-  req->seq = 0;
   req->pose_with_covariance = pose;
 
-  RCLCPP_INFO(get_logger(), "call NDT Align Server");
-  const auto res = cli_align_->async_send_request(req).get();
-  RCLCPP_INFO(get_logger(), "called NDT Align Server");
+  if (!cli_align_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("NDT align server is not ready.");
+  }
 
+  RCLCPP_INFO(get_logger(), "call NDT align server");
+  const auto res = cli_align_->async_send_request(req).get();
+  RCLCPP_INFO(get_logger(), "called NDT align server");
   if (!res->success) {
-    RCLCPP_INFO(get_logger(), "failed NDT Align Server");
-    throw kErrorEstimate;
+    throw ServiceException(
+      Initialize::Service::Response::ERROR_ESTIMATION, "NDT align server failed.");
   }
 
   // Overwrite the covariance.
-  res->pose_with_covariance.pose.covariance = std::array<double, 36>();  // output_pose_covariance_
+  res->pose_with_covariance.pose.covariance = output_pose_covariance_;
   return res->pose_with_covariance;
 }

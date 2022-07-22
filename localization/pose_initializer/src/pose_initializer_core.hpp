@@ -41,6 +41,7 @@ private:
   component_interface_utils::Publisher<State>::SharedPtr pub_state_;
   component_interface_utils::Service<Initialize>::SharedPtr srv_initialize_;
   State::Message state_;
+  std::array<double, 36> output_pose_covariance_;
 
   void ChangeState(State::Message::_state_type state);
   void OnInitialize(ROS_SERVICE_ARG(Initialize, res, req));
