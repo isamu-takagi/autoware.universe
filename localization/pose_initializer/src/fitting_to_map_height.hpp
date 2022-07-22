@@ -12,31 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INITIALPOSE_RVIZ_HELPER_HPP_
-#define INITIALPOSE_RVIZ_HELPER_HPP_
+#ifndef FITTING_TO_MAP_HEIGHT_HPP_
+#define FITTING_TO_MAP_HEIGHT_HPP_
 
-#include "fitting_to_map_height.hpp"
-
-#include <component_interface_specs/localization/initialization.hpp>
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
-using Initialize = localization_interface::initialization::Initialize;
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <string>
+
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-class InitialPoseRvizHelper : public rclcpp::Node
+class FittingMapHeight
 {
 public:
-  InitialPoseRvizHelper();
+  explicit FittingMapHeight(rclcpp::Node * node);
+  PoseWithCovarianceStamped FitHeight(const PoseWithCovarianceStamped pose);
 
 private:
-  FittingMapHeight fit_map_;
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
-  component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
+  rclcpp::Logger logger_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
+  tf2::BufferCore tf2_buffer_;
+  tf2_ros::TransformListener tf2_listener_;
+  std::string map_frame_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
 
-  void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+  void OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  double GetGroundHeight(const tf2::Vector3 & point);
 };
 
-#endif  // INITIALPOSE_RVIZ_HELPER_HPP_
+#endif  // FITTING_TO_MAP_HEIGHT_HPP_

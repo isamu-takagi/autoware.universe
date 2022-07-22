@@ -16,7 +16,7 @@
 
 #include <memory>
 
-InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper")
+InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper"), fit_map_(this)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -33,20 +33,9 @@ void InitialPoseRvizHelper::OnInitialPose(PoseWithCovarianceStamped::ConstShared
 {
   try {
     const auto req = std::make_shared<Initialize::Service::Request>();
-    req->pose.push_back(*msg);
-    cli_initialize_->async_send_request(req);
+    req->pose.push_back(fit_map_.FitHeight(*msg));
+    // cli_initialize_->async_send_request(req);
   } catch (const component_interface_utils::ServiceException & error) {
     RCLCPP_ERROR_STREAM(get_logger(), error.what());
   }
-}
-
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<InitialPoseRvizHelper>();
-  executor.add_node(node);
-  executor.spin();
-  executor.remove_node(node);
-  rclcpp::shutdown();
 }

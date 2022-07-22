@@ -19,15 +19,9 @@
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_external_api_msgs/srv/initialize_pose_auto.hpp>
 #include <tier4_localization_msgs/msg/pose_initialization_request.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <tf2/transform_datatypes.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <memory>
 #include <string>
@@ -52,14 +46,10 @@ private:
     const tier4_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr
       request_msg_ptr);  // NOLINT
 
-  bool getHeight(
-    const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
-    const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr output_pose_msg_ptr);
   bool callAlignServiceAndPublishResult(
     const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr gnss_pose_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
 
   // TODO(Takagi, Isamu): deprecated
   rclcpp::Subscription<tier4_localization_msgs::msg::PoseInitializationRequest>::SharedPtr
@@ -69,12 +59,6 @@ private:
     initialize_pose_service_;
   rclcpp::Service<tier4_external_api_msgs::srv::InitializePoseAuto>::SharedPtr
     initialize_pose_auto_service_;
-
-  tf2::BufferCore tf2_buffer_;
-  tf2_ros::TransformListener tf2_listener_;
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr map_ptr_;
-  std::string map_frame_;
 
   // With the currently available facilities for calling a service, there is no
   // easy way of detecting whether an answer was received within a reasonable

@@ -13,7 +13,7 @@
     <param name="enable_gnss_callback" value="true"/>
   -->
 
-  <node pkg="pose_initializer" exec="pose_initializer" name="pose_initializer" output="log">
+  <node pkg="pose_initializer" exec="pose_initializer_node" name="pose_initializer_node" output="log">
     <param from="$(var config_file)"/>
     <remap from="ndt_align_srv" to="/localization/pose_estimator/ndt_align_srv"/>
     <remap from="ekf_reset_srv" to="/initialpose3d"/>
@@ -21,5 +21,11 @@
 
   <node pkg="pose_initializer" exec="pose_initializer_rviz" name="pose_initializer_rviz" output="log">
     <remap from="initialpose" to="/initialpose"/>
+    <remap from="pointcloud_map" to="/map/pointcloud_map"/>
   </node>
+
+  <!--
+  <node pkg="pose_initializer" exec="pose_initializer_rviz" name="pose_initializer_auto" output="log">
+  </node>
+  -->
 </launch>

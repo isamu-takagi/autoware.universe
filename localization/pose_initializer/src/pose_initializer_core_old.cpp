@@ -30,24 +30,6 @@
 #include <string>
 #include <vector>
 
-double getGroundHeight(const pcl::PointCloud<pcl::PointXYZ>::Ptr pcdmap, const tf2::Vector3 & point)
-{
-  constexpr double radius = 1.0 * 1.0;
-  const double x = point.getX();
-  const double y = point.getY();
-
-  double height = INFINITY;
-  for (const auto & p : pcdmap->points) {
-    const double dx = x - p.x;
-    const double dy = y - p.y;
-    const double sd = (dx * dx) + (dy * dy);
-    if (sd < radius) {
-      height = std::min(height, static_cast<double>(p.z));
-    }
-  }
-  return std::isfinite(height) ? height : point.getZ();
-}
-
 PoseInitializer::PoseInitializer()
 : Node("pose_initializer"), tf2_listener_(tf2_buffer_), map_frame_("map")
 {
@@ -70,39 +52,10 @@ PoseInitializer::PoseInitializer()
   CopyVectorToArray(output_pose_covariance, output_pose_covariance_);
 
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
-  initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "initialpose", 10,
-    std::bind(&PoseInitializer::callbackInitialPose, this, std::placeholders::_1));
-  map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "pointcloud_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&PoseInitializer::callbackMapPoints, this, std::placeholders::_1));
+
   gnss_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "gnss_pose_cov", 1,
     std::bind(&PoseInitializer::callbackGNSSPoseCov, this, std::placeholders::_1));
-  pose_initialization_request_sub_ =
-    this->create_subscription<tier4_localization_msgs::msg::PoseInitializationRequest>(
-      "pose_initialization_request", rclcpp::QoS{1}.transient_local(),
-      std::bind(&PoseInitializer::callbackPoseInitializationRequest, this, std::placeholders::_1));
-
-  initialize_pose_service_ =
-    this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
-      "service/initialize_pose", std::bind(
-                                   &PoseInitializer::serviceInitializePose, this,
-                                   std::placeholders::_1, std::placeholders::_2));
-
-  initialize_pose_auto_service_ =
-    this->create_service<tier4_external_api_msgs::srv::InitializePoseAuto>(
-      "service/initialize_pose_auto", std::bind(
-                                        &PoseInitializer::serviceInitializePoseAuto, this,
-                                        std::placeholders::_1, std::placeholders::_2));
-}
-
-void PoseInitializer::callbackMapPoints(
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
-{
-  std::string map_frame_ = map_points_msg_ptr->header.frame_id;
-  map_ptr_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*map_points_msg_ptr, *map_ptr_);
 }
 
 void PoseInitializer::serviceInitializePose(
@@ -148,53 +101,4 @@ void PoseInitializer::callbackGNSSPoseCov(
   add_height_pose_msg_ptr->pose.covariance = gnss_particle_covariance_;
 
   callAlignServiceAndPublishResult(add_height_pose_msg_ptr);
-}
-
-void PoseInitializer::serviceInitializePoseAuto(
-  const tier4_external_api_msgs::srv::InitializePoseAuto::Request::SharedPtr req,
-  tier4_external_api_msgs::srv::InitializePoseAuto::Response::SharedPtr res)
-{
-  (void)req;
-
-  RCLCPP_INFO(this->get_logger(), "Called Pose Initialize Service");
-  enable_gnss_callback_ = true;
-  res->status = tier4_api_utils::response_success();
-}
-
-void PoseInitializer::callbackPoseInitializationRequest(
-  const tier4_localization_msgs::msg::PoseInitializationRequest::ConstSharedPtr request_msg_ptr)
-{
-  RCLCPP_INFO(this->get_logger(), "Called Pose Initialize");
-  enable_gnss_callback_ = request_msg_ptr->data;
-}
-
-bool PoseInitializer::getHeight(
-  const geometry_msgs::msg::PoseWithCovarianceStamped & input_pose_msg,
-  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr output_pose_msg_ptr)
-{
-  std::string fixed_frame = input_pose_msg.header.frame_id;
-  tf2::Vector3 point(
-    input_pose_msg.pose.pose.position.x, input_pose_msg.pose.pose.position.y,
-    input_pose_msg.pose.pose.position.z);
-
-  if (map_ptr_) {
-    tf2::Transform transform{tf2::Quaternion{}, tf2::Vector3{}};
-    try {
-      const auto stamped = tf2_buffer_.lookupTransform(map_frame_, fixed_frame, tf2::TimePointZero);
-      tf2::fromMsg(stamped.transform, transform);
-    } catch (tf2::TransformException & exception) {
-      RCLCPP_WARN_STREAM(get_logger(), "failed to lookup transform: " << exception.what());
-    }
-
-    point = transform * point;
-    point.setZ(getGroundHeight(map_ptr_, point));
-    point = transform.inverse() * point;
-  }
-
-  *output_pose_msg_ptr = input_pose_msg;
-  output_pose_msg_ptr->pose.pose.position.x = point.getX();
-  output_pose_msg_ptr->pose.pose.position.y = point.getY();
-  output_pose_msg_ptr->pose.pose.position.z = point.getZ();
-
-  return true;
 }
