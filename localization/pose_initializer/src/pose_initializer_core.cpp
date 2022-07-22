@@ -37,8 +37,8 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   const auto on_initialize = std::bind(&PoseInitializer::OnInitialize, this, _1, _2);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, on_initialize, service_callback_group_);
-  pub_align_ = create_publisher<PoseWithCovarianceStamped>("pub_align", 1);
-  cli_align_ = create_client<RequestPoseAlignment>("srv_align");
+  pub_align_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset_srv", 1);
+  cli_align_ = create_client<RequestPoseAlignment>("ndt_align_srv");
 
   // parameters
   const auto covariance = declare_parameter<std::vector<double>>("output_pose_covariance");
