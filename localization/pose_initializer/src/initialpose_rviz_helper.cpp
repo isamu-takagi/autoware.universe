@@ -21,14 +21,23 @@ InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper"
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_cli(cli_initialize_);
+
   auto on_initial_pose = std::bind(&InitialPoseRvizHelper::OnInitialPose, this, _1);
   sub_initial_pose_ =
-    create_subscription<PoseWithCovarianceStamped>("/initialpose", rclcpp::QoS(1), on_initial_pose);
+    create_subscription<PoseWithCovarianceStamped>("initialpose", rclcpp::QoS(1), on_initial_pose);
 }
 
 void InitialPoseRvizHelper::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
-  (void)msg;
+  try {
+    const auto req = std::make_shared<Initialize::Service::Request>();
+    req->pose.push_back(*msg);
+    cli_initialize_->async_send_request(req);
+  } catch (const component_interface_utils::ServiceException & error) {
+    RCLCPP_ERROR_STREAM(get_logger(), error.what());
+  }
 }
 
 int main(int argc, char ** argv)
