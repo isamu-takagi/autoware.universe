@@ -11,6 +11,10 @@ ament_auto_add_executable(pose_initializer
   src/pose_initializer_core.cpp
 )
 
+ament_auto_add_executable(pose_initializer_rviz
+  src/initialpose_rviz_helper.cpp
+)
+
 ament_auto_add_executable(pose_initializer_mock
   src/mock.cpp
 )

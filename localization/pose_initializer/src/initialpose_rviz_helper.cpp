@@ -12,31 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mock.hpp"
+#include "initialpose_rviz_helper.hpp"
 
 #include <memory>
 
-MockNode::MockNode() : Node("mock_node")
+InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
 
-  auto on_ndt_align = std::bind(&MockNode::OnNdtAlign, this, _1, _2);
-  srv_align_ = create_service<RequestPoseAlignment>(
-    "/localization/pose_estimator/ndt_align_srv", on_ndt_align);
+  auto on_initial_pose = std::bind(&InitialPoseRvizHelper::OnInitialPose, this, _1);
+  sub_initial_pose_ =
+    create_subscription<PoseWithCovarianceStamped>("/initialpose", rclcpp::QoS(1), on_initial_pose);
 }
 
-void MockNode::OnNdtAlign(ROS_SERVICE_ARG(RequestPoseAlignment, req, res))
+void InitialPoseRvizHelper::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
-  res->success = true;
-  res->pose_with_covariance = req->pose_with_covariance;
+  (void)msg;
 }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<MockNode>();
+  auto node = std::make_shared<InitialPoseRvizHelper>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);

@@ -19,12 +19,6 @@
 #include <memory>
 #include <vector>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-
 PoseInitializer::PoseInitializer() : Node("pose_initializer")
 {
   using std::placeholders::_1;
@@ -34,7 +28,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
   // interfaces
-  const auto on_initialize = std::bind(&PoseInitializer::OnInitialize, this, _1, _2);
+  auto on_initialize = std::bind(&PoseInitializer::OnInitialize, this, _1, _2);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, on_initialize, service_callback_group_);
   pub_align_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset_srv", 1);

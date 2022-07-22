@@ -15,4 +15,20 @@
 #ifndef INITIALPOSE_RVIZ_HELPER_HPP_
 #define INITIALPOSE_RVIZ_HELPER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+
+using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+
+class InitialPoseRvizHelper : public rclcpp::Node
+{
+public:
+  InitialPoseRvizHelper();
+
+private:
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
+  void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+};
+
 #endif  // INITIALPOSE_RVIZ_HELPER_HPP_

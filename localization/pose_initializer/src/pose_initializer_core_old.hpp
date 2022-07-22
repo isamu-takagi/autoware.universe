@@ -45,8 +45,7 @@ private:
   void serviceInitializePoseAuto(
     const tier4_external_api_msgs::srv::InitializePoseAuto::Request::SharedPtr req,
     tier4_external_api_msgs::srv::InitializePoseAuto::Response::SharedPtr res);
-  void callbackInitialPose(
-    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
+
   void callbackGNSSPoseCov(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_cov_msg_ptr);
   void callbackPoseInitializationRequest(
@@ -63,7 +62,6 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
 
   // TODO(Takagi, Isamu): deprecated
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<tier4_localization_msgs::msg::PoseInitializationRequest>::SharedPtr
     pose_initialization_request_sub_;
 
