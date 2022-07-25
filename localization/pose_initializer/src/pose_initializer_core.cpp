@@ -22,24 +22,16 @@
 
 PoseInitializer::PoseInitializer() : Node("pose_initializer")
 {
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-
   const auto node = component_interface_utils::NodeAdaptor(this);
-  service_callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  // interfaces
-  auto on_initialize = std::bind(&PoseInitializer::OnInitialize, this, _1, _2);
+  group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
-  node.init_srv(srv_initialize_, on_initialize, service_callback_group_);
+  node.init_srv(srv_initialize_, BIND_SERVICE(this, OnInitialize), group_srv_);
   pub_align_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset_srv", 1);
   cli_align_ = create_client<RequestPoseAlignment>("ndt_align_srv");
 
-  // parameters
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
 
-  // other variables
   if (declare_parameter("gnss_support", true)) {
     gnss_ = std::make_unique<InitialPoseGnssHelper>(this);
   }
@@ -94,13 +86,13 @@ PoseWithCovarianceStamped PoseInitializer::AlignPose(const PoseWithCovarianceSta
     throw component_interface_utils::ServiceUnready("NDT align server is not ready.");
   }
 
-  RCLCPP_INFO(get_logger(), "call NDT align server");
+  RCLCPP_INFO(get_logger(), "Call NDT align server.");
   const auto res = cli_align_->async_send_request(req).get();
-  RCLCPP_INFO(get_logger(), "called NDT align server");
   if (!res->success) {
     throw ServiceException(
       Initialize::Service::Response::ERROR_ESTIMATION, "NDT align server failed.");
   }
+  RCLCPP_INFO(get_logger(), "NDT align server succeeded.");
 
   // Overwrite the covariance.
   res->pose_with_covariance.pose.covariance = output_pose_covariance_;

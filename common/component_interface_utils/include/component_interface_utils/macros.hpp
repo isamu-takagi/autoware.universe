@@ -25,4 +25,7 @@
 #define API_SERVICE_ARG(Type, req, res) ROS_SERVICE_ARG(Type::Service, req, res)
 #define API_MESSAGE_ARG(Type, msg) ROS_MESSAGE_ARG(Type::Message, msg)
 
+#define BIND_SERVICE(this, func) [this](auto req, auto res) { func(req, res); }
+#define BIND_MESSAGE(this, func) [this](auto msg) { func(msg); }
+
 #endif  // COMPONENT_INTERFACE_UTILS__MACROS_HPP_

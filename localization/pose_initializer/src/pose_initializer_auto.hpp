@@ -15,10 +15,8 @@
 #ifndef POSE_INITIALIZER_AUTO_HPP_
 #define POSE_INITIALIZER_AUTO_HPP_
 
-/*
 #include <component_interface_specs/localization/initialization.hpp>
 #include <component_interface_utils/rclcpp.hpp>
-*/
 #include <rclcpp/rclcpp.hpp>
 
 class PoseInitializerAuto : public rclcpp::Node
@@ -27,12 +25,13 @@ public:
   PoseInitializerAuto();
 
 private:
-  // using Initialize = localization_interface::initialization::Initialize;
-  // using State = localization_interface::initialization::State;
+  void OnTimer();
+  using Initialize = localization_interface::initialization::Initialize;
+  using State = localization_interface::initialization::State;
   rclcpp::TimerBase::SharedPtr timer_;
-  // component_interface_utils::Subscription<State>::SharedPtr sub_state_;
-  // component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
-  // State::Message state_;
+  component_interface_utils::Subscription<State>::SharedPtr sub_state_;
+  component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
+  State::Message state_;
 };
 
 #endif  // POSE_INITIALIZER_AUTO_HPP_

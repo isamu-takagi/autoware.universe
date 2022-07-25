@@ -18,34 +18,19 @@
 
 PoseInitializerAuto::PoseInitializerAuto() : Node("pose_initializer_auto")
 {
-  /*
-  const auto on_state = [this](const State::Message::SharedPtr msg)
-  {
-    state_ = *msg;
-  };
-  */
-
-  const auto on_timer = [this]() { RCLCPP_INFO_STREAM(rclcpp::get_logger("node"), this); };
-  on_timer();
-
-  // const auto node = component_interface_utils::NodeAdaptor(this);
-  // node.init_sub(sub_state_, on_state);
-  // node.init_cli(cli_initialize_);
-
   const auto period = rclcpp::Rate(1.0).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period, on_timer);
+  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { OnTimer(); });
 }
+
+void PoseInitializerAuto::OnTimer() { RCLCPP_INFO_STREAM(rclcpp::get_logger("node"), this); }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
   auto node = std::make_shared<PoseInitializerAuto>();
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("executor"), "ptr: " << node << " " << node.get());
   executor.add_node(node);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("executor"), "ptr: " << node << " " << node.get());
   executor.spin();
   executor.remove_node(node);
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("executor"), "end");
   rclcpp::shutdown();
 }

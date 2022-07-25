@@ -18,6 +18,7 @@
 #include "fitting_to_map_height.hpp"
 
 #include <component_interface_specs/localization/initialization.hpp>
+#include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 

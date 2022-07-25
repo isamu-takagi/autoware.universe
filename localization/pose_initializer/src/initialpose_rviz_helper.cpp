@@ -20,15 +20,12 @@
 
 InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper"), fit_map_(this)
 {
-  using std::placeholders::_1;
-  using std::placeholders::_2;
-
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_cli(cli_initialize_);
 
-  auto on_initial_pose = std::bind(&InitialPoseRvizHelper::OnInitialPose, this, _1);
-  sub_initial_pose_ =
-    create_subscription<PoseWithCovarianceStamped>("initialpose", rclcpp::QoS(1), on_initial_pose);
+  sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
+    "initialpose", rclcpp::QoS(1),
+    std::bind(&InitialPoseRvizHelper::OnInitialPose, this, std::placeholders::_1));
 
   rviz_particle_covariance_ = GetCovarianceParameter(this, "initialpose_particle_covariance");
 }

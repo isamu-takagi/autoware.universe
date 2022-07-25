@@ -40,7 +40,7 @@ public:
   ~PoseInitializer();
 
 private:
-  rclcpp::CallbackGroup::SharedPtr service_callback_group_;
+  rclcpp::CallbackGroup::SharedPtr group_srv_;
   rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_align_;
   rclcpp::Client<RequestPoseAlignment>::SharedPtr cli_align_;
   component_interface_utils::Publisher<State>::SharedPtr pub_state_;
