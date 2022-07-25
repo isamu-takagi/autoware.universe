@@ -6,23 +6,19 @@ autoware_package()
 
 find_package(PCL REQUIRED COMPONENTS common)
 
-ament_auto_add_library(${PROJECT_NAME}
-  src/pose_initializer_core.cpp
-  src/initialpose_rviz_helper.cpp
-  src/initialpose_gnss_helper.cpp
-  src/fitting_to_map_height.cpp
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/lib/pose_initializer_core.cpp
+  src/lib/gnss_module.cpp
+  src/lib/map_fit_module.cpp
+  src/lib/initial_pose_adaptor.cpp
+  src/lib/automatic_api_caller.cpp
 )
-
-ament_auto_add_executable(${PROJECT_NAME}_node
-  src/pose_initializer_node.cpp
-)
-
-ament_auto_add_executable(${PROJECT_NAME}_rviz
-  src/pose_initializer_rviz.cpp
-)
-
 # fmt often fails to automatically link so manually specify here
 target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} fmt)
+
+ament_auto_add_executable(pose_initializer_node src/pose_initializer_node.cpp)
+ament_auto_add_executable(initial_pose_adaptor src/initial_pose_adaptor.cpp)
+ament_auto_add_executable(automatic_api_caller src/automatic_api_caller.cpp)
 
 if(BUILD_TESTING)
   function(add_testcase filepath)

@@ -12,33 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INITIALPOSE_RVIZ_HELPER_HPP_
-#define INITIALPOSE_RVIZ_HELPER_HPP_
+#ifndef LIB__GNSS_MODULE_HPP_
+#define LIB__GNSS_MODULE_HPP_
 
-#include "fitting_to_map_height.hpp"
+#include "map_fit_module.hpp"
 
-#include <component_interface_specs/localization/initialization.hpp>
-#include <component_interface_utils/macros.hpp>
-#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
-using Initialize = localization_interface::initialization::Initialize;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-class InitialPoseRvizHelper : public rclcpp::Node
+class GnssModule
 {
 public:
-  InitialPoseRvizHelper();
+  explicit GnssModule(rclcpp::Node * node);
+  PoseWithCovarianceStamped GetPose() const;
 
 private:
-  FittingMapHeight fit_map_;
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
-  component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
-  std::array<double, 36> rviz_particle_covariance_;
+  MapFitModule map_fit_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_gnss_pose_;
+  PoseWithCovarianceStamped::ConstSharedPtr gnss_pose_;
+  double timeout_;
 
-  void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+  void OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
 };
 
-#endif  // INITIALPOSE_RVIZ_HELPER_HPP_
+#endif  // LIB__GNSS_MODULE_HPP_

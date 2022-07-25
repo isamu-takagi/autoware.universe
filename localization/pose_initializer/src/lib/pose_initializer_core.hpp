@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INITIALIZER_CORE_HPP_
-#define POSE_INITIALIZER_CORE_HPP_
+#ifndef LIB__POSE_INITIALIZER_CORE_HPP_
+#define LIB__POSE_INITIALIZER_CORE_HPP_
 
-#include <component_interface_specs/localization/initialization.hpp>
+#include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -26,12 +26,12 @@
 #include <memory>
 
 using ServiceException = component_interface_utils::ServiceException;
-using Initialize = localization_interface::initialization::Initialize;
-using State = localization_interface::initialization::State;
+using Initialize = localization_interface::Initialize;
+using State = localization_interface::InitializationState;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
 
-class InitialPoseGnssHelper;
+class GnssModule;
 
 class PoseInitializer : public rclcpp::Node
 {
@@ -48,7 +48,7 @@ private:
   State::Message state_;
   std::array<double, 36> output_pose_covariance_;
   std::array<double, 36> gnss_particle_covariance_;
-  std::unique_ptr<InitialPoseGnssHelper> gnss_;
+  std::unique_ptr<GnssModule> gnss_;
 
   void ChangeState(State::Message::_state_type state);
   void OnInitialize(API_SERVICE_ARG(Initialize, res, req));
@@ -56,4 +56,4 @@ private:
   PoseWithCovarianceStamped AlignPose(const PoseWithCovarianceStamped & pose);
 };
 
-#endif  // POSE_INITIALIZER_CORE_HPP_
+#endif  // LIB__POSE_INITIALIZER_CORE_HPP_

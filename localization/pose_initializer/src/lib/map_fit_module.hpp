@@ -12,29 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INITIALPOSE_GNSS_HELPER_HPP_
-#define INITIALPOSE_GNSS_HELPER_HPP_
-
-#include "fitting_to_map_height.hpp"
+#ifndef LIB__MAP_FIT_MODULE_HPP_
+#define LIB__MAP_FIT_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <string>
 
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-class InitialPoseGnssHelper
+class MapFitModule
 {
 public:
-  explicit InitialPoseGnssHelper(rclcpp::Node * node);
-  PoseWithCovarianceStamped GetPose() const;
+  explicit MapFitModule(rclcpp::Node * node);
+  PoseWithCovarianceStamped FitHeight(const PoseWithCovarianceStamped pose) const;
 
 private:
-  FittingMapHeight fit_map_;
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_gnss_pose_;
-  PoseWithCovarianceStamped::ConstSharedPtr gnss_pose_;
+  rclcpp::Logger logger_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_map_;
+  tf2::BufferCore tf2_buffer_;
+  tf2_ros::TransformListener tf2_listener_;
+  std::string map_frame_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr map_cloud_;
 
-  void OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+  void OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  double GetGroundHeight(const tf2::Vector3 & point) const;
 };
 
-#endif  // INITIALPOSE_GNSS_HELPER_HPP_
+#endif  // LIB__MAP_FIT_MODULE_HPP_

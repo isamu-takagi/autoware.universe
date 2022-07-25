@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "fitting_to_map_height.hpp"
+#include "map_fit_module.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -24,22 +24,22 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-FittingMapHeight::FittingMapHeight(rclcpp::Node * node)
+MapFitModule::MapFitModule(rclcpp::Node * node)
 : logger_(node->get_logger()), tf2_listener_(tf2_buffer_)
 {
   sub_map_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&FittingMapHeight::OnMap, this, std::placeholders::_1));
+    std::bind(&MapFitModule::OnMap, this, std::placeholders::_1));
 }
 
-void FittingMapHeight::OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
+void MapFitModule::OnMap(sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   map_frame_ = msg->header.frame_id;
   map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*msg, *map_cloud_);
 }
 
-double FittingMapHeight::GetGroundHeight(const tf2::Vector3 & point) const
+double MapFitModule::GetGroundHeight(const tf2::Vector3 & point) const
 {
   constexpr double radius = 1.0 * 1.0;
   const double x = point.getX();
@@ -58,7 +58,7 @@ double FittingMapHeight::GetGroundHeight(const tf2::Vector3 & point) const
   return std::isfinite(height) ? height : point.getZ();
 }
 
-PoseWithCovarianceStamped FittingMapHeight::FitHeight(const PoseWithCovarianceStamped pose) const
+PoseWithCovarianceStamped MapFitModule::FitHeight(const PoseWithCovarianceStamped pose) const
 {
   const auto & position = pose.pose.pose.position;
   tf2::Vector3 point(position.x, position.y, position.z);

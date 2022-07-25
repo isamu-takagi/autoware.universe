@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,23 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_initializer_auto.hpp"
+#include "lib/initial_pose_adaptor.hpp"
 
 #include <memory>
-
-PoseInitializerAuto::PoseInitializerAuto() : Node("pose_initializer_auto")
-{
-  const auto period = rclcpp::Rate(1.0).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { OnTimer(); });
-}
-
-void PoseInitializerAuto::OnTimer() { RCLCPP_INFO_STREAM(rclcpp::get_logger("node"), this); }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<PoseInitializerAuto>();
+  auto node = std::make_shared<InitialPoseAdaptor>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);

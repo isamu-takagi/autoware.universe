@@ -12,26 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MOCK_HPP_
-#define MOCK_HPP_
+#ifndef LIB__INITIAL_POSE_ADAPTOR_HPP_
+#define LIB__INITIAL_POSE_ADAPTOR_HPP_
 
+#include "map_fit_module.hpp"
+
+#include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/macros.hpp>
+#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
-using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
+using Initialize = localization_interface::Initialize;
+using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
-class MockNode : public rclcpp::Node
+class InitialPoseAdaptor : public rclcpp::Node
 {
 public:
-  MockNode();
+  InitialPoseAdaptor();
 
 private:
-  rclcpp::Service<RequestPoseAlignment>::SharedPtr srv_align_;
+  MapFitModule map_fit_;
+  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr sub_initial_pose_;
+  component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
+  std::array<double, 36> rviz_particle_covariance_;
 
-  void OnNdtAlign(ROS_SERVICE_ARG(RequestPoseAlignment, req, res));
+  void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
 };
 
-#endif  // MOCK_HPP_
+#endif  // LIB__INITIAL_POSE_ADAPTOR_HPP_

@@ -12,33 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_SPECS__LOCALIZATION__INITIALIZATION_HPP_
-#define COMPONENT_INTERFACE_SPECS__LOCALIZATION__INITIALIZATION_HPP_
+#ifndef COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
+#define COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_ad_api_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_ad_api_msgs/srv/initialize_localization.hpp>
 
-namespace localization_interface::initialization
+namespace localization_interface
 {
 
 struct Initialize
 {
   using Service = autoware_ad_api_msgs::srv::InitializeLocalization;
-  static constexpr char name[] = "/localization/api/initialize";
+  static constexpr char name[] = "/localization/initialize";
 };
 
-struct State
+struct InitializationState
 {
   using Message = autoware_ad_api_msgs::msg::LocalizationInitializationState;
-  static constexpr char name[] = "/localization/api/initialization_state";
+  static constexpr char name[] = "/localization/initialization_state";
   static constexpr double default_hz = 0.0;
   static constexpr size_t depth = 3;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace localization_interface::initialization
+}  // namespace localization_interface
 
-#endif  // COMPONENT_INTERFACE_SPECS__LOCALIZATION__INITIALIZATION_HPP_
+#endif  // COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_

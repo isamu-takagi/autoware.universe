@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INITIALIZER_AUTO_HPP_
-#define POSE_INITIALIZER_AUTO_HPP_
+#ifndef LIB__AUTOMATIC_API_CALLER_HPP_
+#define LIB__AUTOMATIC_API_CALLER_HPP_
 
-#include <component_interface_specs/localization/initialization.hpp>
+#include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-class PoseInitializerAuto : public rclcpp::Node
+class AutomaticApiCaller : public rclcpp::Node
 {
 public:
-  PoseInitializerAuto();
+  AutomaticApiCaller();
 
 private:
   void OnTimer();
-  using Initialize = localization_interface::initialization::Initialize;
-  using State = localization_interface::initialization::State;
+  using Initialize = localization_interface::Initialize;
+  using State = localization_interface::InitializationState;
   rclcpp::TimerBase::SharedPtr timer_;
   component_interface_utils::Subscription<State>::SharedPtr sub_state_;
   component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
   State::Message state_;
 };
 
-#endif  // POSE_INITIALIZER_AUTO_HPP_
+#endif  // LIB__AUTOMATIC_API_CALLER_HPP_

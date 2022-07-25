@@ -15,7 +15,7 @@
 #include "pose_initializer_core.hpp"
 
 #include "copy_vector_to_array.hpp"
-#include "initialpose_gnss_helper.hpp"
+#include "gnss_module.hpp"
 
 #include <memory>
 #include <vector>
@@ -33,7 +33,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
 
   if (declare_parameter("gnss_support", true)) {
-    gnss_ = std::make_unique<InitialPoseGnssHelper>(this);
+    gnss_ = std::make_unique<GnssModule>(this);
   }
   ChangeState(State::Message::UNINITIALIZED);
 }

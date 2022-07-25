@@ -4,19 +4,15 @@
   <node pkg="pose_initializer" exec="pose_initializer_node" name="pose_initializer_node" output="log">
     <param from="$(var config_file)"/>
     <param name="gnss_support" value="true"/>
+    <param name="gnss_pose_timeout" value="3.0"/>
     <remap from="gnss_pose_cov" to="/sensing/gnss/pose_with_covariance"/>
     <remap from="ndt_align_srv" to="/localization/pose_estimator/ndt_align_srv"/>
     <remap from="ekf_reset_srv" to="/initialpose3d"/>
   </node>
 
-  <node pkg="pose_initializer" exec="pose_initializer_rviz" name="pose_initializer_rviz" output="log">
+  <node pkg="pose_initializer" exec="initial_pose_adaptor" name="initial_pose_adaptor" output="log">
     <param from="$(var config_file)"/>
     <remap from="initialpose" to="/initialpose"/>
     <remap from="pointcloud_map" to="/map/pointcloud_map"/>
   </node>
-
-  <!--
-  <node pkg="pose_initializer" exec="pose_initializer_rviz" name="pose_initializer_auto" output="log">
-  </node>
-  -->
 </launch>

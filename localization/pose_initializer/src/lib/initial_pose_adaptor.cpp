@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "initialpose_rviz_helper.hpp"
+#include "initial_pose_adaptor.hpp"
 
 #include "copy_vector_to_array.hpp"
 
 #include <memory>
 
-InitialPoseRvizHelper::InitialPoseRvizHelper() : Node("initial_pose_rviz_helper"), fit_map_(this)
+InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_rviz_helper"), map_fit_(this)
 {
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_cli(cli_initialize_);
 
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "initialpose", rclcpp::QoS(1),
-    std::bind(&InitialPoseRvizHelper::OnInitialPose, this, std::placeholders::_1));
+    std::bind(&InitialPoseAdaptor::OnInitialPose, this, std::placeholders::_1));
 
   rviz_particle_covariance_ = GetCovarianceParameter(this, "initialpose_particle_covariance");
 }
 
-void InitialPoseRvizHelper::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
+void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
   try {
     const auto req = std::make_shared<Initialize::Service::Request>();
-    req->pose.push_back(fit_map_.FitHeight(*msg));
+    req->pose.push_back(map_fit_.FitHeight(*msg));
     req->pose.back().pose.covariance = rviz_particle_covariance_;
     cli_initialize_->async_send_request(req);
   } catch (const component_interface_utils::ServiceException & error) {
