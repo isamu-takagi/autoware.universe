@@ -23,7 +23,7 @@ LocalizationNode::LocalizationNode(const rclcpp::NodeOptions & options)
   const auto node = component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.relay_message(pub_state_, sub_state_);
-  node.relay_service(cli_initialize_, srv_initialize_, group_srv_);  // TODO(Takagi, Isamu): timeout
+  node.relay_service(cli_initialize_, srv_initialize_, group_srv_);
 }
 
 }  // namespace default_ad_api
