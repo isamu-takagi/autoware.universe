@@ -12,15 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_initializer_core.hpp"
+#include <rclcpp/rclcpp.hpp>
 
+#include <iostream>
 #include <memory>
+
+class TestNode : public rclcpp::Node
+{
+public:
+  TestNode();
+
+private:
+  int state_;
+  rclcpp::TimerBase::SharedPtr timer_;
+};
+
+TestNode::TestNode() : Node("test")
+{
+  state_ = 12345;
+
+  const auto on_timer = [&](rclcpp::TimerBase & timer) {
+    (void)timer;
+    std::cout << " " << this << std::endl;
+  };
+
+  const auto period = rclcpp::Rate(1.0).period();
+  timer_ = rclcpp::create_timer(this, get_clock(), period, on_timer);
+}
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<PoseInitializer>();
+  rclcpp::executors::SingleThreadedExecutor executor;
+  auto node = std::make_shared<TestNode>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);
