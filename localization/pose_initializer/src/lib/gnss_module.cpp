@@ -17,8 +17,6 @@
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 
-using Initialize = localization_interface::Initialize;
-
 GnssModule::GnssModule(rclcpp::Node * node) : map_fit_(node)
 {
   sub_gnss_pose_ = node->create_subscription<PoseWithCovarianceStamped>(
@@ -32,6 +30,8 @@ void GnssModule::OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg) { gns
 
 PoseWithCovarianceStamped GnssModule::GetPose() const
 {
+  using Initialize = localization_interface::Initialize;
+
   if (!gnss_pose_) {
     throw component_interface_utils::ServiceException(
       Initialize::Service::Response::ERROR_GNSS, "The GNSS pose has not arrived.");

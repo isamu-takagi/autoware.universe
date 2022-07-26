@@ -8,6 +8,7 @@ find_package(PCL REQUIRED COMPONENTS common)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/lib/pose_initializer_core.cpp
+  src/lib/stop_check_module.cpp
   src/lib/gnss_module.cpp
   src/lib/map_fit_module.cpp
   src/lib/initial_pose_adaptor.cpp
