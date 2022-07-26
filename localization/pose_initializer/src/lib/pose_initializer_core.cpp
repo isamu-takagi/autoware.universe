@@ -33,11 +33,14 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
 
-  if (declare_parameter<bool>("gnss_support")) {
+  if (declare_parameter<bool>("gnss_enabled")) {
     gnss_ = std::make_unique<GnssModule>(this);
   }
-  stop_check_duration_ = declare_parameter<double>("stop_check_duration");
-  stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);  // Add margin.
+  if (declare_parameter<bool>("stop_check_enabled")) {
+    // Add 1.0 sec margin for twist buffer.
+    stop_check_duration_ = declare_parameter<double>("stop_check_duration");
+    stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);
+  }
   ChangeState(State::Message::UNINITIALIZED);
 }
 

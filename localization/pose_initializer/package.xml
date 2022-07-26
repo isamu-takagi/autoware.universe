@@ -13,7 +13,6 @@
 
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
-  <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>
   <depend>motion_utils</depend>

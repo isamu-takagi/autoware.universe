@@ -14,8 +14,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/lib/initial_pose_adaptor.cpp
   src/lib/automatic_api_caller.cpp
 )
-# fmt often fails to automatically link so manually specify here
-target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} fmt)
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES})
 
 ament_auto_add_executable(pose_initializer_node src/pose_initializer_node.cpp)
 ament_auto_add_executable(initial_pose_adaptor src/initial_pose_adaptor.cpp)

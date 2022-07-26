@@ -3,9 +3,10 @@
 
   <node pkg="pose_initializer" exec="pose_initializer_node" name="pose_initializer_node" output="log">
     <param from="$(var config_file)"/>
+    <param name="stop_check_enabled" value="true"/>
     <param name="stop_check_duration" value="5.0"/>
     <remap from="stop_check_twist" to="/sensing/vehicle_velocity_converter/twist_with_covariance"/>
-    <param name="gnss_support" value="true"/>
+    <param name="gnss_enabled" value="true"/>
     <param name="gnss_pose_timeout" value="3.0"/>
     <remap from="gnss_pose_cov" to="/sensing/gnss/pose_with_covariance"/>
     <remap from="ndt_align_srv" to="/localization/pose_estimator/ndt_align_srv"/>
