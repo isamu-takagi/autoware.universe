@@ -50,7 +50,7 @@ private:
   std::array<double, 36> output_pose_covariance_;
   std::array<double, 36> gnss_particle_covariance_;
   std::unique_ptr<GnssModule> gnss_;
-  std::unique_ptr<StopCheckModule> stop_;
+  std::unique_ptr<StopCheckModule> stop_check_;
   double stop_check_duration_;
 
   void ChangeState(State::Message::_state_type state);

@@ -23,7 +23,7 @@ GnssModule::GnssModule(rclcpp::Node * node) : map_fit_(node)
     "gnss_pose_cov", 1, std::bind(&GnssModule::OnGnssPose, this, std::placeholders::_1));
 
   clock_ = node->get_clock();
-  timeout_ = node->declare_parameter<double>("gnss_pose_timeout", 3.0);
+  timeout_ = node->declare_parameter<double>("gnss_pose_timeout");
 }
 
 void GnssModule::OnGnssPose(PoseWithCovarianceStamped::ConstSharedPtr msg) { gnss_pose_ = msg; }

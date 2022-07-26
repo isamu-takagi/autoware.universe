@@ -18,12 +18,11 @@ StopCheckModule::StopCheckModule(rclcpp::Node * node, double buffer_duration)
 : VehicleStopCheckerBase(node, buffer_duration)
 {
   sub_twist_ = node->create_subscription<TwistWithCovarianceStamped>(
-    "gnss_pose_cov", 1, std::bind(&StopCheckModule::OnTwist, this, std::placeholders::_1));
+    "stop_check_twist", 1, std::bind(&StopCheckModule::OnTwist, this, std::placeholders::_1));
 }
 
 void StopCheckModule::OnTwist(TwistWithCovarianceStamped::ConstSharedPtr msg)
 {
-  RCLCPP_INFO_STREAM(logger_, "twist");
   TwistStamped twist;
   twist.header = msg->header;
   twist.twist = msg->twist.twist;

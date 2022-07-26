@@ -33,13 +33,11 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
 
-  if (declare_parameter("gnss_support", true)) {
+  if (declare_parameter<bool>("gnss_support")) {
     gnss_ = std::make_unique<GnssModule>(this);
   }
-
-  stop_check_duration_ = declare_parameter<double>("stop_check_duration", 5.0);
-  stop_ = std::make_unique<StopCheckModule>(this);
-
+  stop_check_duration_ = declare_parameter<double>("stop_check_duration");
+  stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);  // Add margin.
   ChangeState(State::Message::UNINITIALIZED);
 }
 
@@ -58,7 +56,7 @@ void PoseInitializer::ChangeState(State::Message::_state_type state)
 void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
 {
   // NOTE: This function is not executed during initialization because mutually exclusive.
-  if (stop_ && !stop_->isVehicleStopped(stop_check_duration_)) {
+  if (stop_check_ && !stop_check_->isVehicleStopped(stop_check_duration_)) {
     throw ServiceException(
       Initialize::Service::Response::ERROR_UNSAFE, "The vehicle is not stopped.");
   }
