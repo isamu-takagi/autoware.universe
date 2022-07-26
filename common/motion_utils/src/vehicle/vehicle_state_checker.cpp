@@ -51,7 +51,7 @@ bool VehicleStopCheckerBase::isVehicleStopped(const double stop_duration) const
     return false;
   }
 
-  constexpr double stop_velocity = 1e-3;
+  constexpr double squared_stop_velocity = 1e-3 * 1e-3;
   const auto now = clock_->now();
 
   const auto time_buffer_back = now - twist_buffer_.back().header.stamp;
@@ -61,7 +61,11 @@ bool VehicleStopCheckerBase::isVehicleStopped(const double stop_duration) const
 
   // Get velocities within stop_duration
   for (const auto & velocity : twist_buffer_) {
-    if (stop_velocity <= velocity.twist.linear.x) {
+    double x = velocity.twist.linear.x;
+    double y = velocity.twist.linear.y;
+    double z = velocity.twist.linear.z;
+    double v = (x * x) + (y * y) + (z * z);
+    if (squared_stop_velocity <= v) {
       return false;
     }
 
@@ -88,10 +92,10 @@ void VehicleStopChecker::onOdom(const Odometry::SharedPtr msg)
 {
   odometry_ptr_ = msg;
 
-  auto current_velocity = std::make_shared<TwistStamped>();
-  current_velocity->header = msg->header;
-  current_velocity->twist = msg->twist.twist;
-  addTwist(*current_velocity);
+  TwistStamped current_velocity;
+  current_velocity.header = msg->header;
+  current_velocity.twist = msg->twist.twist;
+  addTwist(current_velocity);
 }
 
 VehicleArrivalChecker::VehicleArrivalChecker(rclcpp::Node * node) : VehicleStopChecker(node)
