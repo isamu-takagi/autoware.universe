@@ -9,8 +9,8 @@
     <param name="gnss_enabled" value="true"/>
     <param name="gnss_pose_timeout" value="3.0"/>
     <remap from="gnss_pose_cov" to="/sensing/gnss/pose_with_covariance"/>
-    <remap from="ndt_align_srv" to="/localization/pose_estimator/ndt_align_srv"/>
-    <remap from="ekf_reset_srv" to="/initialpose3d"/>
+    <remap from="ndt_align" to="/localization/pose_estimator/ndt_align_srv"/>
+    <remap from="ekf_reset" to="/initialpose3d"/>
   </node>
 
   <node pkg="pose_initializer" exec="initial_pose_adaptor" name="initial_pose_adaptor" output="log">

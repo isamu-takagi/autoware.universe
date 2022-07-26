@@ -27,8 +27,8 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   node.init_pub(pub_state_);
   node.init_srv(srv_initialize_, BIND_SERVICE(this, OnInitialize), group_srv_);
-  pub_align_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset_srv", 1);
-  cli_align_ = create_client<RequestPoseAlignment>("ndt_align_srv");
+  pub_align_ = create_publisher<PoseWithCovarianceStamped>("ekf_reset", 1);
+  cli_align_ = create_client<RequestPoseAlignment>("ndt_align");
 
   output_pose_covariance_ = GetCovarianceParameter(this, "output_pose_covariance");
   gnss_particle_covariance_ = GetCovarianceParameter(this, "gnss_particle_covariance");
