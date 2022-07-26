@@ -20,17 +20,32 @@
 
 namespace motion_utils
 {
-VehicleStopChecker::VehicleStopChecker(rclcpp::Node * node)
+VehicleStopCheckerBase::VehicleStopCheckerBase(rclcpp::Node * node, double buffer_duration)
 : clock_(node->get_clock()), logger_(node->get_logger())
 {
-  using std::placeholders::_1;
-
-  sub_odom_ = node->create_subscription<Odometry>(
-    "/localization/kinematic_state", rclcpp::QoS(1),
-    std::bind(&VehicleStopChecker::onOdom, this, _1));
+  buffer_duration_ = buffer_duration;
 }
 
-bool VehicleStopChecker::isVehicleStopped(const double stop_duration) const
+void VehicleStopCheckerBase::addTwist(const TwistStamped & twist)
+{
+  twist_buffer_.push_front(twist);
+
+  const auto now = clock_->now();
+  while (true) {
+    // Check oldest data time
+    const auto time_diff = now - twist_buffer_.back().header.stamp;
+
+    // Finish when oldest data is newer than threshold
+    if (time_diff.seconds() <= buffer_duration_) {
+      break;
+    }
+
+    // Remove old data
+    twist_buffer_.pop_back();
+  }
+}
+
+bool VehicleStopCheckerBase::isVehicleStopped(const double stop_duration) const
 {
   if (twist_buffer_.empty()) {
     return false;
@@ -59,6 +74,16 @@ bool VehicleStopChecker::isVehicleStopped(const double stop_duration) const
   return true;
 }
 
+VehicleStopChecker::VehicleStopChecker(rclcpp::Node * node)
+: VehicleStopCheckerBase(node, velocity_buffer_time_sec)
+{
+  using std::placeholders::_1;
+
+  sub_odom_ = node->create_subscription<Odometry>(
+    "/localization/kinematic_state", rclcpp::QoS(1),
+    std::bind(&VehicleStopChecker::onOdom, this, _1));
+}
+
 void VehicleStopChecker::onOdom(const Odometry::SharedPtr msg)
 {
   odometry_ptr_ = msg;
@@ -66,22 +91,7 @@ void VehicleStopChecker::onOdom(const Odometry::SharedPtr msg)
   auto current_velocity = std::make_shared<TwistStamped>();
   current_velocity->header = msg->header;
   current_velocity->twist = msg->twist.twist;
-
-  twist_buffer_.push_front(*current_velocity);
-
-  const auto now = clock_->now();
-  while (true) {
-    // Check oldest data time
-    const auto time_diff = now - twist_buffer_.back().header.stamp;
-
-    // Finish when oldest data is newer than threshold
-    if (time_diff.seconds() <= velocity_buffer_time_sec) {
-      break;
-    }
-
-    // Remove old data
-    twist_buffer_.pop_back();
-  }
+  addTwist(*current_velocity);
 }
 
 VehicleArrivalChecker::VehicleArrivalChecker(rclcpp::Node * node) : VehicleStopChecker(node)
