@@ -15,24 +15,21 @@
 #ifndef LIB__STOP_CHECK_MODULE_HPP_
 #define LIB__STOP_CHECK_MODULE_HPP_
 
+#include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
-class StopCheckModule
+class StopCheckModule : public motion_utils::VehicleStopCheckerBase
 {
 public:
-  explicit StopCheckModule(rclcpp::Node * node);
-  bool IsStopped() const;
+  StopCheckModule(rclcpp::Node * node, double buffer_duration);
 
 private:
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
-  // rclcpp::Clock::SharedPtr clock_;
+  using TwistStamped = geometry_msgs::msg::TwistStamped;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr sub_twist_;
-  TwistWithCovarianceStamped::ConstSharedPtr twist_;
-  double duration_;
-
   void OnTwist(TwistWithCovarianceStamped::ConstSharedPtr msg);
 };
 

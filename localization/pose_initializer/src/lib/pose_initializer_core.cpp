@@ -16,6 +16,7 @@
 
 #include "copy_vector_to_array.hpp"
 #include "gnss_module.hpp"
+#include "stop_check_module.hpp"
 
 #include <memory>
 #include <vector>
@@ -35,6 +36,10 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   if (declare_parameter("gnss_support", true)) {
     gnss_ = std::make_unique<GnssModule>(this);
   }
+
+  stop_check_duration_ = declare_parameter<double>("stop_check_duration", 5.0);
+  stop_ = std::make_unique<StopCheckModule>(this);
+
   ChangeState(State::Message::UNINITIALIZED);
 }
 
@@ -53,6 +58,10 @@ void PoseInitializer::ChangeState(State::Message::_state_type state)
 void PoseInitializer::OnInitialize(API_SERVICE_ARG(Initialize, req, res))
 {
   // NOTE: This function is not executed during initialization because mutually exclusive.
+  if (stop_ && !stop_->isVehicleStopped(stop_check_duration_)) {
+    throw ServiceException(
+      Initialize::Service::Response::ERROR_UNSAFE, "The vehicle is not stopped.");
+  }
   try {
     ChangeState(State::Message::INITIALIZING);
     const auto request_pose = req->pose.empty() ? GetGnssPose() : req->pose.front();

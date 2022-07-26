@@ -31,6 +31,7 @@ using State = localization_interface::InitializationState;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
 
+class StopCheckModule;
 class GnssModule;
 
 class PoseInitializer : public rclcpp::Node
@@ -49,6 +50,8 @@ private:
   std::array<double, 36> output_pose_covariance_;
   std::array<double, 36> gnss_particle_covariance_;
   std::unique_ptr<GnssModule> gnss_;
+  std::unique_ptr<StopCheckModule> stop_;
+  double stop_check_duration_;
 
   void ChangeState(State::Message::_state_type state);
   void OnInitialize(API_SERVICE_ARG(Initialize, res, req));
