@@ -30,7 +30,7 @@ def _create_api_node(node_name, class_name, **kwargs):
 
 def generate_launch_description():
     components = [
-        # _create_api_node("interface", "InterfaceNode"),
+        _create_api_node("interface", "InterfaceNode"),
         # _create_api_node("driving", "DrivingNode"),
         # _create_api_node("motion", "MotionNode"),
         # _create_api_node("route", "RouteNode"),
@@ -48,5 +48,4 @@ def generate_launch_description():
         name="web_server",
         executable="web_server.py",
     )
-    # return launch.LaunchDescription([container, web_server])
-    return launch.LaunchDescription([container])
+    return launch.LaunchDescription([container, web_server])
