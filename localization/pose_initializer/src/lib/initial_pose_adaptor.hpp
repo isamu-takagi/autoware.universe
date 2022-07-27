@@ -17,14 +17,14 @@
 
 #include "map_fit_module.hpp"
 
-#include <component_interface_specs/localization.hpp>
+#include <autoware_ad_api_specs/localization.hpp>
 #include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
-using Initialize = localization_interface::Initialize;
+using Initialize = autoware_ad_api::localization::Initialize;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
 class InitialPoseAdaptor : public rclcpp::Node

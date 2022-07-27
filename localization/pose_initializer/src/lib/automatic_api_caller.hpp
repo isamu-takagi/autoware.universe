@@ -15,7 +15,8 @@
 #ifndef LIB__AUTOMATIC_API_CALLER_HPP_
 #define LIB__AUTOMATIC_API_CALLER_HPP_
 
-#include <component_interface_specs/localization.hpp>
+#include <autoware_ad_api_specs/localization.hpp>
+#include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -26,11 +27,12 @@ public:
 
 private:
   void OnTimer();
-  using Initialize = localization_interface::Initialize;
-  using State = localization_interface::InitializationState;
+  using Initialize = autoware_ad_api::localization::Initialize;
+  using State = autoware_ad_api::localization::InitializationState;
+  rclcpp::CallbackGroup::SharedPtr group_cli_;
   rclcpp::TimerBase::SharedPtr timer_;
-  component_interface_utils::Subscription<State>::SharedPtr sub_state_;
   component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
+  component_interface_utils::Subscription<State>::SharedPtr sub_state_;
   State::Message state_;
 };
 
