@@ -83,7 +83,8 @@ public:
     using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
     using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
     init_cli(cli);
-    init_srv(srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+    init_srv(
+      srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
   }
 
 private:
