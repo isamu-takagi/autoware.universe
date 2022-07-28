@@ -12,24 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
-
-#include <lanelet2_routing/Route.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-#include <visualization_msgs/msg/marker_array.h>
-*/
-
 #include "rviz_adaptor.hpp"
 
 #include <memory>
-#include <string>
 
 RvizAdaptor::RvizAdaptor(const rclcpp::NodeOptions & options)
 : Node("rviz_routing_adaptor", options)

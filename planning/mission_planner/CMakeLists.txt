@@ -31,6 +31,9 @@ rclcpp_components_register_node(rviz_adaptor
   EXECUTABLE rviz_adaptor_node
 )
 
-ament_auto_package(INSTALL_TO_SHARE
-  launch
+ament_auto_add_library(${PROJECT_NAME}_lanelet2_plugins SHARED
+  src/lanelet2_plugins/default.cpp
 )
+pluginlib_export_plugin_description_file(mission_planner plugins/plugin_description.xml)
+
+ament_auto_package(INSTALL_TO_SHARE launch)

@@ -54,7 +54,7 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
   PoseStamped GetEgoVehiclePose();
-  PoseStamped TransformPose(const PoseStamped & input, const std::string & frame);
+  PoseStamped TransformPose(const PoseStamped & input);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<HADMapRoute>::SharedPtr pub_route_;
