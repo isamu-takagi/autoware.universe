@@ -24,6 +24,15 @@ rclcpp_components_register_node(goal_pose_visualizer_node
   EXECUTABLE goal_pose_visualizer
 )
 
+ament_auto_add_library(rviz_adaptor_node SHARED
+  src/temp/rviz_adaptor.cpp
+)
+
+rclcpp_components_register_node(rviz_adaptor_node
+  PLUGIN "RvizAdaptor"
+  EXECUTABLE rviz_adaptor
+)
+
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
