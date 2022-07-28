@@ -18,14 +18,17 @@
 
 namespace mission_planner
 {
-MissionPlanner::MissionPlanner(const std::string & name, const rclcpp::NodeOptions & options)
-: Node(name, options),
+MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
+: Node("mission_planner", options),
   plugin_loader_("mission_planner", "mission_planner::MissionPlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_)
 {
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
+
+  RCLCPP_INFO_STREAM(get_logger(), "create plugin loader");
+  RCLCPP_INFO_STREAM(get_logger(), "create plugin loader");
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   pub_route_ = create_publisher<HADMapRoute>("output/route", durable_qos);
@@ -72,13 +75,12 @@ void MissionPlanner::publish(const HADMapRoute & route) const
   if (!route.segments.empty()) {
     RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
     pub_route_->publish(route);
-    pub_marker_->publish(plugin_->visualize(route));
+    // pub_marker_->publish(plugin_->Visualize(route));
   } else {
     RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
   }
 }
 
-// API_SERVICE_ARG
 void MissionPlanner::onSetRoute(API_SERVICE_ARG(SetRoute, req, res))
 {
   (void)req;
@@ -89,66 +91,69 @@ void MissionPlanner::onSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
 {
   (void)req;
   (void)res;
-
-  /*
-  using component_interface_utils::response_error;
-  using component_interface_utils::response_success;
-  std::vector<geometry_msgs::msg::PoseStamped> waypoints;
-  std::vector<geometry_msgs::msg::PoseStamped> transformed_waypoints;
-
-  // set start pose
-  if (request->start.empty()) {
-    geometry_msgs::msg::PoseStamped base_link;
-    base_link.header.frame_id = base_link_frame_;
-    base_link.pose.orientation.w = 1;
-    waypoints.push_back(base_link);
-  } else {
-    geometry_msgs::msg::PoseStamped start;
-    start.header = request->header;
-    start.pose = request->start[0];
-    waypoints.push_back(start);
-  }
-
-  // set waypoint poses
-  for (const auto & pose : request->waypoints) {
-    geometry_msgs::msg::PoseStamped waypoint;
-    waypoint.header = request->header;
-    waypoint.pose = pose;
-    waypoints.push_back(waypoint);
-  }
-
-  // set goal pose
-  {
-    geometry_msgs::msg::PoseStamped goal;
-    goal.header = request->header;
-    goal.pose = request->goal;
-    waypoints.push_back(goal);
-  }
-
-  // transform waypoints
-  for (const auto & waypoint : waypoints) {
-    geometry_msgs::msg::PoseStamped transformed;
-    if (!transformPose(waypoint, &transformed, map_frame_)) {
-      response->status = response_error(0, "Failed to transform waypoints.");
-      return;
-    }
-    transformed_waypoints.push_back(transformed);
-  }
-
-  RCLCPP_INFO(get_logger(), "New route is set. Reset checkpoints.");
-  start_pose_ = transformed_waypoints.front();
-  goal_pose_ = transformed_waypoints.back();
-  checkpoints_ = transformed_waypoints;
-
-  if (!isRoutingGraphReady()) {
-    response->status = response_error(0, "RoutingGraph is not ready.");
-    return;
-  }
-
-  autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
-  publishRoute(route);
-  response->status = response_success();
-  */
 }
 
+/*
+using component_interface_utils::response_error;
+using component_interface_utils::response_success;
+std::vector<geometry_msgs::msg::PoseStamped> waypoints;
+std::vector<geometry_msgs::msg::PoseStamped> transformed_waypoints;
+
+// set start pose
+if (request->start.empty()) {
+  geometry_msgs::msg::PoseStamped base_link;
+  base_link.header.frame_id = base_link_frame_;
+  base_link.pose.orientation.w = 1;
+  waypoints.push_back(base_link);
+} else {
+  geometry_msgs::msg::PoseStamped start;
+  start.header = request->header;
+  start.pose = request->start[0];
+  waypoints.push_back(start);
+}
+
+// set waypoint poses
+for (const auto & pose : request->waypoints) {
+  geometry_msgs::msg::PoseStamped waypoint;
+  waypoint.header = request->header;
+  waypoint.pose = pose;
+  waypoints.push_back(waypoint);
+}
+
+// set goal pose
+{
+  geometry_msgs::msg::PoseStamped goal;
+  goal.header = request->header;
+  goal.pose = request->goal;
+  waypoints.push_back(goal);
+}
+
+// transform waypoints
+for (const auto & waypoint : waypoints) {
+  geometry_msgs::msg::PoseStamped transformed;
+  if (!transformPose(waypoint, &transformed, map_frame_)) {
+    response->status = response_error(0, "Failed to transform waypoints.");
+    return;
+  }
+  transformed_waypoints.push_back(transformed);
+}
+
+RCLCPP_INFO(get_logger(), "New route is set. Reset checkpoints.");
+start_pose_ = transformed_waypoints.front();
+goal_pose_ = transformed_waypoints.back();
+checkpoints_ = transformed_waypoints;
+
+if (!isRoutingGraphReady()) {
+  response->status = response_error(0, "RoutingGraph is not ready.");
+  return;
+}
+
+autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
+publishRoute(route);
+response->status = response_success();
+*/
+
 }  // namespace mission_planner
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(mission_planner::MissionPlanner)

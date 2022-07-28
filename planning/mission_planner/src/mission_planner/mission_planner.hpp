@@ -35,7 +35,6 @@
 
 namespace mission_planner
 {
-
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
@@ -45,7 +44,7 @@ using SetRoute = planning_interface::SetRoute;
 class MissionPlanner : public rclcpp::Node
 {
 public:
-  MissionPlanner(const std::string & name, const rclcpp::NodeOptions & options);
+  explicit MissionPlanner(const rclcpp::NodeOptions & options);
 
 private:
   pluginlib::ClassLoader<MissionPlannerPlugin> plugin_loader_;
@@ -55,7 +54,7 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
   PoseStamped getEgoVehiclePose();
-  PoseStamped transformPose(const PoseStamped & input_pose, const std::string & target_frame);
+  PoseStamped transformPose(const PoseStamped & input, const std::string & frame);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<HADMapRoute>::SharedPtr pub_route_;
