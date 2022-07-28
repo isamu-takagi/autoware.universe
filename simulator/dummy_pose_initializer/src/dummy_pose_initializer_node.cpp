@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/initial_pose_adaptor.hpp"
+#include "dummy_pose_initializer_core.hpp"
 
 #include <memory>
 
@@ -20,7 +20,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<InitialPoseAdaptor>();
+  auto node = std::make_shared<DummyPoseInitializer>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);
