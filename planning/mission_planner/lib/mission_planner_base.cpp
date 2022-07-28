@@ -14,7 +14,7 @@
 
 #include "mission_planner/mission_planner_base.hpp"
 
-#include <component_interface_utils/response.hpp>
+#include <component_interface_utils/macros.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
@@ -39,14 +39,11 @@ MissionPlanner::MissionPlanner(
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
 
   using std::placeholders::_1;
-  using std::placeholders::_2;
 
   goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/goal_pose", 10, std::bind(&MissionPlanner::goalPoseCallback, this, _1));
   checkpoint_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/checkpoint", 10, std::bind(&MissionPlanner::checkpointCallback, this, _1));
-  route_set_service_ = create_service<autoware_ad_api_msgs::srv::RouteSet>(
-    "~/api/route/set", std::bind(&MissionPlanner::routeSetCallback, this, _1, _2));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -54,6 +51,10 @@ MissionPlanner::MissionPlanner(
     create_publisher<autoware_auto_planning_msgs::msg::HADMapRoute>("output/route", durable_qos);
   marker_publisher_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("debug/route_marker", durable_qos);
+
+  const auto node = component_interface_utils::NodeAdaptor(this);
+  node.init_srv(srv_route_points_, BIND_SERVICE(this, onSetRoutePoints));
+  node.init_srv(srv_route_, BIND_SERVICE(this, onSetRoute));
 }
 
 bool MissionPlanner::getEgoVehiclePose(geometry_msgs::msg::PoseStamped * ego_vehicle_pose)
@@ -141,10 +142,34 @@ void MissionPlanner::checkpointCallback(
   publishRoute(route);
 }
 
-void MissionPlanner::routeSetCallback(
-  const autoware_ad_api_msgs::srv::RouteSet::Request::SharedPtr request,
-  autoware_ad_api_msgs::srv::RouteSet::Response::SharedPtr response)
+void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
+  if (!route.segments.empty()) {
+    RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
+    route_publisher_->publish(route);
+    visualizeRoute(route);
+  } else {
+    RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
+  }
+}
+
+// API_SERVICE_ARG
+void MissionPlanner::onSetRoutePoints(
+  const planning_interface::SetRoutePoints::Service::Request::SharedPtr request,
+  const planning_interface::SetRoutePoints::Service::Response::SharedPtr response)
+{
+  (void)request;
+  (void)response;
+}
+
+void MissionPlanner::onSetRoute(
+  const planning_interface::SetRoute::Service::Request::SharedPtr request,
+  const planning_interface::SetRoute::Service::Response::SharedPtr response)
+{
+  (void)request;
+  (void)response;
+
+  /*
   using component_interface_utils::response_error;
   using component_interface_utils::response_success;
   std::vector<geometry_msgs::msg::PoseStamped> waypoints;
@@ -202,17 +227,7 @@ void MissionPlanner::routeSetCallback(
   autoware_auto_planning_msgs::msg::HADMapRoute route = planRoute();
   publishRoute(route);
   response->status = response_success();
-}
-
-void MissionPlanner::publishRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
-{
-  if (!route.segments.empty()) {
-    RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
-    route_publisher_->publish(route);
-    visualizeRoute(route);
-  } else {
-    RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
-  }
+  */
 }
 
 }  // namespace mission_planner

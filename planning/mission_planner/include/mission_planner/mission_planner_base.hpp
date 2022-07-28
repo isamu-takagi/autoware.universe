@@ -15,9 +15,10 @@
 #ifndef MISSION_PLANNER__MISSION_PLANNER_BASE_HPP_
 #define MISSION_PLANNER__MISSION_PLANNER_BASE_HPP_
 
+#include <component_interface_specs/planning.hpp>
+#include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/srv/route_set.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -55,7 +56,6 @@ private:
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_publisher_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_subscriber_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr checkpoint_subscriber_;
-  rclcpp::Service<autoware_ad_api_msgs::srv::RouteSet>::SharedPtr route_set_service_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -63,13 +63,22 @@ private:
   bool getEgoVehiclePose(geometry_msgs::msg::PoseStamped * ego_vehicle_pose);
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr);
   void checkpointCallback(const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr);
-  void routeSetCallback(
-    const autoware_ad_api_msgs::srv::RouteSet::Request::SharedPtr request,
-    autoware_ad_api_msgs::srv::RouteSet::Response::SharedPtr response);
   bool transformPose(
     const geometry_msgs::msg::PoseStamped & input_pose,
     geometry_msgs::msg::PoseStamped * output_pose, const std::string target_frame);
+
+  using SetRoutePoints = planning_interface::SetRoutePoints;
+  using SetRoute = planning_interface::SetRoute;
+  component_interface_utils::Service<SetRoutePoints>::SharedPtr srv_route_points_;
+  component_interface_utils::Service<SetRoute>::SharedPtr srv_route_;
+  void onSetRoutePoints(
+    const planning_interface::SetRoutePoints::Service::Request::SharedPtr request,
+    const planning_interface::SetRoutePoints::Service::Response::SharedPtr response);
+  void onSetRoute(
+    const planning_interface::SetRoute::Service::Request::SharedPtr request,
+    const planning_interface::SetRoute::Service::Response::SharedPtr response);
 };
 
 }  // namespace mission_planner
+
 #endif  // MISSION_PLANNER__MISSION_PLANNER_BASE_HPP_
