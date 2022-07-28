@@ -18,6 +18,7 @@
 
 namespace mission_planner
 {
+
 MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 : Node("mission_planner", options),
   plugin_loader_("mission_planner", "mission_planner::MissionPlannerPlugin"),
@@ -27,8 +28,11 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
 
-  RCLCPP_INFO_STREAM(get_logger(), "create plugin loader");
-  RCLCPP_INFO_STREAM(get_logger(), "create plugin loader");
+  RCLCPP_INFO_STREAM(get_logger(), "The available mission planner plugins are:");
+  for (const auto & name : plugin_loader_.getDeclaredClasses()) {
+    RCLCPP_INFO_STREAM(get_logger(), " - " << name);
+  }
+  planner_ = plugin_loader_.createSharedInstance("mission_planner_plugins::Default");
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   pub_route_ = create_publisher<HADMapRoute>("output/route", durable_qos);
@@ -39,7 +43,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   node.init_srv(srv_route_, BIND_SERVICE(this, onSetRoute));
 }
 
-PoseStamped MissionPlanner::getEgoVehiclePose()
+PoseStamped MissionPlanner::GetEgoVehiclePose()
 {
   geometry_msgs::msg::PoseStamped base_link_origin;
   base_link_origin.header.frame_id = base_link_frame_;
@@ -52,10 +56,10 @@ PoseStamped MissionPlanner::getEgoVehiclePose()
   base_link_origin.pose.orientation.w = 1;
 
   //  transform base_link frame origin to map_frame to get vehicle positions
-  return transformPose(base_link_origin, map_frame_);
+  return TransformPose(base_link_origin, map_frame_);
 }
 
-PoseStamped MissionPlanner::transformPose(const PoseStamped & input, const std::string & frame)
+PoseStamped MissionPlanner::TransformPose(const PoseStamped & input, const std::string & frame)
 {
   PoseStamped output;
   geometry_msgs::msg::TransformStamped transform;
@@ -70,7 +74,7 @@ PoseStamped MissionPlanner::transformPose(const PoseStamped & input, const std::
   }
 }
 
-void MissionPlanner::publish(const HADMapRoute & route) const
+void MissionPlanner::Publish(const HADMapRoute & route) const
 {
   if (!route.segments.empty()) {
     RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
@@ -81,16 +85,18 @@ void MissionPlanner::publish(const HADMapRoute & route) const
   }
 }
 
-void MissionPlanner::onSetRoute(API_SERVICE_ARG(SetRoute, req, res))
+void MissionPlanner::OnSetRoute(API_SERVICE_ARG(SetRoute, req, res))
 {
   (void)req;
   (void)res;
+  RCLCPP_INFO_STREAM(get_logger(), "onSetRoute");
 }
 
-void MissionPlanner::onSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
+void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
 {
   (void)req;
   (void)res;
+  RCLCPP_INFO_STREAM(get_logger(), "onSetRoutePoints");
 }
 
 /*

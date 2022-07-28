@@ -33,10 +33,11 @@ public:
   using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-  explicit MissionPlannerPlugin(rclcpp::Node * node);
-  virtual bool ready() const = 0;
-  virtual HADMapRoute plan(const RoutePoints & points) = 0;
-  virtual MarkerArray visualize(const HADMapRoute & route) const = 0;
+  virtual ~MissionPlannerPlugin() = default;
+  virtual void Initialize(rclcpp::Node * node) = 0;
+  virtual bool Ready() const = 0;
+  virtual HADMapRoute Plan(const RoutePoints & points) = 0;
+  virtual MarkerArray Visualize(const HADMapRoute & route) const = 0;
 };
 
 }  // namespace mission_planner

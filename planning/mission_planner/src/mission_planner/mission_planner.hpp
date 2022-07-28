@@ -48,22 +48,22 @@ public:
 
 private:
   pluginlib::ClassLoader<MissionPlannerPlugin> plugin_loader_;
-  std::shared_ptr<MissionPlannerPlugin> plugin_;
+  std::shared_ptr<MissionPlannerPlugin> planner_;
   std::string base_link_frame_;
   std::string map_frame_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  PoseStamped getEgoVehiclePose();
-  PoseStamped transformPose(const PoseStamped & input, const std::string & frame);
+  PoseStamped GetEgoVehiclePose();
+  PoseStamped TransformPose(const PoseStamped & input, const std::string & frame);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<HADMapRoute>::SharedPtr pub_route_;
-  void publish(const HADMapRoute & route) const;
+  void Publish(const HADMapRoute & route) const;
 
   component_interface_utils::Service<SetRoute>::SharedPtr srv_route_;
   component_interface_utils::Service<SetRoutePoints>::SharedPtr srv_route_points_;
-  void onSetRoute(API_SERVICE_ARG(SetRoute, req, res));
-  void onSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res));
+  void OnSetRoute(API_SERVICE_ARG(SetRoute, req, res));
+  void OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res));
 };
 
 }  // namespace mission_planner

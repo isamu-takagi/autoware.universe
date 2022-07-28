@@ -28,7 +28,7 @@
 class RvizAdaptor : public rclcpp::Node
 {
 public:
-  RvizAdaptor(const std::string & name, const rclcpp::NodeOptions & options);
+  explicit RvizAdaptor(const rclcpp::NodeOptions & options);
 
 private:
   using PoseStamped = geometry_msgs::msg::PoseStamped;

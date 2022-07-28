@@ -31,9 +31,11 @@
 #include <memory>
 #include <string>
 
-RvizAdaptor::RvizAdaptor(const std::string & name, const rclcpp::NodeOptions & options)
-: Node(name, options)
+RvizAdaptor::RvizAdaptor(const rclcpp::NodeOptions & options)
+: Node("rviz_routing_adaptor", options)
 {
+  RCLCPP_INFO_STREAM(get_logger(), "RvizAdaptor");
+
   sub_goal_ = create_subscription<PoseStamped>(
     "input/goal_pose", 5, std::bind(&RvizAdaptor::OnGoal, this, std::placeholders::_1));
   sub_waypoints_ = create_subscription<PoseStamped>(
@@ -46,6 +48,7 @@ RvizAdaptor::RvizAdaptor(const std::string & name, const rclcpp::NodeOptions & o
 
 void RvizAdaptor::OnGoal(const PoseStamped::ConstSharedPtr pose)
 {
+  RCLCPP_INFO_STREAM(get_logger(), "OnGoal");
   route_points_->header = pose->header;
   route_points_->goal = pose->pose;
   route_points_->waypoints.clear();
@@ -82,6 +85,7 @@ void RvizAdaptor::OnGoal(const PoseStamped::ConstSharedPtr pose)
 void RvizAdaptor::OnWaypoint(const PoseStamped::ConstSharedPtr pose)
 {
   (void)pose;
+  RCLCPP_INFO_STREAM(get_logger(), "OnWaypoint");
 
   /*
   if (checkpoints_.size() < 2) {
@@ -105,3 +109,6 @@ void RvizAdaptor::OnWaypoint(const PoseStamped::ConstSharedPtr pose)
   publishRoute(route);
   */
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(RvizAdaptor)
