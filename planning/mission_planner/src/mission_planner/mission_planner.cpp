@@ -37,7 +37,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
     RCLCPP_INFO_STREAM(get_logger(), " - " << name);
   }
 
-  planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::Default");
+  planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->Initialize(this);
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
@@ -127,7 +127,10 @@ void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
   pose.pose = req->goal;
   points.push_back(TransformPose(pose));
 
-  Publish(planner_->Plan(points));
+  HADMapRoute route = planner_->Plan(points);
+  route.header.stamp = now();
+  route.header.frame_id = map_frame_;
+  Publish(route);
 }
 
 }  // namespace mission_planner

@@ -32,7 +32,8 @@ rclcpp_components_register_node(rviz_adaptor
 )
 
 ament_auto_add_library(${PROJECT_NAME}_lanelet2_plugins SHARED
-  src/lanelet2_plugins/default.cpp
+  src/lanelet2_plugins/default_planner.cpp
+  src/lanelet2_plugins/utility_functions.cpp
 )
 pluginlib_export_plugin_description_file(mission_planner plugins/plugin_description.xml)
 
