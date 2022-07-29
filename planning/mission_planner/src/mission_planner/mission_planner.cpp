@@ -25,14 +25,13 @@ namespace mission_planner
 
 MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 : Node("mission_planner", options),
+  arrival_checker_(this),
   plugin_loader_("mission_planner", "mission_planner::MissionPlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_)
 {
-  // create arrival checker
-
-  map_frame_ = declare_parameter("map_frame", "map");
-  base_link_frame_ = declare_parameter("base_link_frame", "base_link");
+  map_frame_ = declare_parameter<std::string>("map_frame");
+  base_link_frame_ = declare_parameter<std::string>("base_link_frame");
 
   planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->Initialize(this);

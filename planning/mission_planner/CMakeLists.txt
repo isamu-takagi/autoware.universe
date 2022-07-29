@@ -6,6 +6,7 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/mission_planner/mission_planner.cpp
+  src/mission_planner/arrival_checker.cpp
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}

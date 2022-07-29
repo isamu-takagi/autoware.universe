@@ -15,6 +15,8 @@
 #ifndef MISSION_PLANNER__MISSION_PLANNER_HPP_
 #define MISSION_PLANNER__MISSION_PLANNER_HPP_
 
+#include "arrival_checker.hpp"
+
 #include <component_interface_specs/planning.hpp>
 #include <component_interface_utils/macros.hpp>
 #include <component_interface_utils/rclcpp.hpp>
@@ -35,6 +37,7 @@
 
 namespace mission_planner
 {
+
 using PoseStamped = geometry_msgs::msg::PoseStamped;
 using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
@@ -50,6 +53,7 @@ public:
   explicit MissionPlanner(const rclcpp::NodeOptions & options);
 
 private:
+  ArrivalChecker arrival_checker_;
   pluginlib::ClassLoader<MissionPlannerPlugin> plugin_loader_;
   std::shared_ptr<MissionPlannerPlugin> planner_;
   std::string base_link_frame_;
