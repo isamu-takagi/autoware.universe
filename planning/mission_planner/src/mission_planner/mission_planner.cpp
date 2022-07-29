@@ -14,6 +14,8 @@
 
 #include "mission_planner.hpp"
 
+#include "type_conversion.hpp"
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -84,21 +86,6 @@ PoseStamped MissionPlanner::TransformPose(const PoseStamped & input)
   }
 }
 
-void MissionPlanner::ChangeRoute(const HADMapRoute & route)
-{
-  // TODO(Takagi, Isamu): arrival_checker_.ResetGoal();
-  arrival_checker_.ResetGoal(route.goal_pose);
-
-  if (!route.segments.empty()) {
-    RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
-    // TODO(Takagi, Isamu): publish api route
-    pub_had_route_->publish(route);
-    pub_marker_->publish(planner_->Visualize(route));
-  } else {
-    RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
-  }
-}
-
 void MissionPlanner::OnArrivalCheck()
 {
   // NOTE: Do not check in the changing state as goal may change.
@@ -107,6 +94,20 @@ void MissionPlanner::OnArrivalCheck()
       ChangeState(RouteState::Message::ARRIVED);
     }
   }
+}
+
+void MissionPlanner::ChangeRoute()
+{
+  arrival_checker_.ResetGoal();
+  pub_api_route_->publish(conversion::CreateEmptyRoute(now()));
+}
+
+void MissionPlanner::ChangeRoute(const HADMapRoute & route)
+{
+  arrival_checker_.ResetGoal(route.goal_pose);
+  pub_api_route_->publish(conversion::ConvertRoute(route));
+  pub_had_route_->publish(route);
+  pub_marker_->publish(planner_->Visualize(route));
 }
 
 void MissionPlanner::ChangeState(RouteState::Message::_state_type state)
@@ -121,10 +122,9 @@ void MissionPlanner::OnClearRoute(API_SERVICE_ARG(ClearRoute, , res))
   // NOTE: The route services should be mutually exclusive by callback group.
   RCLCPP_INFO_STREAM(get_logger(), "ClearRoute");
 
-  // TODO(Takagi, Isamu): Publish(nullopt);
-
-  res->status.success = true;
+  ChangeRoute();
   ChangeState(RouteState::Message::UNSET);
+  res->status.success = true;
 }
 
 void MissionPlanner::OnSetRoute(API_SERVICE_ARG(SetRoute, req, res))
@@ -173,12 +173,17 @@ void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
   points.push_back(TransformPose(pose));
 
   HADMapRoute route = planner_->Plan(points);
+  if (route.segments.empty()) {
+    RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
+    throw component_interface_utils::ServiceException(123, "aaaa");
+  }
   route.header.stamp = now();
   route.header.frame_id = map_frame_;
-  Publish(route);
 
-  res->status.success = true;
+  RCLCPP_INFO(get_logger(), "Route successfully planned.");
+  ChangeRoute(route);
   ChangeState(RouteState::Message::SET);
+  res->status.success = true;
 }
 
 }  // namespace mission_planner

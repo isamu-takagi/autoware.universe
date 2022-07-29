@@ -185,8 +185,9 @@ MissionPlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & point
   RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.pose.position.z);
 
   // The header is assigned by mission planner.
-  route_msg.segments = route_sections;
+  route_msg.start_pose = points.front().pose;
   route_msg.goal_pose = goal.pose;
+  route_msg.segments = route_sections;
   return route_msg;
 }
 

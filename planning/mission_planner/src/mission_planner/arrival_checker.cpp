@@ -36,27 +36,34 @@ ArrivalChecker::ArrivalChecker(rclcpp::Node * node) : vehicle_stop_checker_(node
     [this](const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) { goal_pose_ = msg; });
 }
 
+void ArrivalChecker::ResetGoal()
+{
+  // Disable checking until the modified goal is received.
+  goal_pose_.reset();
+}
+
+// TODO(Takagi, Isamu): remove when modified goal is always published
 void ArrivalChecker::ResetGoal(const geometry_msgs::msg::Pose & goal)
 {
   const auto pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
   pose->pose = goal;
   goal_pose_ = pose;
-
-  // TODO(Takagi, Isamu): remove argument when modified goal is always published
-  // goal_pose_.reset();
 }
 
 bool ArrivalChecker::IsArrived(const geometry_msgs::msg::Pose & pose) const
 {
+  // Check if the modified goal is received.
   if (goal_pose_ == nullptr) {
     return false;
   }
 
+  // Check distance.
   const auto & goal = goal_pose_->pose;
   if (distance_ < tier4_autoware_utils::calcDistance2d(pose, goal)) {
     return false;
   }
 
+  // Check angle.
   const double yaw_pose = tf2::getYaw(pose.orientation);
   const double yaw_goal = tf2::getYaw(goal.orientation);
   const double yaw_diff = tier4_autoware_utils::normalizeRadian(yaw_pose - yaw_goal);
@@ -64,6 +71,7 @@ bool ArrivalChecker::IsArrived(const geometry_msgs::msg::Pose & pose) const
     return false;
   }
 
+  // Check vehicle stopped.
   return vehicle_stop_checker_.isVehicleStopped(duration_);
 }
 

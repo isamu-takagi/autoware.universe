@@ -63,12 +63,13 @@ private:
   PoseStamped GetEgoVehiclePose();
   PoseStamped TransformPose(const PoseStamped & input);
 
-  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
-  rclcpp::Publisher<HADMapRoute>::SharedPtr pub_had_route_;
-  void ChangeRoute(const HADMapRoute & route);
-
   rclcpp::TimerBase::SharedPtr timer_;
   void OnArrivalCheck();
+
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
+  rclcpp::Publisher<HADMapRoute>::SharedPtr pub_had_route_;
+  void ChangeRoute();
+  void ChangeRoute(const HADMapRoute & route);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
