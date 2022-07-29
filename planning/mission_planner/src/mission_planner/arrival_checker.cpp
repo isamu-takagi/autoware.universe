@@ -18,7 +18,7 @@
 
 #include <tf2/utils.h>
 
-// TODO(Takagi, Isamu): remove argument when modified goal is always published
+// TODO(Takagi, Isamu): remove when modified goal is always published
 #include <memory>
 
 namespace mission_planner
@@ -43,29 +43,34 @@ void ArrivalChecker::ResetGoal()
 }
 
 // TODO(Takagi, Isamu): remove when modified goal is always published
-void ArrivalChecker::ResetGoal(const geometry_msgs::msg::Pose & goal)
+void ArrivalChecker::ResetGoal(const geometry_msgs::msg::PoseStamped & goal)
 {
   const auto pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  pose->pose = goal;
+  *pose = goal;
   goal_pose_ = pose;
 }
 
-bool ArrivalChecker::IsArrived(const geometry_msgs::msg::Pose & pose) const
+bool ArrivalChecker::IsArrived(const geometry_msgs::msg::PoseStamped & pose) const
 {
   // Check if the modified goal is received.
   if (goal_pose_ == nullptr) {
     return false;
   }
+  const auto & goal = *goal_pose_;
+
+  // Check frame_id.
+  if (goal.header.frame_id != pose.header.frame_id) {
+    return false;
+  }
 
   // Check distance.
-  const auto & goal = goal_pose_->pose;
   if (distance_ < tier4_autoware_utils::calcDistance2d(pose, goal)) {
     return false;
   }
 
   // Check angle.
-  const double yaw_pose = tf2::getYaw(pose.orientation);
-  const double yaw_goal = tf2::getYaw(goal.orientation);
+  const double yaw_pose = tf2::getYaw(pose.pose.orientation);
+  const double yaw_goal = tf2::getYaw(goal.pose.orientation);
   const double yaw_diff = tier4_autoware_utils::normalizeRadian(yaw_pose - yaw_goal);
   if (angle_ < std::fabs(yaw_diff)) {
     return false;
