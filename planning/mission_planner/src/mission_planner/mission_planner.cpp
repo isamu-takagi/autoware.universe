@@ -57,7 +57,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 
 PoseStamped MissionPlanner::GetEgoVehiclePose()
 {
-  geometry_msgs::msg::PoseStamped base_link_origin;
+  PoseStamped base_link_origin;
   base_link_origin.header.frame_id = base_link_frame_;
   base_link_origin.pose.position.x = 0;
   base_link_origin.pose.position.y = 0;
@@ -80,7 +80,7 @@ PoseStamped MissionPlanner::TransformPose(const PoseStamped & input)
     tf2::doTransform(input, output, transform);
     return output;
   } catch (tf2::TransformException & error) {
-    throw component_interface_utils::TransformError(error.what())
+    throw component_interface_utils::TransformError(error.what());
   }
 }
 
@@ -165,7 +165,6 @@ void MissionPlanner::OnSetRoute(API_SERVICE_ARG(SetRoute, req, res))
 void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
 {
   // NOTE: The route services should be mutually exclusive by callback group.
-  RCLCPP_INFO_STREAM(get_logger(), "onSetRoutePoints");
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
       SetRoutePoints::Service::Response::ERROR_ROUTE_EXISTS, "The planned route is empty.");
@@ -181,17 +180,17 @@ void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
   pose.header = req->header;
 
   if (req->start.empty()) {
-    points.push_back(GetEgoVehiclePose());
+    points.push_back(GetEgoVehiclePose().pose);
   } else {
     pose.pose = req->start.front();
-    points.push_back(TransformPose(pose));
+    points.push_back(TransformPose(pose).pose);
   }
   for (const auto & waypoint : req->waypoints) {
     pose.pose = waypoint;
-    points.push_back(TransformPose(pose));
+    points.push_back(TransformPose(pose).pose);
   }
   pose.pose = req->goal;
-  points.push_back(TransformPose(pose));
+  points.push_back(TransformPose(pose).pose);
 
   HADMapRoute route = planner_->Plan(points);
   if (route.segments.empty()) {

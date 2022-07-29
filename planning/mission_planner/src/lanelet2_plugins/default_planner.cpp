@@ -145,8 +145,8 @@ MissionPlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & point
 {
   std::stringstream log_ss;
   for (const auto & point : points) {
-    log_ss << "x: " << point.pose.position.x << " "
-           << "y: " << point.pose.position.y << std::endl;
+    log_ss << "x: " << point.position.x << " "
+           << "y: " << point.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
     node_->get_logger(), "start planning route with checkpoints: " << std::endl
@@ -166,7 +166,7 @@ MissionPlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & point
     const auto goal_checkpoint = points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_checkpoint.pose, goal_checkpoint.pose, &path_lanelets)) {
+          start_checkpoint, goal_checkpoint, &path_lanelets)) {
       return route_msg;
     }
     // create local route sections
@@ -182,11 +182,11 @@ MissionPlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & point
   }
 
   const auto goal = refineGoalHeight(points.back(), route_sections);
-  RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.pose.position.z);
+  RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.position.z);
 
   // The header is assigned by mission planner.
-  route_msg.start_pose = points.front().pose;
-  route_msg.goal_pose = goal.pose;
+  route_msg.start_pose = points.front();
+  route_msg.goal_pose = goal;
   route_msg.segments = route_sections;
   return route_msg;
 }
@@ -237,17 +237,17 @@ MissionPlannerPlugin::MarkerArray DefaultPlanner::Visualize(const HADMapRoute & 
   return route_marker_array;
 }
 
-bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::PoseStamped & goal) const
+bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
 {
   lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal.pose, &closest_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &closest_lanelet)) {
     return false;
   }
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.pose.position);
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
 
   if (isInLane(closest_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.pose.position);
-    const auto goal_yaw = tf2::getYaw(goal.pose.orientation);
+    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
+    const auto goal_yaw = tf2::getYaw(goal.orientation);
     const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
@@ -272,14 +272,13 @@ bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::PoseStamped & goal) c
   // check if goal is in shoulder lanelet
   lanelet::Lanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        shoulder_lanelets_, goal.pose, &closest_shoulder_lanelet)) {
+        shoulder_lanelets_, goal, &closest_shoulder_lanelet)) {
     return false;
   }
   // check if goal pose is in shoulder lane
   if (isInLane(closest_shoulder_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw =
-      lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.pose.position);
-    const auto goal_yaw = tf2::getYaw(goal.pose.orientation);
+    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
+    const auto goal_yaw = tf2::getYaw(goal.orientation);
     const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
@@ -304,16 +303,16 @@ void DefaultPlanner::mapCallback(
   is_graph_ready_ = true;
 }
 
-PoseStamped DefaultPlanner::refineGoalHeight(
-  const PoseStamped & goal, const RouteSections & route_sections)
+geometry_msgs::msg::Pose DefaultPlanner::refineGoalHeight(
+  const Pose & goal, const RouteSections & route_sections)
 {
   const auto goal_lane_id = route_sections.back().preferred_primitive_id;
   lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.pose.position);
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
   double goal_height = projectGoalToMap(goal_lanelet, goal_lanelet_pt);
 
-  PoseStamped refined_goal = goal;
-  refined_goal.pose.position.z = goal_height;
+  Pose refined_goal = goal;
+  refined_goal.position.z = goal_height;
   return refined_goal;
 }
 

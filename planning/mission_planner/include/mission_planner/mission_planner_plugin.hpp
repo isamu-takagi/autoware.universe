@@ -29,7 +29,7 @@ namespace mission_planner
 class MissionPlannerPlugin
 {
 public:
-  using RoutePoints = std::vector<geometry_msgs::msg::PoseStamped>;
+  using RoutePoints = std::vector<geometry_msgs::msg::Pose>;
   using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 

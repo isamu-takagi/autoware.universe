@@ -32,9 +32,6 @@
 namespace mission_planner::lanelet2
 {
 
-using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
-using PoseStamped = geometry_msgs::msg::PoseStamped;
-
 class DefaultPlanner : public mission_planner::MissionPlannerPlugin
 {
 public:
@@ -44,6 +41,8 @@ public:
   MarkerArray Visualize(const HADMapRoute & route) const override;
 
 private:
+  using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
+  using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
@@ -56,8 +55,8 @@ private:
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  bool isGoalValid(const geometry_msgs::msg::PoseStamped & goal) const;
-  PoseStamped refineGoalHeight(const PoseStamped & goal, const RouteSections & route_sections);
+  bool isGoalValid(const geometry_msgs::msg::Pose & goal) const;
+  Pose refineGoalHeight(const Pose & goal, const RouteSections & route_sections);
 };
 
 }  // namespace mission_planner::lanelet2
