@@ -28,6 +28,7 @@ class ArrivalChecker
 {
 public:
   explicit ArrivalChecker(rclcpp::Node * node);
+  void ResetGoal(const geometry_msgs::msg::Pose & goal);
   bool IsArrived(const geometry_msgs::msg::Pose & pose) const;
 
 private:

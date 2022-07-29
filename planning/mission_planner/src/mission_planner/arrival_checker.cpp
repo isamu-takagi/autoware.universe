@@ -18,6 +18,9 @@
 
 #include <tf2/utils.h>
 
+// TODO(Takagi, Isamu): remove argument when modified goal is always published
+#include <memory>
+
 namespace mission_planner
 {
 
@@ -33,9 +36,19 @@ ArrivalChecker::ArrivalChecker(rclcpp::Node * node) : vehicle_stop_checker_(node
     [this](const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) { goal_pose_ = msg; });
 }
 
+void ArrivalChecker::ResetGoal(const geometry_msgs::msg::Pose & goal)
+{
+  const auto pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  pose->pose = goal;
+  goal_pose_ = pose;
+
+  // TODO(Takagi, Isamu): remove argument when modified goal is always published
+  // goal_pose_.reset();
+}
+
 bool ArrivalChecker::IsArrived(const geometry_msgs::msg::Pose & pose) const
 {
-  if (goal_pose_) {
+  if (goal_pose_ == nullptr) {
     return false;
   }
 

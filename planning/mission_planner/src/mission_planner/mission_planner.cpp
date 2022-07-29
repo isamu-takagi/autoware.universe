@@ -40,6 +40,9 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   pub_had_route_ = create_publisher<HADMapRoute>("output/route", durable_qos);
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
 
+  const auto period = rclcpp::Duration::from_seconds(1.0);
+  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { OnArrivalCheck(); });
+
   const auto node = component_interface_utils::NodeAdaptor(this);
   node.init_pub(pub_state_);
   node.init_pub(pub_api_route_);
@@ -81,8 +84,11 @@ PoseStamped MissionPlanner::TransformPose(const PoseStamped & input)
   }
 }
 
-void MissionPlanner::Publish(const HADMapRoute & route) const
+void MissionPlanner::ChangeRoute(const HADMapRoute & route)
 {
+  // TODO(Takagi, Isamu): arrival_checker_.ResetGoal();
+  arrival_checker_.ResetGoal(route.goal_pose);
+
   if (!route.segments.empty()) {
     RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
     // TODO(Takagi, Isamu): publish api route
@@ -90,6 +96,16 @@ void MissionPlanner::Publish(const HADMapRoute & route) const
     pub_marker_->publish(planner_->Visualize(route));
   } else {
     RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
+  }
+}
+
+void MissionPlanner::OnArrivalCheck()
+{
+  // NOTE: Do not check in the changing state as goal may change.
+  if (state_.state == RouteState::Message::SET) {
+    if (arrival_checker_.IsArrived(GetEgoVehiclePose().pose)) {
+      ChangeState(RouteState::Message::ARRIVED);
+    }
   }
 }
 
@@ -104,6 +120,8 @@ void MissionPlanner::OnClearRoute(API_SERVICE_ARG(ClearRoute, , res))
 {
   // NOTE: The route services should be mutually exclusive by callback group.
   RCLCPP_INFO_STREAM(get_logger(), "ClearRoute");
+
+  // TODO(Takagi, Isamu): Publish(nullopt);
 
   res->status.success = true;
   ChangeState(RouteState::Message::UNSET);

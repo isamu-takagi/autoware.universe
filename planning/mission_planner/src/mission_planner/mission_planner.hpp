@@ -65,7 +65,10 @@ private:
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<HADMapRoute>::SharedPtr pub_had_route_;
-  void Publish(const HADMapRoute & route) const;
+  void ChangeRoute(const HADMapRoute & route);
+
+  rclcpp::TimerBase::SharedPtr timer_;
+  void OnArrivalCheck();
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
