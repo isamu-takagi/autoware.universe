@@ -29,24 +29,26 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_)
 {
+  // create arrival checker
+
   map_frame_ = declare_parameter("map_frame", "map");
   base_link_frame_ = declare_parameter("base_link_frame", "base_link");
-
-  RCLCPP_INFO_STREAM(get_logger(), "The available mission planner plugins are:");
-  for (const auto & name : plugin_loader_.getDeclaredClasses()) {
-    RCLCPP_INFO_STREAM(get_logger(), " - " << name);
-  }
 
   planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->Initialize(this);
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
-  pub_route_ = create_publisher<HADMapRoute>("output/route", durable_qos);
+  pub_had_route_ = create_publisher<HADMapRoute>("output/route", durable_qos);
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
 
   const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_srv(srv_route_points_, BIND_SERVICE(this, OnSetRoutePoints));
-  node.init_srv(srv_route_, BIND_SERVICE(this, OnSetRoute));
+  node.init_pub(pub_state_);
+  node.init_pub(pub_api_route_);
+  node.init_srv(srv_clear_route_, BIND_SERVICE(this, OnClearRoute));
+  node.init_srv(srv_set_route_, BIND_SERVICE(this, OnSetRoute));
+  node.init_srv(srv_set_route_points_, BIND_SERVICE(this, OnSetRoutePoints));
+
+  ChangeState(RouteState::Message::UNSET);
 }
 
 PoseStamped MissionPlanner::GetEgoVehiclePose()
@@ -84,25 +86,51 @@ void MissionPlanner::Publish(const HADMapRoute & route) const
 {
   if (!route.segments.empty()) {
     RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
-    pub_route_->publish(route);
+    // TODO(Takagi, Isamu): publish api route
+    pub_had_route_->publish(route);
     pub_marker_->publish(planner_->Visualize(route));
   } else {
     RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
   }
 }
 
+void MissionPlanner::ChangeState(RouteState::Message::_state_type state)
+{
+  state_.stamp = now();
+  state_.state = state;
+  pub_state_->publish(state_);
+}
+
+void MissionPlanner::OnClearRoute(API_SERVICE_ARG(ClearRoute, , res))
+{
+  // NOTE: The route services should be mutually exclusive by callback group.
+  RCLCPP_INFO_STREAM(get_logger(), "ClearRoute");
+
+  res->status.success = true;
+  ChangeState(RouteState::Message::UNSET);
+}
+
 void MissionPlanner::OnSetRoute(API_SERVICE_ARG(SetRoute, req, res))
 {
-  (void)req;
-  (void)res;
+  // NOTE: The route services should be mutually exclusive by callback group.
   RCLCPP_INFO_STREAM(get_logger(), "onSetRoute");
+  if (state_.state != RouteState::Message::UNSET) {
+    throw component_interface_utils::ServiceException(123, "The route is already set.");
+  }
+
+  (void)req;
+
+  res->status.success = true;
+  ChangeState(RouteState::Message::SET);
 }
 
 void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
 {
-  (void)req;
-  (void)res;
+  // NOTE: The route services should be mutually exclusive by callback group.
   RCLCPP_INFO_STREAM(get_logger(), "onSetRoutePoints");
+  if (state_.state != RouteState::Message::UNSET) {
+    throw component_interface_utils::ServiceException(123, "The route is already set.");
+  }
 
   if (!planner_->Ready()) {
     // TODO(Takagi, Isamu): error code
@@ -131,6 +159,9 @@ void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
   route.header.stamp = now();
   route.header.frame_id = map_frame_;
   Publish(route);
+
+  res->status.success = true;
+  ChangeState(RouteState::Message::SET);
 }
 
 }  // namespace mission_planner

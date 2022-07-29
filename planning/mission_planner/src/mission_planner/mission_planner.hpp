@@ -40,6 +40,9 @@ using HADMapRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
 using SetRoutePoints = planning_interface::SetRoutePoints;
 using SetRoute = planning_interface::SetRoute;
+using ClearRoute = planning_interface::ClearRoute;
+using Route = planning_interface::Route;
+using RouteState = planning_interface::RouteState;
 
 class MissionPlanner : public rclcpp::Node
 {
@@ -57,11 +60,18 @@ private:
   PoseStamped TransformPose(const PoseStamped & input);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
-  rclcpp::Publisher<HADMapRoute>::SharedPtr pub_route_;
+  rclcpp::Publisher<HADMapRoute>::SharedPtr pub_had_route_;
   void Publish(const HADMapRoute & route) const;
 
-  component_interface_utils::Service<SetRoute>::SharedPtr srv_route_;
-  component_interface_utils::Service<SetRoutePoints>::SharedPtr srv_route_points_;
+  RouteState::Message state_;
+  component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
+  component_interface_utils::Publisher<Route>::SharedPtr pub_api_route_;
+  void ChangeState(RouteState::Message::_state_type state);
+
+  component_interface_utils::Service<ClearRoute>::SharedPtr srv_clear_route_;
+  component_interface_utils::Service<SetRoute>::SharedPtr srv_set_route_;
+  component_interface_utils::Service<SetRoutePoints>::SharedPtr srv_set_route_points_;
+  void OnClearRoute(API_SERVICE_ARG(ClearRoute, req, res));
   void OnSetRoute(API_SERVICE_ARG(SetRoute, req, res));
   void OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res));
 };

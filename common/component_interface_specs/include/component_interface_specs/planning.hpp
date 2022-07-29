@@ -17,7 +17,9 @@
 
 #include <rclcpp/qos.hpp>
 
+#include <autoware_ad_api_msgs/msg/route_optional.hpp>
 #include <autoware_ad_api_msgs/msg/route_state.hpp>
+#include <autoware_ad_api_msgs/srv/clear_route.hpp>
 #include <autoware_ad_api_msgs/srv/set_route.hpp>
 #include <autoware_ad_api_msgs/srv/set_route_points.hpp>
 
@@ -36,12 +38,26 @@ struct SetRoute
   static constexpr char name[] = "/planning/routing/set_route";
 };
 
+struct ClearRoute
+{
+  using Service = autoware_ad_api_msgs::srv::ClearRoute;
+  static constexpr char name[] = "/planning/routing/clear_route";
+};
+
 struct RouteState
 {
   using Message = autoware_ad_api_msgs::msg::RouteState;
   static constexpr char name[] = "/planning/routing/state";
-  static constexpr double default_hz = 0.0;
   static constexpr size_t depth = 3;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+};
+
+struct Route
+{
+  using Message = autoware_ad_api_msgs::msg::RouteOptional;
+  static constexpr char name[] = "/planning/routing/route";
+  static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
