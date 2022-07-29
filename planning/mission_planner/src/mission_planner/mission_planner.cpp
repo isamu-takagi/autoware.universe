@@ -140,24 +140,29 @@ void MissionPlanner::OnSetRoute(API_SERVICE_ARG(SetRoute, req, res))
       SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The planned route is empty.");
   }
 
-  (void)req;
-  /*
-  autoware_ad_api_msgs::msg::Route route;
+  // Use common header for transforms
   PoseStamped pose;
   pose.header = req->header;
-  route.segments = req->segments;
 
+  // Convert route points.
+  autoware_ad_api_msgs::msg::Route body;
+  body.segments = req->segments;
   if (req->start.empty()) {
-    route.start = GetEgoVehiclePose();
+    body.start = GetEgoVehiclePose().pose;
   } else {
     pose.pose = req->start.front();
-    route.start = TransformPose(pose);
+    body.start = TransformPose(pose).pose;
   }
   pose.pose = req->goal;
-  route.goal = TransformPose(pose);
+  body.goal = TransformPose(pose).pose;
 
+  // Convert route.
+  HADMapRoute route = conversion::ConvertRoute(body);
+  route.header.stamp = req->header.stamp;
+  route.header.frame_id = map_frame_;
+
+  // Update route.
   ChangeRoute(route);
-  */
   ChangeState(RouteState::Message::SET);
   res->status.success = true;
 }
@@ -169,16 +174,17 @@ void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
     throw component_interface_utils::ServiceException(
       SetRoutePoints::Service::Response::ERROR_ROUTE_EXISTS, "The planned route is empty.");
   }
-
   if (!planner_->Ready()) {
     throw component_interface_utils::ServiceException(
       SetRoutePoints::Service::Response::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
 
-  MissionPlannerPlugin::RoutePoints points;
+  // Use common header for transforms.
   PoseStamped pose;
   pose.header = req->header;
 
+  // Convert route points.
+  MissionPlannerPlugin::RoutePoints points;
   if (req->start.empty()) {
     points.push_back(GetEgoVehiclePose().pose);
   } else {
@@ -192,14 +198,16 @@ void MissionPlanner::OnSetRoutePoints(API_SERVICE_ARG(SetRoutePoints, req, res))
   pose.pose = req->goal;
   points.push_back(TransformPose(pose).pose);
 
+  // Plan route.
   HADMapRoute route = planner_->Plan(points);
   if (route.segments.empty()) {
     throw component_interface_utils::ServiceException(
       SetRoutePoints::Service::Response::ERROR_PLANNER_FAILED, "The planned route is empty.");
   }
-  route.header.stamp = now();
+  route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
 
+  // Update route.
   ChangeRoute(route);
   ChangeState(RouteState::Message::SET);
   res->status.success = true;

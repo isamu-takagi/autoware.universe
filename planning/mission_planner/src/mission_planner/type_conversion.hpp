@@ -29,8 +29,8 @@ using APIRoute = autoware_ad_api_msgs::msg::RouteOptional;
 using HADRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 
 APIRoute CreateEmptyRoute(const rclcpp::Time & stamp);
-APIRoute ConvertRoute(const HADRoute & api_route);
-HADRoute ConvertRoute(const std_msgs::msg::Header & header, const APIRouteBody & body);
+APIRoute ConvertRoute(const HADRoute & had);
+HADRoute ConvertRoute(const APIRouteBody & api);
 
 }  // namespace mission_planner::conversion
 

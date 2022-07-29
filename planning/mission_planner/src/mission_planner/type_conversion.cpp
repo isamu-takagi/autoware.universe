@@ -48,6 +48,15 @@ APIPrimitive Convert(const HADPrimitive & had)
 }
 
 template <>
+HADPrimitive Convert(const APIPrimitive & api)
+{
+  HADPrimitive had;
+  had.id = api.id;
+  had.primitive_type = api.type;
+  return had;
+}
+
+template <>
 APISegment Convert(const HADSegment & had)
 {
   APISegment api;
@@ -62,6 +71,16 @@ APISegment Convert(const HADSegment & had)
   return api;
 }
 
+template <>
+HADSegment Convert(const APISegment & api)
+{
+  HADSegment had;
+  had.primitives = ConvertVector<HADPrimitive>(api.alternatives);
+  had.primitives.push_back(Convert<HADPrimitive>(api.preferred));
+  had.preferred_primitive_id = had.primitives.back().id;
+  return had;
+}
+
 }  // namespace
 
 namespace mission_planner::conversion
@@ -74,27 +93,27 @@ APIRoute CreateEmptyRoute(const rclcpp::Time & stamp)
   return api_route;
 }
 
-APIRoute ConvertRoute(const HADRoute & had_route)
+APIRoute ConvertRoute(const HADRoute & had)
 {
   APIRouteBody body;
-  body.start = had_route.start_pose;
-  body.goal = had_route.goal_pose;
-  body.segments = ConvertVector<APISegment>(had_route.segments);
+  body.start = had.start_pose;
+  body.goal = had.goal_pose;
+  body.segments = ConvertVector<APISegment>(had.segments);
 
-  APIRoute api_route;
-  api_route.header = had_route.header;
-  api_route.route.push_back(body);
-  return api_route;
+  APIRoute api;
+  api.header = had.header;
+  api.route.push_back(body);
+  return api;
 }
 
-/*
-HADRoute ConvertRoute(const std_msgs::msg::Header & header, const APIRouteBody & body)
+HADRoute ConvertRoute(const APIRouteBody & api)
 {
-  HADRoute had_route;
-  had_route.header = api_route.header;
-
-  return had_route;
+  // The header is assigned by mission planner.
+  HADRoute had;
+  had.start_pose = api.start;
+  had.goal_pose = api.goal;
+  had.segments = ConvertVector<HADSegment>(api.segments);
+  return had;
 }
-*/
 
 }  // namespace mission_planner::conversion
