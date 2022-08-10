@@ -20,6 +20,7 @@
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 
+#include <optional>
 #include <utility>
 
 namespace component_interface_utils
@@ -43,7 +44,7 @@ public:
 
   /// Send request.
   typename WrapType::SharedResponse call(
-    const typename WrapType::SharedRequest request, double timeout = 0.0)
+    const typename WrapType::SharedRequest request, std::optional<double> timeout = std::nullopt)
   {
     if (!client_->service_is_ready()) {
       RCLCPP_INFO_STREAM(logger_, "client unready: " << SpecT::name);
@@ -51,8 +52,8 @@ public:
     }
 
     const auto future = this->async_send_request(request);
-    if (timeout != 0.0) {
-      const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout);
+    if (timeout) {
+      const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout.value());
       if (future.wait_for(duration) != std::future_status::ready) {
         RCLCPP_INFO_STREAM(logger_, "client timeout: " << SpecT::name);
         throw ServiceTimeout(SpecT::name);
