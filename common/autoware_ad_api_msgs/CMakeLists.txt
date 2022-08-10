@@ -9,6 +9,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   interface/srv/InterfaceVersion.srv
   localization/msg/LocalizationInitializationState.msg
   localization/srv/InitializeLocalization.srv
+  operation_mode/srv/ChangeOperationMode.srv
+  operation_mode/msg/OperationMode.msg
+  operation_mode/msg/OperationModeState.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs
