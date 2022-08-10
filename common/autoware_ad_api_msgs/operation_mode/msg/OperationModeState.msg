@@ -1,13 +1,5 @@
-# constants for operation_mode
-uint16 UNKNOWN = 0
-uint16 STOP = 1
-uint16 AUTONOMOUS = 2
-uint16 LOCAL = 3
-uint16 REMOTE = 4
-
-# variables
 builtin_interfaces/Time stamp
-uint16 operation_mode
+autoware_ad_api_msgs/OperationMode operation
 bool is_autoware_control_enabled
 bool is_in_transition
 bool change_to_stop

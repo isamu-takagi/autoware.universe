@@ -23,7 +23,8 @@ The version of AD API follows [Semantic Versioning][semver] in order to provide 
 
 ## Routing
 
-The route message is optional to detect clearing.
+The routing service support two formats. One uses pose and the other uses map dependent data directly.
+The body part of the route message is optional, since the route does not exist when it is cleared by the service.
 
 <!-- link -->
 
