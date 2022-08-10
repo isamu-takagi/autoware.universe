@@ -33,7 +33,6 @@ struct InitializationState
 {
   using Message = autoware_ad_api_msgs::msg::LocalizationInitializationState;
   static constexpr char name[] = "/api/localization/initialization_state";
-  static constexpr double default_hz = 0.0;
   static constexpr size_t depth = 3;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
