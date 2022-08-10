@@ -12,6 +12,14 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   operation_mode/srv/ChangeOperationMode.srv
   operation_mode/msg/OperationMode.msg
   operation_mode/msg/OperationModeState.msg
+  routing/msg/RouteState.msg
+  routing/msg/Route.msg
+  routing/msg/RouteBody.msg
+  routing/msg/RoutePrimitive.msg
+  routing/msg/RouteSegment.msg
+  routing/srv/ClearRoute.srv
+  routing/srv/SetRoute.srv
+  routing/srv/SetRoutePoints.srv
   DEPENDENCIES
     builtin_interfaces
     std_msgs
