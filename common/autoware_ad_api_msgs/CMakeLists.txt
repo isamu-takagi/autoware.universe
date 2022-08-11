@@ -21,10 +21,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   routing/srv/ClearRoute.srv
   routing/srv/SetRoute.srv
   routing/srv/SetRoutePoints.srv
-  planning/msg/PlanningFactor.msg
-  planning/msg/PlanningFactorArray.msg
-  planning/msg/PlanningState.msg
-  planning/srv/AllowStart.srv
+  motion/msg/MotionState.msg
+  motion/srv/AllowStart.srv
+  planning/msg/VelocityFactor.msg
+  planning/msg/VelocityFactorArray.msg
+  planning/msg/SteeringFactor.msg
+  planning/msg/SteeringFactorArray.msg
   DEPENDENCIES
     builtin_interfaces
     std_msgs
