@@ -22,7 +22,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   routing/srv/SetRoute.srv
   routing/srv/SetRoutePoints.srv
   motion/msg/MotionState.msg
-  motion/srv/AllowStart.srv
+  motion/srv/AcceptStart.srv
   planning/msg/VelocityFactor.msg
   planning/msg/VelocityFactorArray.msg
   planning/msg/SteeringFactor.msg
