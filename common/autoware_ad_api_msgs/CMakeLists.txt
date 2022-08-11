@@ -7,6 +7,7 @@ autoware_package()
 rosidl_generate_interfaces(${PROJECT_NAME}
   common/msg/ResponseStatus.msg
   interface/srv/InterfaceVersion.srv
+  fail_safe/msg/MrmState.msg
   localization/msg/LocalizationInitializationState.msg
   localization/srv/InitializeLocalization.srv
   operation_mode/srv/ChangeOperationMode.srv
@@ -20,6 +21,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   routing/srv/ClearRoute.srv
   routing/srv/SetRoute.srv
   routing/srv/SetRoutePoints.srv
+  planning/msg/PlanningFactor.msg
+  planning/msg/PlanningFactorArray.msg
+  planning/msg/PlanningState.msg
+  planning/srv/AllowStart.srv
   DEPENDENCIES
     builtin_interfaces
     std_msgs
