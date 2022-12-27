@@ -27,6 +27,21 @@ InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interf
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_srv(srv_, on_interface_version);
+
+  RCLCPP_INFO_STREAM(get_logger(), "initialize on_timer");
+  const auto rate = rclcpp::Rate(1.0);
+  count_ = 0;
+  group_ = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+  timer_ = rclcpp::create_timer(
+    this, this->get_clock(), rate.period(), std::bind(&InterfaceNode::on_timer, this), group_);
+}
+
+void InterfaceNode::on_timer()
+{
+  const auto count = ++count_;
+  RCLCPP_INFO_STREAM(get_logger(), "on_timer begin: " << count);
+  get_clock()->sleep_for(rclcpp::Duration::from_seconds(2.0));
+  RCLCPP_INFO_STREAM(get_logger(), "on_timer end: " << count);
 }
 
 }  // namespace default_ad_api

@@ -30,6 +30,10 @@ public:
   explicit InterfaceNode(const rclcpp::NodeOptions & options);
 
 private:
+  void on_timer();
+  int count_;
+  rclcpp::CallbackGroup::SharedPtr group_;
+  rclcpp::TimerBase::SharedPtr timer_;
   Srv<autoware_ad_api::interface::Version> srv_;
 };
 

@@ -16,6 +16,11 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/compatibility/autoware_state.cpp
 )
 
+ament_auto_add_executable(debug
+  src/debug.cpp
+  src/interface.cpp
+)
+
 rclcpp_components_register_nodes(${PROJECT_NAME}
   "default_ad_api::AutowareStateNode"
   "default_ad_api::FailSafeNode"
