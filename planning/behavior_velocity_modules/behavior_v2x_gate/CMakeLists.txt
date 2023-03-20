@@ -6,6 +6,7 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/manager.cpp
+  src/lanelet.cpp
 )
 
 # TODO(Takagi, Isamu): remove unused dependency

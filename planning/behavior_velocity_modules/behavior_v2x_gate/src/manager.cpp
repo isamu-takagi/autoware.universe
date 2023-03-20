@@ -14,6 +14,8 @@
 
 #include "manager.hpp"
 
+#include "lanelet.hpp"
+
 #include <memory>
 
 namespace behavior_v2x_gate
@@ -27,6 +29,11 @@ void SceneManager::updateSceneModuleInstances(
   (void)data;
   (void)path;
   RCLCPP_INFO_STREAM(node_->get_logger(), "v2x gate update");
+
+  const auto & gates = get_all_v2x_gates(data->route_handler_->getLaneletMapPtr());
+  for (const auto & gate : gates) {
+    RCLCPP_INFO_STREAM(node_->get_logger(), " - gate: " << gate->id());
+  }
 }
 
 void SceneManager::plan(PathWithLaneId * path) { (void)path; }
