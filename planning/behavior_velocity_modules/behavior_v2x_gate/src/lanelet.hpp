@@ -24,7 +24,8 @@ namespace behavior_v2x_gate
 {
 
 using lanelet::autoware::V2xGate;
-std::vector<V2xGate::ConstPtr> get_all_v2x_gates(lanelet::LaneletMapPtr map);
+std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map);
+void create_v2x_gate_map(const lanelet::LaneletMapPtr map);
 
 }  // namespace behavior_v2x_gate
 

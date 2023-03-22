@@ -38,16 +38,11 @@ void SceneManager::updateSceneModuleInstances(
   (void)path;
   RCLCPP_INFO_STREAM(node_->get_logger(), "v2x gate update");
 
-  const auto & gates = get_all_v2x_gates(data->route_handler_->getLaneletMapPtr());
-  for (const auto & gate : gates) {
-    RCLCPP_INFO_STREAM(node_->get_logger(), " - gate: " << gate->id());
-  }
+  const auto map = data->route_handler_->getLaneletMapPtr();
+  // const auto current_pose = data->current_odometry->pose;
+  // const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
 
-  const auto & map = data->route_handler_->getLaneletMapPtr();
-  const auto & current_pose = data->current_odometry->pose;
-
-  const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
-
+  /*
   std::vector<int64_t> unique_lane_ids;
   if (current_lane) {
     unique_lane_ids = planning_utils::getSubsequentLaneIdsSetOnPath(path, *current_lane);
@@ -60,6 +55,33 @@ void SceneManager::updateSceneModuleInstances(
     ids += " " + std::to_string(id);
   }
   RCLCPP_INFO_STREAM(node_->get_logger(), " - path:" << ids);
+  */
+
+  // const auto gates = get_all_v2x_gates(data->route_handler_->getLaneletMapPtr());
+  /*
+  const auto gates = planning_utils::getRegElemMapOnPath<V2xGate>(path, map, current_pose);
+  for (const auto & gate : gates) {
+    RCLCPP_INFO_STREAM(node_->get_logger(), " - gate: " << gate.first->id() << " " <<
+  gate.first->id());
+  }
+  */
+
+  create_v2x_gate_map(map);
+
+  /*
+  for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
+         path, planner_data_->route_handler_->getLaneletMapPtr(),
+         planner_data_->current_odometry->pose)) {
+    // Use lanelet_id to unregister module when the route is changed
+    const auto lane_id = m.second.id();
+    const auto module_id = lane_id;
+    if (!isModuleRegistered(module_id)) {
+      registerModule(std::make_shared<VirtualTrafficLightModule>(
+        module_id, lane_id, *m.first, m.second, planner_param_,
+        logger_.get_child("virtual_traffic_light_module"), clock_));
+    }
+  }
+  */
 }
 
 void SceneManager::plan(PathWithLaneId * path) { (void)path; }
