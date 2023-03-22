@@ -15,8 +15,11 @@
 #include "manager.hpp"
 
 #include "lanelet.hpp"
+#include "utilization/util.hpp"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace behavior_v2x_gate
 {
@@ -26,6 +29,8 @@ void SceneManager::init(rclcpp::Node * node) { node_ = node; }
 void SceneManager::updateSceneModuleInstances(
   const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path)
 {
+  namespace planning_utils = behavior_velocity_planner::planning_utils;
+
   static int count = 0;
   if (count++ % 10 != 0) return;
 
@@ -38,20 +43,23 @@ void SceneManager::updateSceneModuleInstances(
     RCLCPP_INFO_STREAM(node_->get_logger(), " - gate: " << gate->id());
   }
 
-  /*
-  for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
-         path, planner_data_->route_handler_->getLaneletMapPtr(),
-         planner_data_->current_odometry->pose)) {
-    // Use lanelet_id to unregister module when the route is changed
-    const auto lane_id = m.second.id();
-    const auto module_id = lane_id;
-    if (!isModuleRegistered(module_id)) {
-      registerModule(std::make_shared<VirtualTrafficLightModule>(
-        module_id, lane_id, *m.first, m.second, planner_param_,
-        logger_.get_child("virtual_traffic_light_module"), clock_));
-    }
+  const auto & map = data->route_handler_->getLaneletMapPtr();
+  const auto & current_pose = data->current_odometry->pose;
+
+  const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
+
+  std::vector<int64_t> unique_lane_ids;
+  if (current_lane) {
+    unique_lane_ids = planning_utils::getSubsequentLaneIdsSetOnPath(path, *current_lane);
+  } else {
+    unique_lane_ids = planning_utils::getSortedLaneIdsFromPath(path);
   }
-  */
+
+  std::string ids;
+  for (const auto & id : unique_lane_ids) {
+    ids += " " + std::to_string(id);
+  }
+  RCLCPP_INFO_STREAM(node_->get_logger(), " - path:" << ids);
 }
 
 void SceneManager::plan(PathWithLaneId * path) { (void)path; }
