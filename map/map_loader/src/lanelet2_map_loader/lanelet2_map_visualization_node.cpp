@@ -34,6 +34,7 @@
 #include "map_loader/lanelet2_map_visualization_node.hpp"
 
 #include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
@@ -64,6 +65,20 @@ void setColor(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, doubl
   cl->b = b;
   cl->a = a;
 }
+
+using lanelet::autoware::V2xGate;
+std::vector<V2xGate::ConstPtr> get_all_v2x_gates(lanelet::LaneletMapPtr map)
+{
+  std::vector<V2xGate::ConstPtr> gates;
+  for (const auto & element : map->regulatoryElementLayer) {
+    const auto gate = std::dynamic_pointer_cast<const V2xGate>(element);
+    if (gate) {
+      gates.push_back(gate);
+    }
+  }
+  return gates;
+}
+
 }  // namespace
 
 Lanelet2MapVisualizationNode::Lanelet2MapVisualizationNode(const rclcpp::NodeOptions & options)
@@ -121,6 +136,11 @@ void Lanelet2MapVisualizationNode::onMapBin(
   lanelet::ConstPolygons3d no_obstacle_segmentation_area_for_run_out =
     lanelet::utils::query::getAllPolygonsByType(
       viz_lanelet_map, "no_obstacle_segmentation_area_for_run_out");
+
+  std::vector<V2xGate::ConstPtr> v2x_gate_elems = get_all_v2x_gates(viz_lanelet_map);
+  std_msgs::msg::ColorRGBA cl_v2x_gate_acquire, cl_v2x_gate_release;
+  setColor(&cl_v2x_gate_acquire, 0.3, 0.7, 0.7, 0.999);
+  setColor(&cl_v2x_gate_release, 0.7, 0.3, 0.7, 0.999);
 
   std_msgs::msg::ColorRGBA cl_road, cl_shoulder, cl_cross, cl_partitions, cl_pedestrian_markings,
     cl_ll_borders, cl_shoulder_borders, cl_stoplines, cl_trafficlights, cl_detection_areas,
@@ -218,6 +238,24 @@ void Lanelet2MapVisualizationNode::onMapBin(
     &map_marker_array,
     lanelet::visualization::noObstacleSegmentationAreaForRunOutAsMarkerArray(
       no_obstacle_segmentation_area_for_run_out, cl_no_obstacle_segmentation_area_for_run_out));
+
+  {
+    std::vector<lanelet::ConstLineString3d> acquire_lines;
+    std::vector<lanelet::ConstLineString3d> release_lines;
+    for (const auto & elem : v2x_gate_elems) {
+      const auto a = elem->getAcquireLines();
+      const auto r = elem->getReleaseLines();
+      acquire_lines.insert(acquire_lines.end(), a.begin(), a.end());
+      release_lines.insert(release_lines.end(), r.begin(), r.end());
+    }
+
+    insertMarkerArray(
+      &map_marker_array, lanelet::visualization::lineStringsAsMarkerArray(
+                           acquire_lines, "v2x_gate_acquire", cl_v2x_gate_acquire, 0.5));
+    insertMarkerArray(
+      &map_marker_array, lanelet::visualization::lineStringsAsMarkerArray(
+                           release_lines, "v2x_gate_release", cl_v2x_gate_release, 0.5));
+  }
 
   pub_marker_->publish(map_marker_array);
 }

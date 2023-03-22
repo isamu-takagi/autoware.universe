@@ -26,6 +26,9 @@ void SceneManager::init(rclcpp::Node * node) { node_ = node; }
 void SceneManager::updateSceneModuleInstances(
   const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path)
 {
+  static int count = 0;
+  if (count++ % 10 != 0) return;
+
   (void)data;
   (void)path;
   RCLCPP_INFO_STREAM(node_->get_logger(), "v2x gate update");
@@ -34,6 +37,21 @@ void SceneManager::updateSceneModuleInstances(
   for (const auto & gate : gates) {
     RCLCPP_INFO_STREAM(node_->get_logger(), " - gate: " << gate->id());
   }
+
+  /*
+  for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
+         path, planner_data_->route_handler_->getLaneletMapPtr(),
+         planner_data_->current_odometry->pose)) {
+    // Use lanelet_id to unregister module when the route is changed
+    const auto lane_id = m.second.id();
+    const auto module_id = lane_id;
+    if (!isModuleRegistered(module_id)) {
+      registerModule(std::make_shared<VirtualTrafficLightModule>(
+        module_id, lane_id, *m.first, m.second, planner_param_,
+        logger_.get_child("virtual_traffic_light_module"), clock_));
+    }
+  }
+  */
 }
 
 void SceneManager::plan(PathWithLaneId * path) { (void)path; }
