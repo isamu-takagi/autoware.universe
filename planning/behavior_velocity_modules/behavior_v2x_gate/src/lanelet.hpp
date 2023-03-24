@@ -18,14 +18,21 @@
 #include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace behavior_v2x_gate
 {
 
+struct V2xGateData
+{
+  std::unordered_map<lanelet::Id, std::vector<lanelet::ConstLineString3d>> lines;
+};
+
+using V2xGateMap = std::unordered_map<lanelet::Id, V2xGateData>;
 using lanelet::autoware::V2xGate;
 std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map);
-void create_v2x_gate_map(const lanelet::LaneletMapPtr map);
+V2xGateMap create_v2x_gate_map(const lanelet::LaneletMapPtr map);
 
 }  // namespace behavior_v2x_gate
 

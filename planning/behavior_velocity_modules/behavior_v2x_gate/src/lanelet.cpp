@@ -23,12 +23,12 @@
 namespace
 {
 
-template <typename Point>
-auto center_point(Point p1, Point p2)
+template <class Point>
+auto center_point(Point p, const Point & q)
 {
-  boost::geometry::add_point(p1, p2);
-  boost::geometry::multiply_value(p1, 0.5);
-  return p1;
+  boost::geometry::add_point(p, q);
+  boost::geometry::multiply_value(p, 0.5);
+  return p;
 }
 
 }  // namespace
@@ -48,26 +48,23 @@ std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr ma
   return gates;
 }
 
-void create_v2x_gate_map(const lanelet::LaneletMapPtr map)
+V2xGateMap create_v2x_gate_map(const lanelet::LaneletMapPtr map)
 {
-  const auto logger = rclcpp::get_logger("test_v2x_gate");
-
-  const auto gates = get_all_v2x_gates(map);
-  for (const auto & gate : gates) {
-    RCLCPP_INFO_STREAM(logger, "===== " << gate->id() << " =====");
+  V2xGateMap mapping;
+  for (const auto & gate : get_all_v2x_gates(map)) {
+    V2xGateData data;
     for (const auto & line : gate->getAcquireLines()) {
-      RCLCPP_INFO_STREAM(logger, "line " << line.id());
-
       const auto center = center_point(line[0].basicPoint(), line[1].basicPoint());
-      RCLCPP_INFO_STREAM(
-        logger, "  - center: " << center.x() << " " << center.y() << " " << center.z());
-
       for (const auto & lane : map->laneletLayer) {
-        const auto dist = lanelet::geometry::distance(lane.polygon3d().basicPolygon(), center);
-        RCLCPP_INFO_STREAM(logger, "    - lane " << lane.id() << ": " << dist);
+        const auto dist = lanelet::geometry::distance(lane.polygon3d(), center);
+        if (dist < 1e-3) {
+          data.lines[lane.id()].push_back(line);
+        }
       }
     }
+    mapping[gate->id()] = data;
   }
+  return mapping;
 }
 
 }  // namespace behavior_v2x_gate

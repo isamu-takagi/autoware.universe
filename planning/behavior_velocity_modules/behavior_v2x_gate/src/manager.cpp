@@ -30,13 +30,14 @@ void SceneManager::updateSceneModuleInstances(
   const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path)
 {
   namespace planning_utils = behavior_velocity_planner::planning_utils;
+  const auto logger = node_->get_logger();
 
   static int count = 0;
   if (count++ % 10 != 0) return;
 
   (void)data;
   (void)path;
-  RCLCPP_INFO_STREAM(node_->get_logger(), "v2x gate update");
+  RCLCPP_INFO_STREAM(logger, "v2x gate update");
 
   const auto map = data->route_handler_->getLaneletMapPtr();
   // const auto current_pose = data->current_odometry->pose;
@@ -66,7 +67,16 @@ void SceneManager::updateSceneModuleInstances(
   }
   */
 
-  create_v2x_gate_map(map);
+  const auto mapping = create_v2x_gate_map(map);
+  for (const auto & [gid, data] : mapping) {
+    RCLCPP_INFO_STREAM(logger, "Gate " << gid);
+    for (const auto & [lid, lines] : data.lines) {
+      RCLCPP_INFO_STREAM(logger, "  Lane " << lid);
+      for (const auto & line : lines) {
+        RCLCPP_INFO_STREAM(logger, "  Line " << line.id());
+      }
+    }
+  }
 
   /*
   for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
