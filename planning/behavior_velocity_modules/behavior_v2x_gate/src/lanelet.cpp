@@ -48,12 +48,11 @@ std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr ma
   return gates;
 }
 
-V2xGateMap create_v2x_gate_map(const lanelet::LaneletMapPtr map)
+std::vector<V2xGateData::ConstPtr> create_v2x_gate_data(const lanelet::LaneletMapPtr map)
 {
-  V2xGateMap mapping;
-  for (const auto & gate : get_all_v2x_gates(map)) {
-    V2xGateData data;
-    for (const auto & line : gate->getAcquireLines()) {
+  using LineStringList = std::vector<lanelet::ConstLineString3d>;
+  const auto bind_lanelet = [map](V2xGateData & data, const LineStringList & lines) {
+    for (const auto & line : lines) {
       const auto center = center_point(line[0].basicPoint(), line[1].basicPoint());
       for (const auto & lane : map->laneletLayer) {
         const auto dist = lanelet::geometry::distance(lane.polygon3d(), center);
@@ -62,7 +61,27 @@ V2xGateMap create_v2x_gate_map(const lanelet::LaneletMapPtr map)
         }
       }
     }
-    mapping[gate->id()] = data;
+  };
+
+  std::vector<V2xGateData::ConstPtr> list;
+  for (const auto & gate : get_all_v2x_gates(map)) {
+    const auto data = std::make_shared<V2xGateData>();
+    data->gate = gate;
+    bind_lanelet(*data, gate->getAcquireLines());
+    bind_lanelet(*data, gate->getReleaseLines());
+    list.push_back(data);
+  }
+  return list;
+}
+
+V2xGateMap create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map)
+{
+  V2xGateMap mapping;
+  const auto gates = create_v2x_gate_data(map);
+  for (const auto & gate : gates) {
+    for (const auto & [lane_id, line] : gate->lines) {
+      mapping[lane_id].push_back(gate);
+    }
   }
   return mapping;
 }

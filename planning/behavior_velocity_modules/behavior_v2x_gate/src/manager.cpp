@@ -40,10 +40,11 @@ void SceneManager::updateSceneModuleInstances(
   RCLCPP_INFO_STREAM(logger, "v2x gate update");
 
   const auto map = data->route_handler_->getLaneletMapPtr();
-  // const auto current_pose = data->current_odometry->pose;
-  // const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
+  const auto mapping = create_lanelet_to_v2x_gate(map);
 
-  /*
+  const auto current_pose = data->current_odometry->pose;
+  const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
+
   std::vector<int64_t> unique_lane_ids;
   if (current_lane) {
     unique_lane_ids = planning_utils::getSubsequentLaneIdsSetOnPath(path, *current_lane);
@@ -51,12 +52,16 @@ void SceneManager::updateSceneModuleInstances(
     unique_lane_ids = planning_utils::getSortedLaneIdsFromPath(path);
   }
 
-  std::string ids;
+  V2xGateDataSet gates;
   for (const auto & id : unique_lane_ids) {
-    ids += " " + std::to_string(id);
+    RCLCPP_INFO_STREAM(logger, "Lane " << id);
+    if (mapping.count(id)) {
+      for (const auto & gate : mapping.at(id)) {
+        RCLCPP_INFO_STREAM(logger, "  Gate " << gate->gate->id());
+        gates.insert(gate);
+      }
+    }
   }
-  RCLCPP_INFO_STREAM(node_->get_logger(), " - path:" << ids);
-  */
 
   // const auto gates = get_all_v2x_gates(data->route_handler_->getLaneletMapPtr());
   /*
@@ -66,17 +71,6 @@ void SceneManager::updateSceneModuleInstances(
   gate.first->id());
   }
   */
-
-  const auto mapping = create_v2x_gate_map(map);
-  for (const auto & [gid, data] : mapping) {
-    RCLCPP_INFO_STREAM(logger, "Gate " << gid);
-    for (const auto & [lid, lines] : data.lines) {
-      RCLCPP_INFO_STREAM(logger, "  Lane " << lid);
-      for (const auto & line : lines) {
-        RCLCPP_INFO_STREAM(logger, "  Line " << line.id());
-      }
-    }
-  }
 
   /*
   for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(

@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace behavior_v2x_gate
@@ -26,13 +27,18 @@ namespace behavior_v2x_gate
 
 struct V2xGateData
 {
+  using ConstPtr = std::shared_ptr<V2xGateData>;
+  lanelet::autoware::V2xGate::ConstPtr gate;
   std::unordered_map<lanelet::Id, std::vector<lanelet::ConstLineString3d>> lines;
 };
 
-using V2xGateMap = std::unordered_map<lanelet::Id, V2xGateData>;
+using V2xGateDataSet = std::unordered_set<V2xGateData::ConstPtr>;
+using V2xGateMap = std::unordered_map<lanelet::Id, std::vector<V2xGateData::ConstPtr>>;
 using lanelet::autoware::V2xGate;
+
 std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map);
-V2xGateMap create_v2x_gate_map(const lanelet::LaneletMapPtr map);
+std::vector<V2xGateData::ConstPtr> create_v2x_gate_data(const lanelet::LaneletMapPtr map);
+V2xGateMap create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map);
 
 }  // namespace behavior_v2x_gate
 
