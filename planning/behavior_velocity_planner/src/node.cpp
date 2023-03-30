@@ -202,7 +202,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // TODO(Takagi, Isamu): module order
   if (this->declare_parameter("launch_v2x_gate", true)) {
-    planner_manager_.register_scene_manager(this, "behavior_v2x_gate::SceneManager");
+    const auto name = "behavior_velocity_planner::v2x_gate::SceneManager";
+    planner_manager_.register_scene_manager(this, name);
   }
 }
 

@@ -23,6 +23,10 @@
 namespace
 {
 
+using ConstLines = std::vector<lanelet::ConstLineString3d>;
+using LaneToLine = std::unordered_map<lanelet::Id, lanelet::ConstLineString3d>;
+using LaneletLayer = lanelet::LaneletLayer;
+
 template <class Point>
 auto center_point(Point p, const Point & q)
 {
@@ -31,9 +35,24 @@ auto center_point(Point p, const Point & q)
   return p;
 }
 
+LaneToLine create_lane_to_line(const LaneletLayer & lanes, const ConstLines & lines)
+{
+  LaneToLine mapping;
+  for (const auto & line : lines) {
+    const auto center = center_point(line[0].basicPoint(), line[1].basicPoint());
+    for (const auto & lane : lanes) {
+      const auto dist = lanelet::geometry::distance(lane.polygon3d(), center);
+      if (dist < 1e-3) {
+        mapping[lane.id()] = line;
+      }
+    }
+  }
+  return mapping;
+}
+
 }  // namespace
 
-namespace behavior_v2x_gate
+namespace behavior_velocity_planner::v2x_gate
 {
 
 std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map)
@@ -50,40 +69,27 @@ std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr ma
 
 std::vector<V2xGateData::ConstPtr> create_v2x_gate_data(const lanelet::LaneletMapPtr map)
 {
-  using LineStringList = std::vector<lanelet::ConstLineString3d>;
-  const auto bind_lanelet = [map](V2xGateData & data, const LineStringList & lines) {
-    for (const auto & line : lines) {
-      const auto center = center_point(line[0].basicPoint(), line[1].basicPoint());
-      for (const auto & lane : map->laneletLayer) {
-        const auto dist = lanelet::geometry::distance(lane.polygon3d(), center);
-        if (dist < 1e-3) {
-          data.lines[lane.id()].push_back(line);
-        }
-      }
-    }
-  };
-
   std::vector<V2xGateData::ConstPtr> list;
   for (const auto & gate : get_all_v2x_gates(map)) {
     const auto data = std::make_shared<V2xGateData>();
     data->gate = gate;
-    bind_lanelet(*data, gate->getAcquireLines());
-    bind_lanelet(*data, gate->getReleaseLines());
+    data->acquire_lines = create_lane_to_line(map->laneletLayer, gate->getAcquireLines());
+    data->release_lines = create_lane_to_line(map->laneletLayer, gate->getReleaseLines());
     list.push_back(data);
   }
   return list;
 }
 
-V2xGateMap create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map)
+LaneToGate create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map)
 {
-  V2xGateMap mapping;
+  LaneToGate mapping;
   const auto gates = create_v2x_gate_data(map);
   for (const auto & gate : gates) {
-    for (const auto & [lane_id, line] : gate->lines) {
+    for (const auto & [lane_id, line] : gate->acquire_lines) {
       mapping[lane_id].push_back(gate);
     }
   }
   return mapping;
 }
 
-}  // namespace behavior_v2x_gate
+}  // namespace behavior_velocity_planner::v2x_gate

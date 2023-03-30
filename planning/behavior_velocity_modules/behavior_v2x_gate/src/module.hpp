@@ -12,27 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANELET_HPP_
-#define LANELET_HPP_
+#ifndef MODULE_HPP_
+#define MODULE_HPP_
 
-#include "module.hpp"
+#include <behavior_velocity_planner/scene_module_plugin.hpp>
+#include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
 
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 namespace behavior_velocity_planner::v2x_gate
 {
 
-using V2xGateDataSet = std::unordered_set<V2xGateData::ConstPtr>;
-using LaneToGate = std::unordered_map<lanelet::Id, std::vector<V2xGateData::ConstPtr>>;
-using lanelet::autoware::V2xGate;
+struct V2xGateData
+{
+  using ConstPtr = std::shared_ptr<V2xGateData>;
+  lanelet::autoware::V2xGate::ConstPtr gate;
+  std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> acquire_lines;
+  std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> release_lines;
+};
 
-std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map);
-std::vector<V2xGateData::ConstPtr> create_v2x_gate_data(const lanelet::LaneletMapPtr map);
-LaneToGate create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map);
+class SceneModule : public SceneModulePlugin
+{
+public:
+  using SharedPtr = std::shared_ptr<SceneModule>;
+  explicit SceneModule(const V2xGateData::ConstPtr data);
+  void plan(PathWithLaneId * path);
+
+private:
+  V2xGateData::ConstPtr data_;
+};
 
 }  // namespace behavior_velocity_planner::v2x_gate
 
-#endif  // LANELET_HPP_
+#endif  // MODULE_HPP_

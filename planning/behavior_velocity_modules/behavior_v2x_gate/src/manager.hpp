@@ -15,17 +15,19 @@
 #ifndef MANAGER_HPP_
 #define MANAGER_HPP_
 
+#include "module.hpp"
+
 #include <behavior_velocity_planner/scene_manager_plugin.hpp>
 
-#include <memory>
+#include <memory>  // TODO(Takagi, Isamu): Replace with PlannerData2
+#include <unordered_map>
 
-namespace behavior_v2x_gate
+namespace behavior_velocity_planner::v2x_gate
 {
 
-class SceneManager : public behavior_velocity_planner::SceneManagerPlugin
+class SceneManager : public SceneManagerPlugin
 {
 public:
-  using PlannerData = behavior_velocity_planner::PlannerData;
   void init(rclcpp::Node * node);
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path) override;
@@ -35,8 +37,9 @@ public:
 
 private:
   rclcpp::Node * node_;
+  std::unordered_map<lanelet::Id, SceneModule::SharedPtr> scenes_;
 };
 
-}  // namespace behavior_v2x_gate
+}  // namespace behavior_velocity_planner::v2x_gate
 
 #endif  // MANAGER_HPP_

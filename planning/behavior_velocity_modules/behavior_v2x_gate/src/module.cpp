@@ -12,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
+#include "module.hpp"
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-namespace behavior_velocity_planner
+#include <utility>
+
+namespace behavior_velocity_planner::v2x_gate
 {
 
-class SceneModulePlugin
+SceneModule::SceneModule(const V2xGateData::ConstPtr data) { data_ = std::move(data); }
+
+void SceneModule::plan(PathWithLaneId * path)
 {
-public:
-  using PathWithLaneId = autoware_auto_planning_msgs::msg::PathWithLaneId;
-};
+  (void)path;
 
-}  // namespace behavior_velocity_planner
+  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate");
+  RCLCPP_INFO_STREAM(logger, "scene module: " << data_->gate->id());
+}
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
+}  // namespace behavior_velocity_planner::v2x_gate

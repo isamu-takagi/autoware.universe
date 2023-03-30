@@ -12,20 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
-
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PLANNER_DATA2_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PLANNER_DATA2_HPP_
 
 namespace behavior_velocity_planner
 {
 
-class SceneModulePlugin
-{
-public:
-  using PathWithLaneId = autoware_auto_planning_msgs::msg::PathWithLaneId;
-};
+// This is a planner data with forward declarations to avoid unnecessary dependencies.
 
-}  // namespace behavior_velocity_planner
+}
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__SCENE_MODULE_PLUGIN_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PLANNER_DATA2_HPP_

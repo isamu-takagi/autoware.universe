@@ -6,6 +6,7 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/manager.cpp
+  src/module.cpp
   src/lanelet.cpp
 )
 

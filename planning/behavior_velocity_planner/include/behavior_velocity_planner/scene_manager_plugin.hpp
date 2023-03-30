@@ -19,10 +19,18 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <lanelet2_core/primitives/Primitive.h>
+
 #include <memory>
+#include <unordered_map>
 
 namespace behavior_velocity_planner
 {
+
+struct PlannerData2
+{
+  using ConstSharedPtr = std::shared_ptr<const PlannerData2>;
+};
 
 class SceneManagerPlugin
 {
@@ -31,8 +39,8 @@ public:
 
   virtual ~SceneManagerPlugin() = default;
   virtual void init(rclcpp::Node * node) = 0;
-  virtual void updateSceneModuleInstances(
-    const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path) = 0;
+  // virtual void update(const std::shared_ptr<const PlannerData> & data, const PathWithLaneId &
+  // path) = 0;
   virtual void plan(PathWithLaneId * path) = 0;
 
   // TODO(Takagi, Isamu): use std::optional
@@ -40,6 +48,12 @@ public:
 
   // TODO(Takagi, Isamu): use std::string
   virtual const char * getModuleName() = 0;
+
+  // TODO(Takagi, Isamu): use update function
+  virtual void updateSceneModuleInstances(
+    const std::shared_ptr<const PlannerData> &, const PathWithLaneId &)
+  {
+  }
 };
 
 }  // namespace behavior_velocity_planner
