@@ -15,6 +15,7 @@
 #ifndef MODULE_HPP_
 #define MODULE_HPP_
 
+#include <behavior_velocity_planner/planner_data2.hpp>
 #include <behavior_velocity_planner/scene_module_plugin.hpp>
 #include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
 
@@ -34,13 +35,14 @@ struct V2xGateData
 
 struct FrameData
 {
+  PlannerData2::ConstSharedPtr data;
 };
 
 class SceneModule : public SceneModulePlugin
 {
 public:
   using SharedPtr = std::shared_ptr<SceneModule>;
-  explicit SceneModule(const V2xGateData::ConstPtr data);
+  explicit SceneModule(const V2xGateData::ConstPtr & data);
   void plan(PathWithLaneId * path, const FrameData & frame);
 
 private:

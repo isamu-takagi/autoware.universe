@@ -16,6 +16,7 @@
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__COMMON_HPP_
 
 #include <route_handler/route_handler.hpp>
+#include <vehicle_info_util/vehicle_info.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -27,8 +28,11 @@ namespace behavior_velocity_planner
 struct PlannerDataCommon
 {
   std::shared_ptr<route_handler::RouteHandler> route_handler;
+  vehicle_info_util::VehicleInfo vehicle_info;
 
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
+
+  double stop_line_extend_length;
 };
 
 }  // namespace behavior_velocity_planner

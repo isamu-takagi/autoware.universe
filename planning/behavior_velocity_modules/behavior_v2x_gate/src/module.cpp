@@ -14,16 +14,18 @@
 
 #include "module.hpp"
 
+#include <behavior_velocity_planner/planner_data/common.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <utilization/arc_lane_util.hpp>  // TODO(Takagi, Isamu): move header
 #include <utilization/util.hpp>
 
-#include <utility>
-
 namespace behavior_velocity_planner::v2x_gate
 {
 
-SceneModule::SceneModule(const V2xGateData::ConstPtr data) { data_ = std::move(data); }
+SceneModule::SceneModule(const V2xGateData::ConstPtr & data)
+{
+  data_ = data;
+}
 
 void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
 {
@@ -35,8 +37,8 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
 
   // TODO(Takagi, Isamu): set stop params
   const double stop_margin = 0.0;
-  const double stop_offset = 0.0;  // planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  const double line_extend = 0.0;
+  const double stop_offset = frame.data->common->vehicle_info.max_longitudinal_offset_m;
+  const double line_extend = frame.data->common->stop_line_extend_length;
 
   for (const auto & [lane_id, line] : data_->acquire_lines) {
     const auto stop_line = planning_utils::extendLine(line[0], line[1], line_extend);

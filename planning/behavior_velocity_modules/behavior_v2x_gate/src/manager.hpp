@@ -38,6 +38,7 @@ public:
 private:
   rclcpp::Node * node_;
   std::unordered_map<lanelet::Id, SceneModule::SharedPtr> scenes_;
+  PlannerData2::ConstSharedPtr data_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

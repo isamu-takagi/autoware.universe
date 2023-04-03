@@ -26,11 +26,15 @@
 namespace behavior_velocity_planner::v2x_gate
 {
 
-void SceneManager::init(rclcpp::Node * node) { node_ = node; }
+void SceneManager::init(rclcpp::Node * node)
+{
+  node_ = node;
+}
 
 void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId & path)
 {
   const auto logger = node_->get_logger();
+  data_ = data;
 
   static int count = 0;
   if (count++ % 10 != 0) return;
@@ -73,15 +77,24 @@ void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathW
 void SceneManager::plan(PathWithLaneId * path)
 {
   FrameData frame;
+  frame.data = data_;
 
   for (const auto & [lane, scene] : scenes_) {
     scene->plan(path, frame);
   }
+
+  data_ = nullptr;
 }
 
-boost::optional<int> SceneManager::getFirstStopPathPointIndex() { return boost::none; }
+boost::optional<int> SceneManager::getFirstStopPathPointIndex()
+{
+  return boost::none;
+}
 
-const char * SceneManager::getModuleName() { return ""; }
+const char * SceneManager::getModuleName()
+{
+  return "v2x_gate";
+}
 
 }  // namespace behavior_velocity_planner::v2x_gate
 

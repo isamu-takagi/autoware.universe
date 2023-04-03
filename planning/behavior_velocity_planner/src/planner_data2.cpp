@@ -24,7 +24,9 @@ PlannerData2::PlannerData2(const PlannerData & data)
   common = std::make_unique<PlannerDataCommon>();
 
   common->route_handler = data.route_handler_;
+  common->vehicle_info = data.vehicle_info_;
   common->current_odometry = data.current_odometry;
+  common->stop_line_extend_length = data.stop_line_extend_length;
 }
 
 PlannerData2::~PlannerData2()
