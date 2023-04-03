@@ -29,9 +29,9 @@ class SceneManager : public SceneManagerPlugin
 {
 public:
   void init(rclcpp::Node * node);
-  void updateSceneModuleInstances(
-    const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path) override;
   void plan(PathWithLaneId * path) override;
+  void update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId & path) override;
+
   boost::optional<int> getFirstStopPathPointIndex() override;
   const char * getModuleName() override;
 

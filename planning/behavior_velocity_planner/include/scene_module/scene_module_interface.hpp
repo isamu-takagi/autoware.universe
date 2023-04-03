@@ -173,8 +173,6 @@ public:
 
   virtual ~SceneModuleManagerInterface() = default;
 
-  void init(rclcpp::Node *) {}
-
   boost::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
 
   void updateSceneModuleInstances(
@@ -191,6 +189,10 @@ public:
   {
     modifyPathVelocity(path);
   }
+
+  // unused plugin interface
+  void init(rclcpp::Node *) override {}
+  void update(const PlannerData2::ConstSharedPtr &, const PathWithLaneId &) override {}
 
 protected:
   virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)

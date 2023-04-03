@@ -15,22 +15,16 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__SCENE_MANAGER_PLUGIN_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__SCENE_MANAGER_PLUGIN_HPP_
 
-#include <behavior_velocity_planner/planner_data.hpp>
-
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
-#include <lanelet2_core/primitives/Primitive.h>
-
 #include <memory>
-#include <unordered_map>
+
+// TODO(Takagi, Isamu): replace with PlannerData2
+#include <behavior_velocity_planner/planner_data.hpp>
+#include <behavior_velocity_planner/planner_data2.hpp>
 
 namespace behavior_velocity_planner
 {
-
-struct PlannerData2
-{
-  using ConstSharedPtr = std::shared_ptr<const PlannerData2>;
-};
 
 class SceneManagerPlugin
 {
@@ -39,8 +33,7 @@ public:
 
   virtual ~SceneManagerPlugin() = default;
   virtual void init(rclcpp::Node * node) = 0;
-  // virtual void update(const std::shared_ptr<const PlannerData> & data, const PathWithLaneId &
-  // path) = 0;
+  virtual void update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId & path) = 0;
   virtual void plan(PathWithLaneId * path) = 0;
 
   // TODO(Takagi, Isamu): use std::optional

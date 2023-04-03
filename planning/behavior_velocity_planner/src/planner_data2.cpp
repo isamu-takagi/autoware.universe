@@ -12,14 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PLANNER_DATA2_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PLANNER_DATA2_HPP_
+#include <behavior_velocity_planner/planner_data.hpp>
+#include <behavior_velocity_planner/planner_data/common.hpp>
+#include <behavior_velocity_planner/planner_data2.hpp>
 
 namespace behavior_velocity_planner
 {
 
-// This is a planner data with forward declarations to avoid unnecessary dependencies.
+PlannerData2::PlannerData2(const PlannerData & data)
+{
+  common = std::make_unique<PlannerDataCommon>();
 
+  common->route_handler = data.route_handler_;
+  common->current_odometry = data.current_odometry;
 }
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PLANNER_DATA2_HPP_
+PlannerData2::~PlannerData2()
+{
+  // For unique_ptr destructor.
+}
+
+}  // namespace behavior_velocity_planner

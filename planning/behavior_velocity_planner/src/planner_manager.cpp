@@ -14,6 +14,8 @@
 
 #include "behavior_velocity_planner/planner_manager.hpp"
 
+#include "behavior_velocity_planner/planner_data2.hpp"
+
 #include <boost/format.hpp>
 
 #include <memory>
@@ -73,12 +75,14 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg)
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId output_path_msg = input_path_msg;
+  const auto planner_data2 = std::make_shared<PlannerData2>(*planner_data);
 
   int first_stop_path_point_index = static_cast<int>(output_path_msg.points.size() - 1);
   std::string stop_reason_msg("path_end");
 
   for (const auto & scene_manager_ptr : scene_manager_ptrs_) {
     scene_manager_ptr->updateSceneModuleInstances(planner_data, input_path_msg);
+    scene_manager_ptr->update(planner_data2, input_path_msg);
     scene_manager_ptr->plan(&output_path_msg);
     boost::optional<int> firstStopPathPointIndex = scene_manager_ptr->getFirstStopPathPointIndex();
 

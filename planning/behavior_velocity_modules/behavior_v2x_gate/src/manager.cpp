@@ -15,7 +15,9 @@
 #include "manager.hpp"
 
 #include "lanelet.hpp"
-#include "utilization/util.hpp"
+
+#include <behavior_velocity_planner/planner_data/common.hpp>
+#include <utilization/util.hpp>
 
 #include <memory>
 #include <string>
@@ -26,8 +28,7 @@ namespace behavior_velocity_planner::v2x_gate
 
 void SceneManager::init(rclcpp::Node * node) { node_ = node; }
 
-void SceneManager::updateSceneModuleInstances(
-  const std::shared_ptr<const PlannerData> & data, const PathWithLaneId & path)
+void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId & path)
 {
   const auto logger = node_->get_logger();
 
@@ -38,10 +39,10 @@ void SceneManager::updateSceneModuleInstances(
   (void)path;
   RCLCPP_INFO_STREAM(logger, "v2x gate update");
 
-  const auto map = data->route_handler_->getLaneletMapPtr();
+  const auto map = data->common->route_handler->getLaneletMapPtr();
   const auto mapping = create_lanelet_to_v2x_gate(map);
 
-  const auto current_pose = data->current_odometry->pose;
+  const auto current_pose = data->common->current_odometry->pose;
   const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
 
   std::vector<int64_t> unique_lane_ids;
@@ -71,8 +72,10 @@ void SceneManager::updateSceneModuleInstances(
 
 void SceneManager::plan(PathWithLaneId * path)
 {
+  FrameData frame;
+
   for (const auto & [lane, scene] : scenes_) {
-    scene->plan(path);
+    scene->plan(path, frame);
   }
 }
 

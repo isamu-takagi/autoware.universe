@@ -32,12 +32,16 @@ struct V2xGateData
   std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> release_lines;
 };
 
+struct FrameData
+{
+};
+
 class SceneModule : public SceneModulePlugin
 {
 public:
   using SharedPtr = std::shared_ptr<SceneModule>;
   explicit SceneModule(const V2xGateData::ConstPtr data);
-  void plan(PathWithLaneId * path);
+  void plan(PathWithLaneId * path, const FrameData & frame);
 
 private:
   V2xGateData::ConstPtr data_;

@@ -33,6 +33,7 @@ endforeach()
 ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
   src/planner_manager.cpp
+  src/planner_data2.cpp
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
   src/utilization/debug.cpp
