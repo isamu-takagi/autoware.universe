@@ -33,6 +33,8 @@ struct PlannerDataCommon
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
 
   double stop_line_extend_length;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 };
 
 }  // namespace behavior_velocity_planner

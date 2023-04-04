@@ -26,7 +26,10 @@ PlannerData2::PlannerData2(const PlannerData & data)
   common->route_handler = data.route_handler_;
   common->vehicle_info = data.vehicle_info_;
   common->current_odometry = data.current_odometry;
+
   common->stop_line_extend_length = data.stop_line_extend_length;
+  common->ego_nearest_dist_threshold = data.ego_nearest_dist_threshold;
+  common->ego_nearest_yaw_threshold = data.ego_nearest_yaw_threshold;
 }
 
 PlannerData2::~PlannerData2()
