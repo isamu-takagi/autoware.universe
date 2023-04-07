@@ -145,12 +145,8 @@ PredictedPath convertToPredictedPath(
   const double initial_velocity = std::abs(vehicle_twist.linear.x);
   const double lane_change_velocity = std::max(initial_velocity + acceleration * prepare_time, 0.0);
 
-  // first point
-  predicted_path.path.push_back(
-    motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length));
-
   // prepare segment
-  for (double t = resolution; t < prepare_time; t += resolution) {
+  for (double t = 0.0; t < prepare_time; t += resolution) {
     const double length = initial_velocity * t + 0.5 * acceleration * t * t;
     predicted_path.path.push_back(
       motion_utils::calcInterpolatedPose(path.points, vehicle_pose_frenet.length + length));
@@ -2338,7 +2334,7 @@ double calcTotalLaneChangeDistance(
   const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
 {
   const double minimum_lane_change_distance =
-    common_param.minimum_lane_change_prepare_distance + common_param.minimum_lane_change_length;
+    common_param.minimum_prepare_length + common_param.minimum_lane_changing_length;
   const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
   return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
 }
