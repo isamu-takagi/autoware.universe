@@ -16,6 +16,7 @@
 #define MANAGER_HPP_
 
 #include "module.hpp"
+#include "server.hpp"
 
 #include <behavior_velocity_planner/scene_manager_plugin.hpp>
 
@@ -38,6 +39,7 @@ public:
 private:
   rclcpp::Node * node_;
   std::unordered_map<lanelet::Id, SceneModule::SharedPtr> scenes_;
+  LockServer server_;
   PlannerData2::ConstSharedPtr data_;
 };
 

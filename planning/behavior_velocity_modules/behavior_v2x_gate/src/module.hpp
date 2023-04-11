@@ -47,6 +47,7 @@ public:
 
 private:
   V2xGateData::ConstPtr data_;
+  bool lock_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

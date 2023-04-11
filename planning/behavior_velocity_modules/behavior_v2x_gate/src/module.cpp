@@ -26,15 +26,20 @@
 namespace behavior_velocity_planner::v2x_gate
 {
 
-struct PathPose
+struct PathPoint
 {
-  double distance;
-  size_t index;
   geometry_msgs::msg::Pose pose;
+  size_t index;
 };
 
-std::optional<PathPose> get_first_cross_point(
-  const PathWithLaneId & path, const FrameData & frame, const PathPose & ego,
+struct StopPoint : public PathPoint
+{
+  lanelet::ConstLineString3d line;
+  double distance;
+};
+
+std::optional<StopPoint> get_first_cross_point(
+  const PathWithLaneId & path, const FrameData & frame, const PathPoint & ego,
   const std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> & lines)
 {
   // TODO(Takagi, Isamu): Use stop margin
@@ -42,7 +47,7 @@ std::optional<PathPose> get_first_cross_point(
   const double stop_offset = frame.data->common->vehicle_info.max_longitudinal_offset_m;
   const double line_extend = frame.data->common->stop_line_extend_length;
 
-  std::optional<PathPose> result;
+  std::optional<StopPoint> result;
   for (const auto & [lane_id, line] : lines) {
     const auto stop_line = planning_utils::extendLine(line[0], line[1], line_extend);
     const auto stop_pair =
@@ -55,7 +60,7 @@ std::optional<PathPose> get_first_cross_point(
         path.points, ego.pose.position, ego.index, stop_pose.position, stop_seg_index);
 
       if (!result || stop_distance < result.value().distance) {
-        result = PathPose{stop_distance, stop_seg_index, stop_pose};
+        result = StopPoint{stop_pose, stop_seg_index, line, stop_distance};
       }
     }
   }
@@ -64,18 +69,19 @@ std::optional<PathPose> get_first_cross_point(
 
 // TODO(Takagi, Isamu): Use scene manager interface.
 template <class T>
-PathPose find_ego_segment_index(
+PathPoint find_ego_segment_index(
   const std::vector<T> & points, const PlannerData2::ConstSharedPtr & p)
 {
   const auto index = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     points, p->common->current_odometry->pose, p->common->ego_nearest_dist_threshold,
     p->common->ego_nearest_yaw_threshold);
-  return PathPose{0.0, index, p->common->current_odometry->pose};
+  return PathPoint{p->common->current_odometry->pose, index};
 }
 
 SceneModule::SceneModule(const V2xGateData::ConstPtr & data)
 {
   data_ = data;
+  lock_ = false;
 }
 
 void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
@@ -92,17 +98,26 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
 
   const auto acquire_point = get_first_cross_point(*path, frame, ego, data_->acquire_lines);
-  if (acquire_point) {
+  const auto release_point = get_first_cross_point(*path, frame, ego, data_->release_lines);
+
+  if (acquire_point && release_point) {
+    const auto acquire_id = acquire_point.value().line.id();
+    const auto release_id = release_point.value().line.id();
+    RCLCPP_INFO_STREAM(logger, " - target gates: " << acquire_id << " " << release_id);
+  }
+
+  /*
+
     const auto [dist, index, pose] = acquire_point.value();
     RCLCPP_INFO_STREAM(logger, " - acquire line: " << index << " " << dist);
     planning_utils::insertStopPoint(pose.position, index, *path);
-  }
 
-  const auto release_point = get_first_cross_point(*path, frame, ego, data_->release_lines);
   if (release_point) {
     const auto [dist, index, pose] = release_point.value();
     RCLCPP_INFO_STREAM(logger, " - release line: " << index << " " << dist);
+    planning_utils::insertStopPoint(pose.position, index, *path);
   }
+  */
 }
 
 }  // namespace behavior_velocity_planner::v2x_gate
