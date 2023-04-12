@@ -55,6 +55,12 @@ LaneToLine create_lane_to_line(const LaneletLayer & lanes, const ConstLines & li
 namespace behavior_velocity_planner::v2x_gate
 {
 
+GateArea::GateArea(const BaseTypePtr gate, const lanelet::LaneletMapPtr map)
+{
+  base_ = gate;
+  (void)map;
+}
+
 std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map)
 {
   std::vector<V2xGate::ConstPtr> gates;

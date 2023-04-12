@@ -67,10 +67,11 @@ void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathW
 
   // Create module.
   for (const auto & gate : gates) {
-    const auto id = gate->gate->id();
+    const auto temp = std::make_shared<GateArea>(gate->gate, map);
+    const auto id = temp->id();
     if (!scenes_.count(id)) {
       RCLCPP_INFO_STREAM(logger, "create scene: " << id);
-      server_.create(gate->gate->getCategory(), gate->gate->id());
+      server_.create(temp->getCategory(), id);
       scenes_.emplace(id, std::make_shared<SceneModule>(gate));
     }
   }

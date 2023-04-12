@@ -17,13 +17,29 @@
 
 #include "module.hpp"
 
+#include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
+
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 namespace behavior_velocity_planner::v2x_gate
 {
+
+class GateArea
+{
+public:
+  using BaseTypePtr = lanelet::autoware::V2xGate::ConstPtr;
+  GateArea(const BaseTypePtr gate, const lanelet::LaneletMapPtr map);
+
+  lanelet::Id id() { return base_->id(); }
+  std::string getCategory() { return base_->getCategory(); }
+
+private:
+  BaseTypePtr base_;
+};
 
 using V2xGateDataSet = std::unordered_set<V2xGateData::ConstPtr>;
 using LaneToGate = std::unordered_map<lanelet::Id, std::vector<V2xGateData::ConstPtr>>;
