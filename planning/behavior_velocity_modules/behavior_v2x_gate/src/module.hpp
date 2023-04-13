@@ -15,6 +15,9 @@
 #ifndef MODULE_HPP_
 #define MODULE_HPP_
 
+#include "lanelet.hpp"
+#include "server.hpp"
+
 #include <behavior_velocity_planner/planner_data2.hpp>
 #include <behavior_velocity_planner/scene_module_plugin.hpp>
 #include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
@@ -25,14 +28,6 @@
 namespace behavior_velocity_planner::v2x_gate
 {
 
-struct V2xGateData
-{
-  using ConstPtr = std::shared_ptr<V2xGateData>;
-  lanelet::autoware::V2xGate::ConstPtr gate;
-  std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> acquire_lines;
-  std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> release_lines;
-};
-
 struct FrameData
 {
   PlannerData2::ConstSharedPtr data;
@@ -42,12 +37,12 @@ class SceneModule : public SceneModulePlugin
 {
 public:
   using SharedPtr = std::shared_ptr<SceneModule>;
-  explicit SceneModule(const V2xGateData::ConstPtr & data);
+  explicit SceneModule(const GateArea::ConstSharedPtr & gate);
   void plan(PathWithLaneId * path, const FrameData & frame);
 
 private:
-  V2xGateData::ConstPtr data_;
-  bool lock_;
+  GateArea::ConstSharedPtr gate_;
+  LockTarget lock_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

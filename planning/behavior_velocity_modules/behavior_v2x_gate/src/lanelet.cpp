@@ -23,9 +23,10 @@
 namespace
 {
 
+using LaneletLayer = lanelet::LaneletLayer;
 using ConstLines = std::vector<lanelet::ConstLineString3d>;
 using LaneToLine = std::unordered_map<lanelet::Id, lanelet::ConstLineString3d>;
-using LaneletLayer = lanelet::LaneletLayer;
+using V2xGate = lanelet::autoware::V2xGate;
 
 template <class Point>
 auto center_point(Point p, const Point & q)
@@ -55,43 +56,31 @@ LaneToLine create_lane_to_line(const LaneletLayer & lanes, const ConstLines & li
 namespace behavior_velocity_planner::v2x_gate
 {
 
-GateArea::GateArea(const BaseTypePtr gate, const lanelet::LaneletMapPtr map)
+GateArea::GateArea(const BaseType::ConstPtr gate, const lanelet::LaneletMapPtr map)
 {
   base_ = gate;
-  (void)map;
+  acquire_lines_ = create_lane_to_line(map->laneletLayer, gate->getAcquireLines());
+  release_lines_ = create_lane_to_line(map->laneletLayer, gate->getReleaseLines());
 }
 
-std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map)
+GateAreas get_all_gate_areas(const lanelet::LaneletMapPtr map)
 {
-  std::vector<V2xGate::ConstPtr> gates;
+  GateAreas gates;
   for (const auto & element : map->regulatoryElementLayer) {
     const auto gate = std::dynamic_pointer_cast<const V2xGate>(element);
     if (gate) {
-      gates.push_back(gate);
+      gates.push_back(std::make_shared<GateArea>(gate, map));
     }
   }
   return gates;
 }
 
-std::vector<V2xGateData::ConstPtr> create_v2x_gate_data(const lanelet::LaneletMapPtr map)
+LaneToGateAreas get_lane_to_gate_areas(const lanelet::LaneletMapPtr map)
 {
-  std::vector<V2xGateData::ConstPtr> list;
-  for (const auto & gate : get_all_v2x_gates(map)) {
-    const auto data = std::make_shared<V2xGateData>();
-    data->gate = gate;
-    data->acquire_lines = create_lane_to_line(map->laneletLayer, gate->getAcquireLines());
-    data->release_lines = create_lane_to_line(map->laneletLayer, gate->getReleaseLines());
-    list.push_back(data);
-  }
-  return list;
-}
-
-LaneToGate create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map)
-{
-  LaneToGate mapping;
-  const auto gates = create_v2x_gate_data(map);
+  LaneToGateAreas mapping;
+  const auto gates = get_all_gate_areas(map);
   for (const auto & gate : gates) {
-    for (const auto & [lane_id, line] : gate->acquire_lines) {
+    for (const auto & [lane_id, line] : gate->getAcquireLines()) {
       mapping[lane_id].push_back(gate);
     }
   }

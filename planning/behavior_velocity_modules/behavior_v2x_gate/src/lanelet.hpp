@@ -15,14 +15,11 @@
 #ifndef LANELET_HPP_
 #define LANELET_HPP_
 
-#include "module.hpp"
-
 #include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
 
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace behavior_velocity_planner::v2x_gate
@@ -31,23 +28,25 @@ namespace behavior_velocity_planner::v2x_gate
 class GateArea
 {
 public:
-  using BaseTypePtr = lanelet::autoware::V2xGate::ConstPtr;
-  GateArea(const BaseTypePtr gate, const lanelet::LaneletMapPtr map);
+  using ConstSharedPtr = std::shared_ptr<const GateArea>;
+  using BaseType = lanelet::autoware::V2xGate;
+  GateArea(const BaseType::ConstPtr gate, const lanelet::LaneletMapPtr map);
 
-  lanelet::Id id() { return base_->id(); }
-  std::string getCategory() { return base_->getCategory(); }
+  lanelet::Id id() const { return base_->id(); }
+  std::string getCategory() const { return base_->getCategory(); }
+
+  auto getAcquireLines() const { return acquire_lines_; }
+  auto getReleaseLines() const { return release_lines_; }
 
 private:
-  BaseTypePtr base_;
+  BaseType::ConstPtr base_;
+  std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> acquire_lines_;
+  std::unordered_map<lanelet::Id, lanelet::ConstLineString3d> release_lines_;
 };
 
-using V2xGateDataSet = std::unordered_set<V2xGateData::ConstPtr>;
-using LaneToGate = std::unordered_map<lanelet::Id, std::vector<V2xGateData::ConstPtr>>;
-using lanelet::autoware::V2xGate;
-
-std::vector<V2xGate::ConstPtr> get_all_v2x_gates(const lanelet::LaneletMapPtr map);
-std::vector<V2xGateData::ConstPtr> create_v2x_gate_data(const lanelet::LaneletMapPtr map);
-LaneToGate create_lanelet_to_v2x_gate(const lanelet::LaneletMapPtr map);
+using GateAreas = std::vector<GateArea::ConstSharedPtr>;
+using LaneToGateAreas = std::unordered_map<lanelet::Id, GateAreas>;
+LaneToGateAreas get_lane_to_gate_areas(const lanelet::LaneletMapPtr map);
 
 }  // namespace behavior_velocity_planner::v2x_gate
 

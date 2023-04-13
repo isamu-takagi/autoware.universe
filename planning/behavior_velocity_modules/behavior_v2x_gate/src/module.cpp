@@ -78,10 +78,9 @@ PathPoint find_ego_segment_index(
   return PathPoint{p->common->current_odometry->pose, index};
 }
 
-SceneModule::SceneModule(const V2xGateData::ConstPtr & data)
+SceneModule::SceneModule(const GateArea::ConstSharedPtr & gate)
 {
-  data_ = data;
-  lock_ = false;
+  gate_ = gate;
 }
 
 void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
@@ -92,13 +91,13 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   (void)frame;
 
   const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate");
-  RCLCPP_INFO_STREAM(logger, "scene module: " << data_->gate->id());
+  RCLCPP_INFO_STREAM(logger, "scene module: " << gate_->id());
 
   const auto ego = find_ego_segment_index(path->points, frame.data);
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
 
-  const auto acquire_point = get_first_cross_point(*path, frame, ego, data_->acquire_lines);
-  const auto release_point = get_first_cross_point(*path, frame, ego, data_->release_lines);
+  const auto acquire_point = get_first_cross_point(*path, frame, ego, gate_->getAcquireLines());
+  const auto release_point = get_first_cross_point(*path, frame, ego, gate_->getReleaseLines());
 
   if (acquire_point && release_point) {
     const auto acquire_id = acquire_point.value().line.id();
@@ -107,16 +106,13 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   }
 
   /*
-
     const auto [dist, index, pose] = acquire_point.value();
     RCLCPP_INFO_STREAM(logger, " - acquire line: " << index << " " << dist);
     planning_utils::insertStopPoint(pose.position, index, *path);
 
-  if (release_point) {
     const auto [dist, index, pose] = release_point.value();
     RCLCPP_INFO_STREAM(logger, " - release line: " << index << " " << dist);
     planning_utils::insertStopPoint(pose.position, index, *path);
-  }
   */
 }
 

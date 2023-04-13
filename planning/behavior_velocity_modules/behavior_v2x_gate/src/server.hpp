@@ -37,7 +37,6 @@ struct LockStatus
 class LockTarget
 {
 public:
-  using Key = std::pair<std::string, std::string>;
   void acquire(lanelet::Id in, lanelet::Id out);
   void release(lanelet::Id in, lanelet::Id out);
 
@@ -48,10 +47,6 @@ private:
 class LockServer
 {
 public:
-  LockStatus * create(const std::string & category, const lanelet::Id target);
-
-private:
-  std::map<LockTarget::Key, std::unique_ptr<LockTarget>> modules_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace behavior_velocity_planner::v2x_gate
@@ -44,7 +45,7 @@ void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathW
   RCLCPP_INFO_STREAM(logger, "v2x gate update");
 
   const auto map = data->common->route_handler->getLaneletMapPtr();
-  const auto mapping = create_lanelet_to_v2x_gate(map);
+  const auto mapping = get_lane_to_gate_areas(map);
 
   const auto current_pose = data->common->current_odometry->pose;
   const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
@@ -56,22 +57,21 @@ void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathW
     unique_lane_ids = planning_utils::getSortedLaneIdsFromPath(path);
   }
 
-  V2xGateDataSet gates;
+  std::unordered_set<GateArea::ConstSharedPtr> gates_on_route;
   for (const auto & id : unique_lane_ids) {
     if (mapping.count(id)) {
       for (const auto & gate : mapping.at(id)) {
-        gates.insert(gate);
+        gates_on_route.insert(gate);
       }
     }
   }
 
   // Create module.
-  for (const auto & gate : gates) {
-    const auto temp = std::make_shared<GateArea>(gate->gate, map);
-    const auto id = temp->id();
+  for (const auto & gate : gates_on_route) {
+    const auto id = gate->id();
     if (!scenes_.count(id)) {
       RCLCPP_INFO_STREAM(logger, "create scene: " << id);
-      server_.create(temp->getCategory(), id);
+      // server_.create(temp->getCategory(), id);
       scenes_.emplace(id, std::make_shared<SceneModule>(gate));
     }
   }
