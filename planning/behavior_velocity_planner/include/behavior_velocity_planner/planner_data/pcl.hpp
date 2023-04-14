@@ -12,31 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__COMMON_HPP_
-#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__COMMON_HPP_
-
-#include <route_handler/route_handler.hpp>
-#include <vehicle_info_util/vehicle_info.hpp>
-
-#include <geometry_msgs/msg/pose_stamped.hpp>
-
-#include <memory>
+#ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PCL_HPP_
+#define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PCL_HPP_
 
 namespace behavior_velocity_planner
 {
 
-struct PlannerDataCommon
+struct PlannerDataPcl
 {
-  std::shared_ptr<route_handler::RouteHandler> route_handler;
-  vehicle_info_util::VehicleInfo vehicle_info;
-
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
-
-  double stop_line_extend_length;
-  double ego_nearest_dist_threshold;
-  double ego_nearest_yaw_threshold;
 };
 
 }  // namespace behavior_velocity_planner
 
-#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__COMMON_HPP_
+#endif  // BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA__PCL_HPP_

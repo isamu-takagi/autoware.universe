@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <behavior_velocity_planner/planner_data.hpp>
-#include <behavior_velocity_planner/planner_data/common.hpp>
+#include <behavior_velocity_planner/planner_data/pcl.hpp>
 #include <behavior_velocity_planner/planner_data2.hpp>
 
 namespace behavior_velocity_planner
@@ -21,15 +21,15 @@ namespace behavior_velocity_planner
 
 PlannerData2::PlannerData2(const PlannerData & data)
 {
-  common = std::make_unique<PlannerDataCommon>();
+  pcl = std::make_unique<PlannerDataPcl>();
 
-  common->route_handler = data.route_handler_;
-  common->vehicle_info = data.vehicle_info_;
-  common->current_odometry = data.current_odometry;
+  route_handler = data.route_handler_;
+  vehicle_info = data.vehicle_info_;
+  current_odometry = data.current_odometry;
 
-  common->stop_line_extend_length = data.stop_line_extend_length;
-  common->ego_nearest_dist_threshold = data.ego_nearest_dist_threshold;
-  common->ego_nearest_yaw_threshold = data.ego_nearest_yaw_threshold;
+  stop_line_extend_length = data.stop_line_extend_length;
+  ego_nearest_dist_threshold = data.ego_nearest_dist_threshold;
+  ego_nearest_yaw_threshold = data.ego_nearest_yaw_threshold;
 }
 
 PlannerData2::~PlannerData2()

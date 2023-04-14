@@ -15,6 +15,11 @@
 #ifndef BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA2_HPP_
 #define BEHAVIOR_VELOCITY_PLANNER__PLANNER_DATA2_HPP_
 
+#include <route_handler/route_handler.hpp>
+#include <vehicle_info_util/vehicle_info.hpp>
+
+#include <geometry_msgs/msg/pose_stamped.hpp>
+
 #include <memory>
 
 namespace behavior_velocity_planner
@@ -22,7 +27,7 @@ namespace behavior_velocity_planner
 
 // The planner data uses forward declarations to avoid unnecessary dependencies.
 struct PlannerData;
-struct PlannerDataCommon;
+struct PlannerDataPcl;
 
 struct PlannerData2 final
 {
@@ -30,7 +35,16 @@ struct PlannerData2 final
   explicit PlannerData2(const PlannerData & data);
   ~PlannerData2();
 
-  std::unique_ptr<PlannerDataCommon> common;
+  // Data that only some plugins depend on.
+  std::unique_ptr<PlannerDataPcl> pcl;
+
+  // Data that all plugins depend on.
+  std::shared_ptr<route_handler::RouteHandler> route_handler;
+  vehicle_info_util::VehicleInfo vehicle_info;
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
+  double stop_line_extend_length;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 };
 
 }  // namespace behavior_velocity_planner

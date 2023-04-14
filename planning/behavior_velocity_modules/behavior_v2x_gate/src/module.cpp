@@ -14,7 +14,6 @@
 
 #include "module.hpp"
 
-#include <behavior_velocity_planner/planner_data/common.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <utilization/arc_lane_util.hpp>  // TODO(Takagi, Isamu): move header
 #include <utilization/util.hpp>
@@ -44,8 +43,8 @@ std::optional<StopPoint> get_first_cross_point(
 {
   // TODO(Takagi, Isamu): Use stop margin
   const double stop_margin = 0.0;
-  const double stop_offset = frame.data->common->vehicle_info.max_longitudinal_offset_m;
-  const double line_extend = frame.data->common->stop_line_extend_length;
+  const double stop_offset = frame.data->vehicle_info.max_longitudinal_offset_m;
+  const double line_extend = frame.data->stop_line_extend_length;
 
   std::optional<StopPoint> result;
   for (const auto & [lane_id, line] : lines) {
@@ -73,9 +72,8 @@ PathPoint find_ego_segment_index(
   const std::vector<T> & points, const PlannerData2::ConstSharedPtr & p)
 {
   const auto index = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    points, p->common->current_odometry->pose, p->common->ego_nearest_dist_threshold,
-    p->common->ego_nearest_yaw_threshold);
-  return PathPoint{p->common->current_odometry->pose, index};
+    points, p->current_odometry->pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  return PathPoint{p->current_odometry->pose, index};
 }
 
 SceneModule::SceneModule(const GateArea::ConstSharedPtr & gate)

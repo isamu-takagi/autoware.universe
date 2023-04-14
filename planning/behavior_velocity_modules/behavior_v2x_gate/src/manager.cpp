@@ -16,7 +16,6 @@
 
 #include "lanelet.hpp"
 
-#include <behavior_velocity_planner/planner_data/common.hpp>
 #include <utilization/util.hpp>
 
 #include <memory>
@@ -44,10 +43,10 @@ void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathW
   (void)path;
   RCLCPP_INFO_STREAM(logger, "v2x gate update");
 
-  const auto map = data->common->route_handler->getLaneletMapPtr();
+  const auto map = data->route_handler->getLaneletMapPtr();
   const auto mapping = get_lane_to_gate_areas(map);
 
-  const auto current_pose = data->common->current_odometry->pose;
+  const auto current_pose = data->current_odometry->pose;
   const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
 
   std::vector<int64_t> unique_lane_ids;
