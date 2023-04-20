@@ -1323,18 +1323,18 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
   return path.points.at(*insert_idx);
 }
 
-double getSignedDistanceFromShoulderLeftBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose)
+double getSignedDistanceFromBoundary(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose, bool left_side)
 {
-  lanelet::ConstLanelet closest_shoulder_lanelet;
+  lanelet::ConstLanelet closest_lanelet;
   lanelet::ArcCoordinates arc_coordinates;
-  if (lanelet::utils::query::getClosestLanelet(
-        shoulder_lanelets, pose, &closest_shoulder_lanelet)) {
+  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
     const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & left_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.leftBound3d());
+    const auto & boundary_line_2d = left_side
+                                      ? lanelet::utils::to2D(closest_lanelet.leftBound3d())
+                                      : lanelet::utils::to2D(closest_lanelet.rightBound3d());
     arc_coordinates = lanelet::geometry::toArcCoordinates(
-      left_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
-
+      boundary_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
   } else {
     RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("behavior_path_planner").get_child("utils"),
@@ -1344,29 +1344,30 @@ double getSignedDistanceFromShoulderLeftBoundary(
   return arc_coordinates.distance;
 }
 
-std::optional<double> getSignedDistanceFromShoulderLeftBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const LinearRing2d & footprint,
-  const Pose & vehicle_pose)
+std::optional<double> getSignedDistanceFromBoundary(
+  const lanelet::ConstLanelets & lanelets, const LinearRing2d & footprint,
+  const Pose & vehicle_pose, const bool left_side)
 {
   double min_distance = std::numeric_limits<double>::max();
+
   const auto transformed_footprint =
     transformVector(footprint, tier4_autoware_utils::pose2transform(vehicle_pose));
-  bool found_neighbor_shoulder_bound = false;
+  bool found_neighbor_bound = false;
   for (const auto & vehicle_corner_point : transformed_footprint) {
     // convert point of footprint to pose
     Pose vehicle_corner_pose{};
     vehicle_corner_pose.position = tier4_autoware_utils::toMsg(vehicle_corner_point.to_3d());
     vehicle_corner_pose.orientation = vehicle_pose.orientation;
 
-    // calculate distance to the shoulder bound directly next to footprint points
-    lanelet::ConstLanelet closest_shoulder_lanelet{};
-    if (lanelet::utils::query::getClosestLanelet(
-          shoulder_lanelets, vehicle_corner_pose, &closest_shoulder_lanelet)) {
-      const auto & left_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.leftBound3d());
+    // calculate distance to the bound directly next to footprint points
+    lanelet::ConstLanelet closest_lanelet{};
+    if (lanelet::utils::query::getClosestLanelet(lanelets, vehicle_corner_pose, &closest_lanelet)) {
+      const auto & bound_line_2d = left_side ? lanelet::utils::to2D(closest_lanelet.leftBound3d())
+                                             : lanelet::utils::to2D(closest_lanelet.rightBound3d());
 
-      for (size_t i = 1; i < left_line_2d.size(); ++i) {
-        const Point p_front = lanelet::utils::conversion::toGeomMsgPt(left_line_2d[i - 1]);
-        const Point p_back = lanelet::utils::conversion::toGeomMsgPt(left_line_2d[i]);
+      for (size_t i = 1; i < bound_line_2d.size(); ++i) {
+        const Point p_front = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i - 1]);
+        const Point p_back = lanelet::utils::conversion::toGeomMsgPt(bound_line_2d[i]);
 
         const Point inverse_p_front =
           tier4_autoware_utils::inverseTransformPoint(p_front, vehicle_corner_pose);
@@ -1381,41 +1382,27 @@ std::optional<double> getSignedDistanceFromShoulderLeftBoundary(
         if (dx_front < 0 && dx_back > 0) {
           const double lateral_distance_from_pose_to_segment =
             (dy_front * dx_back + dy_back * -dx_front) / (dx_back - dx_front);
-          min_distance = std::min(lateral_distance_from_pose_to_segment, min_distance);
-          found_neighbor_shoulder_bound = true;
+
+          if (std::abs(lateral_distance_from_pose_to_segment) < std::abs(min_distance)) {
+            min_distance = lateral_distance_from_pose_to_segment;
+          }
+
+          found_neighbor_bound = true;
           break;
         }
       }
     }
   }
 
-  if (!found_neighbor_shoulder_bound) {
+  if (!found_neighbor_bound) {
     RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("behavior_path_planner").get_child("utils"),
       "neighbor shoulder bound to footprint is not found.");
     return {};
   }
 
+  // min_distance is the distance from corner_pose to bound, so reverse this value
   return -min_distance;
-}
-
-double getSignedDistanceFromRightBoundary(
-  const lanelet::ConstLanelets & lanelets, const Pose & pose)
-{
-  lanelet::ConstLanelet closest_lanelet;
-  lanelet::ArcCoordinates arc_coordinates;
-  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
-    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & right_line_2d = lanelet::utils::to2D(closest_lanelet.rightBound3d());
-    arc_coordinates = lanelet::geometry::toArcCoordinates(
-      right_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
-  } else {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("utils"),
-      "closest shoulder lanelet not found.");
-  }
-
-  return arc_coordinates.distance;
 }
 
 double getArcLengthToTargetLanelet(
@@ -1740,7 +1727,6 @@ PathWithLaneId setDecelerationVelocity(
 
 BehaviorModuleOutput getReferencePath(
   const lanelet::ConstLanelet & current_lane,
-  const std::shared_ptr<LaneFollowingParameters> & parameters,
   const std::shared_ptr<const PlannerData> & planner_data)
 {
   PathWithLaneId reference_path{};
@@ -1781,21 +1767,21 @@ BehaviorModuleOutput getReferencePath(
   const auto drivable_lanes = generateDrivableLanes(drivable_lanelets);
 
   {
-    const int num_lane_change =
-      std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
+    const auto shift_intervals =
+      route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
 
-    const double lane_change_buffer = calcLaneChangeBuffer(p, num_lane_change);
+    const double lane_change_buffer = utils::calcMinimumLaneChangeLength(p, shift_intervals);
 
-    reference_path = setDecelerationVelocity(
-      *route_handler, reference_path, current_lanes, parameters->lane_change_prepare_duration,
+    reference_path = utils::setDecelerationVelocity(
+      *route_handler, reference_path, current_lanes, p.lane_change_prepare_duration,
       lane_change_buffer);
   }
 
   const auto shorten_lanes = cutOverlappedLanes(reference_path, drivable_lanes);
 
   const auto expanded_lanes = expandLanelets(
-    shorten_lanes, parameters->drivable_area_left_bound_offset,
-    parameters->drivable_area_right_bound_offset, parameters->drivable_area_types_to_skip);
+    shorten_lanes, p.drivable_area_left_bound_offset, p.drivable_area_right_bound_offset,
+    p.drivable_area_types_to_skip);
 
   generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data);
 
@@ -2005,11 +1991,39 @@ double calcTotalLaneChangeLength(
   return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
 }
 
+double calcLaneChangingTime(
+  const double lane_changing_velocity, const double shift_length,
+  const BehaviorPathPlannerParameters & common_parameter)
+{
+  const double lateral_acc =
+    lane_changing_velocity < common_parameter.lateral_acc_switching_velocity
+      ? common_parameter.lane_changing_lateral_acc_at_low_velocity
+      : common_parameter.lane_changing_lateral_acc;
+  const double & lateral_jerk = common_parameter.lane_changing_lateral_jerk;
+  return PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
+}
+
 double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
   const double length_to_intersection)
 {
   return num_lane_change * calcTotalLaneChangeLength(common_param) + length_to_intersection;
+}
+
+double calcMinimumLaneChangeLength(
+  const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
+  const double length_to_intersection)
+{
+  const double & vel = common_param.minimum_lane_changing_velocity;
+
+  double accumulated_length =
+    length_to_intersection + common_param.backward_length_buffer_for_end_of_lane;
+  for (const auto & shift_interval : shift_intervals) {
+    const double t = calcLaneChangingTime(vel, shift_interval, common_param);
+    accumulated_length += vel * t + common_param.minimum_prepare_length;
+  }
+
+  return accumulated_length;
 }
 
 lanelet::ConstLanelets getLaneletsFromPath(

@@ -277,13 +277,11 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
 PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
 
-double getSignedDistanceFromShoulderLeftBoundary(
-  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
-std::optional<double> getSignedDistanceFromShoulderLeftBoundary(
+double getSignedDistanceFromBoundary(
+  const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose, const bool left_side);
+std::optional<double> getSignedDistanceFromBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const LinearRing2d & footprint,
-  const Pose & vehicle_pose);
-double getSignedDistanceFromRightBoundary(
-  const lanelet::ConstLanelets & lanelets, const Pose & pose);
+  const Pose & vehicle_pose, const bool left_side);
 
 // misc
 
@@ -306,13 +304,8 @@ PathWithLaneId setDecelerationVelocity(
   const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
   const double lane_change_buffer);
 
-PathWithLaneId setDecelerationVelocity(
-  const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
-  const double buffer, const double deceleration_interval);
-
 BehaviorModuleOutput getReferencePath(
   const lanelet::ConstLanelet & current_lane,
-  const std::shared_ptr<LaneFollowingParameters> & parameters,
   const std::shared_ptr<const PlannerData> & planner_data);
 
 // object label
@@ -346,8 +339,16 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 double calcTotalLaneChangeLength(
   const BehaviorPathPlannerParameters & common_param, const bool include_buffer = true);
 
+double calcLaneChangingTime(
+  const double lane_changing_velocity, const double shift_length,
+  const BehaviorPathPlannerParameters & common_parameter);
+
 double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
+  const double length_to_intersection = 0.0);
+
+double calcMinimumLaneChangeLength(
+  const BehaviorPathPlannerParameters & common_param, const std::vector<double> & shift_intervals,
   const double length_to_intersection = 0.0);
 
 lanelet::ConstLanelets getLaneletsFromPath(
