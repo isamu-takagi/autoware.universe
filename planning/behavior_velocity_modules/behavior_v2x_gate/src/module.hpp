@@ -16,7 +16,7 @@
 #define MODULE_HPP_
 
 #include "lanelet.hpp"
-#include "server.hpp"
+#include "status.hpp"
 
 #include <behavior_velocity_planner/planner_data2.hpp>
 #include <behavior_velocity_planner/scene_module_plugin.hpp>
@@ -40,6 +40,8 @@ public:
   using SharedPtr = std::shared_ptr<SceneModule>;
   explicit SceneModule(const GateArea::ConstSharedPtr & gate);
   void plan(PathWithLaneId * path, const FrameData & frame);
+
+  LockTarget & lock() { return lock_; }
 
 private:
   GateArea::ConstSharedPtr gate_;

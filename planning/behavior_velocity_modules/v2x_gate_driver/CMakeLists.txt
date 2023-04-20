@@ -14,4 +14,4 @@ rclcpp_components_register_nodes(${PROJECT_NAME}
 
 pluginlib_export_plugin_description_file(${PROJECT_NAME} plugins.xml)
 
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE launch)

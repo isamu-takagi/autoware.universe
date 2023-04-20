@@ -1,0 +1,7 @@
+<launch>
+  <node_container pkg="rclcpp_components" exec="component_container" name="container" namespace="">
+    <composable_node pkg="v2x_gate_driver" plugin="v2x_gate_driver::Loader" name="loader">
+      <remap from="~/srv/acquire" to="/test/gate_lock/acquire"/>
+    </composable_node>
+  </node_container>
+</launch>

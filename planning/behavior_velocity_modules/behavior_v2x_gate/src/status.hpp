@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SERVER_HPP_
-#define SERVER_HPP_
+#ifndef STATUS_HPP_
+#define STATUS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -44,30 +44,42 @@ struct ServerStatus
   bool cancel;
 };
 
-class LockTarget
+struct RequestStatus
 {
-public:
-  void acquire(const ClientStatus & status);
-  void release();
-  ServerStatus status() const;
-
-private:
-  ClientStatus client_status_;
-  ServerStatus server_status_;
+  std::set<lanelet::Id> gates;
+  rclcpp::Time stamp;
 };
 
 class LockServer
 {
 public:
   explicit LockServer(rclcpp::Node * node);
+  rclcpp::Time now() const { return clock_->now(); }
+  const auto & srv_acquire() { return srv_acquire_; }
+  const auto & srv_release() { return srv_release_; }
 
 private:
   using AcquireGateLock = tier4_v2x_msgs::srv::AcquireGateLock;
   using ReleaseGateLock = tier4_v2x_msgs::srv::ReleaseGateLock;
+  rclcpp::Clock::SharedPtr clock_;
   rclcpp::Client<AcquireGateLock>::SharedPtr srv_acquire_;
   rclcpp::Client<ReleaseGateLock>::SharedPtr srv_release_;
 };
 
+class LockTarget
+{
+public:
+  void acquire(const ClientStatus & status);
+  void release();
+  void update(LockServer & server);
+  ServerStatus status() const;
+
+private:
+  ClientStatus client_status_;
+  ServerStatus server_status_;
+  std::optional<RequestStatus> request_status_;
+};
+
 }  // namespace behavior_velocity_planner::v2x_gate
 
-#endif  // SERVER_HPP_
+#endif  // STATUS_HPP_

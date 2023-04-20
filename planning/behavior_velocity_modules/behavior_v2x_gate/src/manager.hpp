@@ -16,7 +16,7 @@
 #define MANAGER_HPP_
 
 #include "module.hpp"
-#include "server.hpp"
+#include "status.hpp"
 
 #include <behavior_velocity_planner/scene_manager_plugin.hpp>
 

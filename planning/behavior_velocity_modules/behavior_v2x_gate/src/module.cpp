@@ -90,13 +90,13 @@ LaneToLines filter_lines(const LaneToLines & lines, const std::set<lanelet::Id> 
   return result;
 }
 
-std::set<lanelet::Id> get_keys(const LaneToLines & lines)
+std::set<lanelet::Id> get_line_ids(const LaneToLines & lines)
 {
-  std::set<lanelet::Id> keys;
-  for (const auto & [key, value] : lines) {
-    keys.insert(key);
+  std::set<lanelet::Id> result;
+  for (const auto & [lane, line] : lines) {
+    result.insert(line.id());
   }
-  return keys;
+  return result;
 }
 
 std::set<lanelet::Id> get_union(const std::set<lanelet::Id> & a, const std::set<lanelet::Id> & b)
@@ -116,9 +116,6 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
 {
   using arc_lane_utils::PathIndexWithPose;
 
-  (void)path;
-  (void)frame;
-
   const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate");
   RCLCPP_INFO_STREAM(logger, "scene module: " << gate_->id());
 
@@ -127,7 +124,8 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   const auto release_lines = filter_lines(gate_->getReleaseLines(), frame.lane_ids_on_path);
 
   ClientStatus status;
-  status.gates = get_union(get_keys(acquire_lines), get_keys(release_lines));
+  status.gates = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
+  lock_.acquire(status);
 
   const auto ego = find_ego_segment_index(path->points, frame.data);
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
