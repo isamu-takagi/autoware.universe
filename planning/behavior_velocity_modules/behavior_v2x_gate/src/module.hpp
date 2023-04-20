@@ -23,7 +23,7 @@
 #include <lanelet2_extension/regulatory_elements/v2x_gate.hpp>
 
 #include <memory>
-#include <unordered_map>
+#include <set>
 
 namespace behavior_velocity_planner::v2x_gate
 {
@@ -31,6 +31,7 @@ namespace behavior_velocity_planner::v2x_gate
 struct FrameData
 {
   PlannerData2::ConstSharedPtr data;
+  std::set<lanelet::Id> lane_ids_on_path;
 };
 
 class SceneModule : public SceneModulePlugin

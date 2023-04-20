@@ -17,4 +17,24 @@
 namespace behavior_velocity_planner::v2x_gate
 {
 
+void LockTarget::acquire(const ClientStatus & status)
+{
+  client_status_ = status;
+}
+
+void LockTarget::release()
+{
+}
+
+ServerStatus LockTarget::status() const
+{
+  return ServerStatus{};
+}
+
+LockServer::LockServer(rclcpp::Node * node)
+{
+  srv_acquire_ = node->create_client<AcquireGateLock>("/test/gate_lock/acquire");
+  srv_release_ = node->create_client<ReleaseGateLock>("/test/gate_lock/release");
+}
+
 }  // namespace behavior_velocity_planner::v2x_gate

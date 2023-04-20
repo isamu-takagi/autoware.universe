@@ -39,7 +39,7 @@ public:
 private:
   rclcpp::Node * node_;
   std::unordered_map<lanelet::Id, SceneModule::SharedPtr> scenes_;
-  LockServer server_;
+  std::unique_ptr<LockServer> server_;
   PlannerData2::ConstSharedPtr data_;
 };
 

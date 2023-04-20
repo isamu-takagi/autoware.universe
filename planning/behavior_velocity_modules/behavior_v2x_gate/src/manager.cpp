@@ -19,9 +19,28 @@
 #include <utilization/util.hpp>
 
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_set>
 #include <vector>
+
+namespace
+{
+
+/*
+std::set<lanelet::Id> get_lane_ids_on_path(const PathWithLaneId & path)
+{
+  std::set<lanelet::Id> lane_ids;
+  for (const auto & points : path.points) {
+    for (const auto lane_id : points.lane_ids) {
+      lane_ids.insert(lane_id);
+    }
+  }
+  return lane_ids;
+}
+*/
+
+}  // namespace
 
 namespace behavior_velocity_planner::v2x_gate
 {
@@ -29,35 +48,34 @@ namespace behavior_velocity_planner::v2x_gate
 void SceneManager::init(rclcpp::Node * node)
 {
   node_ = node;
+  server_ = std::make_unique<LockServer>(node);
 }
 
-void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId & path)
+void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId &)
+{
+  data_ = data;
+}
+
+void SceneManager::plan(PathWithLaneId * path)
 {
   const auto logger = node_->get_logger();
-  data_ = data;
+  RCLCPP_INFO_STREAM(logger, "v2x gate plan");
 
-  static int count = 0;
-  if (count++ % 10 != 0) return;
-
-  (void)data;
-  (void)path;
-  RCLCPP_INFO_STREAM(logger, "v2x gate update");
-
-  const auto map = data->route_handler->getLaneletMapPtr();
+  const auto map = data_->route_handler->getLaneletMapPtr();
   const auto mapping = get_lane_to_gate_areas(map);
 
-  const auto current_pose = data->current_odometry->pose;
-  const auto current_lane = planning_utils::getNearestLaneId(path, map, current_pose);
+  const auto current_pose = data_->current_odometry->pose;
+  const auto current_lane = planning_utils::getNearestLaneId(*path, map, current_pose);
 
-  std::vector<int64_t> unique_lane_ids;
+  std::vector<int64_t> lane_ids_on_path;
   if (current_lane) {
-    unique_lane_ids = planning_utils::getSubsequentLaneIdsSetOnPath(path, *current_lane);
+    lane_ids_on_path = planning_utils::getSubsequentLaneIdsSetOnPath(*path, *current_lane);
   } else {
-    unique_lane_ids = planning_utils::getSortedLaneIdsFromPath(path);
+    lane_ids_on_path = planning_utils::getSortedLaneIdsFromPath(*path);
   }
 
   std::unordered_set<GateArea::ConstSharedPtr> gates_on_route;
-  for (const auto & id : unique_lane_ids) {
+  for (const auto & id : lane_ids_on_path) {
     if (mapping.count(id)) {
       for (const auto & gate : mapping.at(id)) {
         gates_on_route.insert(gate);
@@ -70,16 +88,13 @@ void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathW
     const auto id = gate->id();
     if (!scenes_.count(id)) {
       RCLCPP_INFO_STREAM(logger, "create scene: " << id);
-      // server_.create(temp->getCategory(), id);
       scenes_.emplace(id, std::make_shared<SceneModule>(gate));
     }
   }
-}
 
-void SceneManager::plan(PathWithLaneId * path)
-{
   FrameData frame;
   frame.data = data_;
+  frame.lane_ids_on_path = std::set<lanelet::Id>(lane_ids_on_path.begin(), lane_ids_on_path.end());
 
   for (const auto & [lane, scene] : scenes_) {
     scene->plan(path, frame);

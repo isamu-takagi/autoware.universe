@@ -19,6 +19,7 @@
 #include <utilization/util.hpp>
 
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -76,6 +77,36 @@ PathPoint find_ego_segment_index(
   return PathPoint{p->current_odometry->pose, index};
 }
 
+using LaneToLines = std::unordered_map<lanelet::Id, lanelet::ConstLineString3d>;
+
+LaneToLines filter_lines(const LaneToLines & lines, const std::set<lanelet::Id> & lanes)
+{
+  LaneToLines result;
+  for (const auto & [key, value] : lines) {
+    if (lanes.count(key)) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+std::set<lanelet::Id> get_keys(const LaneToLines & lines)
+{
+  std::set<lanelet::Id> keys;
+  for (const auto & [key, value] : lines) {
+    keys.insert(key);
+  }
+  return keys;
+}
+
+std::set<lanelet::Id> get_union(const std::set<lanelet::Id> & a, const std::set<lanelet::Id> & b)
+{
+  std::set<lanelet::Id> result;
+  for (const auto & v : a) result.insert(v);
+  for (const auto & v : b) result.insert(v);
+  return result;
+}
+
 SceneModule::SceneModule(const GateArea::ConstSharedPtr & gate)
 {
   gate_ = gate;
@@ -91,11 +122,18 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate");
   RCLCPP_INFO_STREAM(logger, "scene module: " << gate_->id());
 
+  // Get gate lines on the path.
+  const auto acquire_lines = filter_lines(gate_->getAcquireLines(), frame.lane_ids_on_path);
+  const auto release_lines = filter_lines(gate_->getReleaseLines(), frame.lane_ids_on_path);
+
+  ClientStatus status;
+  status.gates = get_union(get_keys(acquire_lines), get_keys(release_lines));
+
   const auto ego = find_ego_segment_index(path->points, frame.data);
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
 
-  const auto acquire_point = get_first_cross_point(*path, frame, ego, gate_->getAcquireLines());
-  const auto release_point = get_first_cross_point(*path, frame, ego, gate_->getReleaseLines());
+  const auto acquire_point = get_first_cross_point(*path, frame, ego, acquire_lines);
+  const auto release_point = get_first_cross_point(*path, frame, ego, release_lines);
 
   if (acquire_point && release_point) {
     const auto acquire_id = acquire_point.value().line.id();

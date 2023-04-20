@@ -15,10 +15,16 @@
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
+#include <tier4_v2x_msgs/srv/acquire_gate_lock.hpp>
+#include <tier4_v2x_msgs/srv/release_gate_lock.hpp>
+
 #include <lanelet2_core/Forward.h>
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -26,27 +32,40 @@
 namespace behavior_velocity_planner::v2x_gate
 {
 
-struct LockStatus
+struct ClientStatus
 {
-  using Key = std::set<lanelet::Id>;
-  bool locked;
-  bool cancel;
+  std::set<lanelet::Id> gates;
   double distance;
+};
+
+struct ServerStatus
+{
+  std::set<lanelet::Id> gates;
+  bool cancel;
 };
 
 class LockTarget
 {
 public:
-  void acquire(lanelet::Id in, lanelet::Id out);
-  void release(lanelet::Id in, lanelet::Id out);
+  void acquire(const ClientStatus & status);
+  void release();
+  ServerStatus status() const;
 
 private:
-  std::map<LockStatus::Key, std::unique_ptr<LockStatus>> statuses_;
+  ClientStatus client_status_;
+  ServerStatus server_status_;
 };
 
 class LockServer
 {
 public:
+  explicit LockServer(rclcpp::Node * node);
+
+private:
+  using AcquireGateLock = tier4_v2x_msgs::srv::AcquireGateLock;
+  using ReleaseGateLock = tier4_v2x_msgs::srv::ReleaseGateLock;
+  rclcpp::Client<AcquireGateLock>::SharedPtr srv_acquire_;
+  rclcpp::Client<ReleaseGateLock>::SharedPtr srv_release_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate
