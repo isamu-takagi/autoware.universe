@@ -59,6 +59,7 @@ using tier4_autoware_utils::StopWatch;
 using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
+using tier4_rtc_msgs::msg::Module;
 using unique_identifier_msgs::msg::UUID;
 
 class SceneModuleInterface
@@ -67,6 +68,7 @@ public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
   : module_id_(module_id),
+    activated_(false),
     safe_(false),
     distance_(std::numeric_limits<double>::lowest()),
     logger_(logger),
@@ -127,8 +129,7 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->current_odometry->pose, p->ego_nearest_dist_threshold,
-      p->ego_nearest_yaw_threshold);
+      points, p->current_odometry->pose, p->ego_nearest_dist_threshold);
   }
 };
 
@@ -136,7 +137,7 @@ class SceneModuleManagerInterface : public SceneManagerPlugin
 {
 public:
   SceneModuleManagerInterface(rclcpp::Node & node, [[maybe_unused]] const char * module_name)
-  : clock_(node.get_clock()), logger_(node.get_logger())
+  : node_(node), clock_(node.get_clock()), logger_(node.get_logger())
   {
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 1);
@@ -310,6 +311,7 @@ protected:
   std::shared_ptr<const PlannerData> planner_data_;
 
   boost::optional<int> first_stop_path_point_index_;
+  rclcpp::Node & node_;
   rclcpp::Clock::SharedPtr clock_;
   // Debug
   bool is_publish_debug_path_ = {false};  // note : this is very heavy debug topic option
@@ -345,7 +347,7 @@ protected:
   RTCInterface rtc_interface_;
   std::unordered_map<int64_t, UUID> map_uuid_;
 
-  void sendRTC(const Time & stamp)
+  virtual void sendRTC(const Time & stamp)
   {
     for (const auto & scene_module : scene_modules_) {
       const UUID uuid = getUUID(scene_module->getModuleId());
@@ -354,7 +356,7 @@ protected:
     publishRTCStatus(stamp);
   }
 
-  void setActivation()
+  virtual void setActivation()
   {
     for (const auto & scene_module : scene_modules_) {
       const UUID uuid = getUUID(scene_module->getModuleId());
