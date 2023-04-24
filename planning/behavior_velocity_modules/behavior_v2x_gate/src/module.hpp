@@ -41,11 +41,11 @@ public:
   explicit SceneModule(const GateArea::ConstSharedPtr & gate);
   void plan(PathWithLaneId * path, const FrameData & frame);
 
-  LockTarget & lock() { return lock_; }
+  LockTarget * lock() { return lock_.get(); }
 
 private:
   GateArea::ConstSharedPtr gate_;
-  LockTarget lock_;
+  std::unique_ptr<LockTarget> lock_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

@@ -69,15 +69,22 @@ private:
 class LockTarget
 {
 public:
+  LockTarget(const std::string & category, const lanelet::Id target);
   void acquire(const ClientStatus & status);
   void release();
   void update(LockServer & server);
   ServerStatus status() const;
 
 private:
+  using AcquireGateLock = tier4_v2x_msgs::srv::AcquireGateLock;
+  using ReleaseGateLock = tier4_v2x_msgs::srv::ReleaseGateLock;
+  std::string category_;
+  std::string target_;
   ClientStatus client_status_;
   ServerStatus server_status_;
-  std::optional<RequestStatus> request_status_;
+
+  AcquireGateLock::Request::ConstSharedPtr acquire_request_;
+  void on_acquire_response(const rclcpp::Client<AcquireGateLock>::SharedFuture future);
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

@@ -110,6 +110,7 @@ std::set<lanelet::Id> get_union(const std::set<lanelet::Id> & a, const std::set<
 SceneModule::SceneModule(const GateArea::ConstSharedPtr & gate)
 {
   gate_ = gate;
+  lock_ = std::make_unique<LockTarget>(gate->getCategory(), gate->id());
 }
 
 void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
@@ -125,7 +126,7 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
 
   ClientStatus status;
   status.gates = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
-  lock_.acquire(status);
+  lock_->acquire(status);
 
   const auto ego = find_ego_segment_index(path->points, frame.data);
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);

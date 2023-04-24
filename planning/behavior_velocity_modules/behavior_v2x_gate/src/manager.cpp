@@ -102,7 +102,7 @@ void SceneManager::plan(PathWithLaneId * path)
 
   // Synchronize status
   for (const auto & [lane, scene] : scenes_) {
-    scene->lock().update(*server_);
+    scene->lock()->update(*server_);
   }
 
   data_ = nullptr;

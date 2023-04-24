@@ -14,6 +14,18 @@
 
 #include "loader.hpp"
 
+#include <string>
+#include <vector>
+
+std::string join(const std::vector<std::string> & ids)
+{
+  std::string result;
+  for (const auto & id : ids) {
+    result += id + " ";
+  }
+  return result;
+}
+
 namespace v2x_gate_driver
 {
 
@@ -27,9 +39,12 @@ Loader::Loader(const rclcpp::NodeOptions & options) : Node("v2x_gate_driver", op
 void Loader::on_acquire(
   const AcquireGateLock::Request::SharedPtr req, const AcquireGateLock::Response::SharedPtr res)
 {
-  (void)req;
-  (void)res;
   RCLCPP_INFO_STREAM(get_logger(), "on_acquire");
+  RCLCPP_INFO_STREAM(get_logger(), " - " << req->target.category);
+  RCLCPP_INFO_STREAM(get_logger(), " - " << req->target.target);
+  RCLCPP_INFO_STREAM(get_logger(), " - " << join(req->target.gates));
+  get_clock()->sleep_for(rclcpp::Duration::from_seconds(1.0));
+  res->status.success = true;
 }
 
 }  // namespace v2x_gate_driver

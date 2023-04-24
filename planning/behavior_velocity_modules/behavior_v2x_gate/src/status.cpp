@@ -14,6 +14,8 @@
 
 #include "status.hpp"
 
+#include <vector>
+
 namespace
 {
 
@@ -26,10 +28,25 @@ std::string to_string(const std::set<lanelet::Id> & ids)
   return text;
 }
 
+std::vector<std::string> to_message_gates(const std::set<lanelet::Id> & ids)
+{
+  std::vector<std::string> result;
+  for (const auto & id : ids) {
+    result.push_back(std::to_string(id));
+  }
+  return result;
+}
+
 }  // namespace
 
 namespace behavior_velocity_planner::v2x_gate
 {
+
+LockTarget::LockTarget(const std::string & category, const lanelet::Id target)
+{
+  category_ = category;
+  target_ = std::to_string(target);
+}
 
 void LockTarget::acquire(const ClientStatus & status)
 {
@@ -48,18 +65,34 @@ void LockTarget::update(LockServer & server)
   RCLCPP_INFO_STREAM(logger, " - server gates: " << to_string(server_status_.gates));
 
   if (client_status_.gates != server_status_.gates) {
-    RequestStatus status;
-    status.gates = client_status_.gates;
-    status.stamp = server.now();
-
     if (client_status_.gates.empty()) {
       RCLCPP_INFO_STREAM(logger, " - request release");
     } else {
-      RCLCPP_INFO_STREAM(logger, " - request acquire");
+      if (!acquire_request_) {
+        RCLCPP_INFO_STREAM(logger, " - request acquire");
+        const auto srv = server.srv_acquire();
+        if (srv->service_is_ready()) {
+          const auto req = std::make_shared<AcquireGateLock::Request>();
+          req->target.category = category_;
+          req->target.target = target_;
+          req->target.gates = to_message_gates(client_status_.gates);
+          req->priority = client_status_.distance;
+          srv->async_send_request(
+            req, std::bind(&LockTarget::on_acquire_response, this, std::placeholders::_1));
+          acquire_request_ = req;
+          RCLCPP_INFO_STREAM(logger, " - request acquire done");
+        }
+      }
     }
   }
+}
 
-  (void)server;
+void LockTarget::on_acquire_response(const rclcpp::Client<AcquireGateLock>::SharedFuture future)
+{
+  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
+  const auto res = future.get();
+  RCLCPP_INFO_STREAM(logger, " - request acquire response: " << res->status.success);
+  acquire_request_ = nullptr;
 }
 
 ServerStatus LockTarget::status() const
