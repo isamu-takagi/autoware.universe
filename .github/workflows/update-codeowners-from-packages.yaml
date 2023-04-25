@@ -17,17 +17,17 @@ jobs:
     if: ${{ needs.check-secret.outputs.set == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Generate token
-        id: generate-token
-        uses: tibdex/github-app-token@v1
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.PRIVATE_KEY }}
+      #  - name: Generate token
+      #    id: generate-token
+      #    uses: tibdex/github-app-token@v1
+      #    with:
+      #      app_id: ${{ secrets.APP_ID }}
+      #      private_key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Run update-codeowners-from-packages
         uses: isamu-takagi/autoware-github-actions/update-codeowners-from-packages@feat/code-owners-advanced-settings
         with:
-          token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ secrets.APP_ID }}
           pr-labels: |
             bot
             update-codeowners-from-packages
