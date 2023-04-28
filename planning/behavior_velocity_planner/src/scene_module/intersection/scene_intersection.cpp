@@ -244,65 +244,74 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     ego_lane_with_next_lane, objects_ptr, closest_idx, time_delay);
 
   /* check occlusion on detection lane */
-  const auto first_inside_detection_idx_ip_opt =
-    first_detection_area ? util::getFirstPointInsidePolygon(
-                             path_ip, lane_interval_ip_opt.value(), first_detection_area.value())
-                         : std::nullopt;
-  const std::pair<size_t, size_t> lane_detection_interval_ip =
-    first_inside_detection_idx_ip_opt
-      ? std::make_pair(
-          first_inside_detection_idx_ip_opt.value(), std::get<1>(lane_interval_ip_opt.value()))
-      : lane_interval_ip_opt.value();
   const double occlusion_dist_thr = std::fabs(
     std::pow(planner_param_.occlusion.max_vehicle_velocity_for_rss, 2) /
     (2 * planner_param_.occlusion.min_vehicle_brake_for_rss));
-  const auto occlusion_stop_line_idx_ip_opt =
+  const bool is_occlusion_cleared =
     (enable_occlusion_detection_ && first_detection_area && !occlusion_attention_lanelets.empty())
-      ? findNearestOcclusionProjectedPosition(
-          *planner_data_->occupancy_grid, occlusion_attention_area, first_detection_area.value(),
-          path_ip, interval, lane_detection_interval_ip, detection_divisions_.value(),
+      ? isOcclusionCleared(
+          *planner_data_->occupancy_grid, occlusion_attention_area, adjacent_lanelets,
+          first_detection_area.value(), path_ip, lane_interval_ip, detection_divisions_.value(),
           occlusion_dist_thr)
-      : std::nullopt;
-  const std::optional<size_t> occlusion_stop_line_idx_opt =
-    occlusion_stop_line_idx_ip_opt
-      ? util::insertPoint(
-          path_ip.points.at(occlusion_stop_line_idx_ip_opt.value()).point.pose, path)
+      : true;
+  const auto occlusion_peeking_line_idx_opt =
+    first_detection_area
+      ? util::generatePeekingLimitLine(
+          first_detection_area.value(), path, path_ip, interval, lane_interval_ip, planner_data_,
+          planner_param_.occlusion.peeking_offset)
       : std::nullopt;
 
-  /* a flag if front stop line is not occlusion */
+  /* calculate final stop lines */
+  std::optional<size_t> stop_line_idx = default_stop_line_idx_opt;
+  std::optional<size_t> occlusion_peeking_line_idx =
+    occlusion_peeking_line_idx_opt;  // TODO(Mamoru Sobue): different position depending on the flag
+  std::optional<size_t> occlusion_first_stop_line_idx = default_stop_line_idx_opt;
+  std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
+
+  /* set RTC distance */
+  const double dist_1st_stopline =
+    default_stop_line_idx_opt
+      ? motion_utils::calcSignedArcLength(
+          path_ip.points, current_pose.position,
+          path->points.at(default_stop_line_idx_opt.value()).point.pose.position)
+      : std::numeric_limits<double>::lowest();
+  const double dist_2nd_stopline =
+    occlusion_peeking_line_idx
+      ? motion_utils::calcSignedArcLength(
+          path_ip.points, current_pose.position,
+          path->points.at(occlusion_peeking_line_idx.value()).point.pose.position)
+      : std::numeric_limits<double>::lowest();
+
   bool stuck_stop_required = false;
   bool collision_stop_required = false;
   bool first_phase_stop_required = false;
   bool occlusion_stop_required = false;
 
-  /* calculate final stop lines */
-  std::optional<size_t> stop_line_idx = default_stop_line_idx_opt;
-  std::optional<size_t> occlusion_stop_line_idx =
-    default_stop_line_idx_opt;  // TODO(Mamoru Sobue): maybe different position depending on the
-                                // flag
-  std::optional<size_t> occlusion_first_stop_line_idx = default_stop_line_idx_opt;
-  std::optional<std::pair<size_t, size_t>> insert_creep_during_occlusion = std::nullopt;
-  if (occlusion_stop_line_idx_opt) {
+  /* check safety */
+  const bool ext_occlusion_requested = (is_occlusion_cleared && !occlusion_activated_);
+  is_actually_occluded_ = !is_occlusion_cleared;
+  is_forcefully_occluded_ = ext_occlusion_requested;
+  if (!is_occlusion_cleared || ext_occlusion_requested) {
     if (!default_stop_line_idx_opt) {
+      RCLCPP_DEBUG(logger_, "occlusion is detected but default stop line is not set or generated");
+      RCLCPP_DEBUG(logger_, "===== plan end =====");
+      return true;
+    }
+    if (
+      before_creep_state_machine_.getState() == StateMachine::State::GO &&
+      !ext_occlusion_requested) {
       occlusion_stop_required = true;
-      stop_line_idx = occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
-      is_occluded_ = true;
-      occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
-      RCLCPP_WARN(logger_, "directly stop at occlusion stop line because collision line not found");
-    } else if (before_creep_state_machine_.getState() == StateMachine::State::GO) {
-      occlusion_stop_required = true;
-      stop_line_idx = occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
+      stop_line_idx = occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
       // clear first stop line
       // insert creep velocity [closest_idx, occlusion_stop_line)
       insert_creep_during_occlusion =
-        std::make_pair(closest_idx, occlusion_stop_line_idx_opt.value());
-      is_occluded_ = true;
+        std::make_pair(closest_idx, occlusion_peeking_line_idx_opt.value());
       occlusion_state_ = OcclusionState::CREEP_SECOND_STOP_LINE;
     } else {
-      const double dist_default_stop_line = motion_utils::calcSignedArcLength(
-        path_ip.points, current_pose.position,
-        path->points.at(default_stop_line_idx_opt.value()).point.pose.position);
-      if (dist_default_stop_line < planner_param_.common.stop_overshoot_margin) {
+      const bool approached_stop_line =
+        (dist_1st_stopline < planner_param_.common.stop_overshoot_margin);
+      const bool is_stopped = planner_data_->isVehicleStopped();
+      if (is_stopped && approached_stop_line) {
         // start waiting at the first stop line
         before_creep_state_machine_.setStateWithMarginTime(
           StateMachine::State::GO, logger_.get_child("occlusion state_machine"), *clock_);
@@ -310,18 +319,19 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       }
       first_phase_stop_required = true;
       occlusion_stop_required = true;
-      occlusion_stop_line_idx = occlusion_stop_line_idx_opt;
+      occlusion_peeking_line_idx = occlusion_peeking_line_idx_opt;
       stop_line_idx = occlusion_first_stop_line_idx;
       // insert creep velocity [default_stop_line, occlusion_stop_line)
       insert_creep_during_occlusion =
-        std::make_pair(default_stop_line_idx_opt.value(), occlusion_stop_line_idx_opt.value());
-      is_occluded_ = true;
+        std::make_pair(default_stop_line_idx_opt.value(), occlusion_peeking_line_idx_opt.value());
       occlusion_state_ = OcclusionState::BEFORE_FIRST_STOP_LINE;
     }
-  } else if (is_occluded_) {
+  } else if (occlusion_state_ != OcclusionState::CLEARED) {
     // previously occlusion existed, but now it is clear
-    if (!util::isOverTargetIndex(
-          *path, closest_idx, current_pose, default_stop_line_idx_opt.value())) {
+    if (
+      default_stop_line_idx_opt &&
+      !util::isOverTargetIndex(
+        *path, closest_idx, current_pose, default_stop_line_idx_opt.value())) {
       stop_line_idx = default_stop_line_idx_opt.value();
     } else if (
       static_pass_judge_line_opt &&
@@ -330,7 +340,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       stop_line_idx = static_pass_judge_line_opt;
     }
     occlusion_state_ = OcclusionState::CLEARED;
-    is_occluded_ = false;
     if (stop_line_idx && has_collision) {
       // do collision checking at previous occlusion stop line
       collision_stop_required = true;
@@ -375,30 +384,25 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
                                                      : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
 
-  /* set RTC request respectively */
+  /* set RTC safety respectively */
   if (occlusion_stop_required) {
     if (first_phase_stop_required) {
       occlusion_first_stop_safety_ = false;
-      occlusion_first_stop_distance_ = motion_utils::calcSignedArcLength(
-        path->points, planner_data_->current_odometry->pose.position,
-        path->points.at(stop_line_idx.value()).point.pose.position);
+      occlusion_first_stop_distance_ = dist_1st_stopline;
     }
-    occlusion_safety_ = false;
-    occlusion_stop_distance_ = motion_utils::calcSignedArcLength(
-      path->points, planner_data_->current_odometry->pose.position,
-      path->points.at(occlusion_stop_line_idx.value()).point.pose.position);
+    occlusion_safety_ = is_occlusion_cleared;
+    occlusion_stop_distance_ = dist_2nd_stopline;
   } else {
     /* collision */
     setSafe(collision_state_machine_.getState() == StateMachine::State::GO);
-    setDistance(motion_utils::calcSignedArcLength(
-      path->points, planner_data_->current_odometry->pose.position,
-      path->points.at(stop_line_idx.value()).point.pose.position));
+    setDistance(dist_1st_stopline);
   }
 
   /* make decision */
-  const double baselink2front = planner_data_->vehicle_info_.vehicle_length_m;
+  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   if (!occlusion_activated_) {
     is_go_out_ = false;
+
     /* in case of creeping */
     if (insert_creep_during_occlusion && planner_param_.occlusion.enable_creeping) {
       const auto [start, end] = insert_creep_during_occlusion.value();
@@ -415,13 +419,12 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
         planning_utils::getAheadPose(occlusion_first_stop_line_idx.value(), baselink2front, *path);
     }
 
-    const auto reconciled_occlusion_stop_line_idx =
-      occlusion_stop_required
-        ? occlusion_stop_line_idx.value()
-        : stop_line_idx.value();  // because intersection module may miss real occlusion
-    planning_utils::setVelocityFromIndex(reconciled_occlusion_stop_line_idx, 0.0 /* [m/s] */, path);
-    debug_data_.occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(reconciled_occlusion_stop_line_idx, baselink2front, *path);
+    if (occlusion_peeking_line_idx) {
+      planning_utils::setVelocityFromIndex(
+        occlusion_peeking_line_idx.value(), 0.0 /* [m/s] */, path);
+      debug_data_.occlusion_stop_wall_pose =
+        planning_utils::getAheadPose(occlusion_peeking_line_idx.value(), baselink2front, *path);
+    }
 
     RCLCPP_DEBUG(logger_, "not activated. stop at the line.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
@@ -450,10 +453,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       velocity_factor_.set(
         path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
     }
-
-    RCLCPP_DEBUG(logger_, "not activated. stop at the line.");
-    RCLCPP_DEBUG(logger_, "===== plan end =====");
-    return true;
   }
 
   is_go_out_ = true;
@@ -947,23 +946,28 @@ bool IntersectionModule::checkFrontVehicleDeceleration(
   return false;
 }
 
-std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
+bool IntersectionModule::isOcclusionCleared(
   const nav_msgs::msg::OccupancyGrid & occ_grid,
   const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
-  const lanelet::CompoundPolygon3d & first_detection_area,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double interval,
-  const std::pair<size_t, size_t> & lane_interval,
+  lanelet::ConstLanelets adjacent_lanelets, const lanelet::CompoundPolygon3d & first_detection_area,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip,
+  const std::pair<size_t, size_t> & lane_interval_ip,
   const std::vector<util::DetectionLaneDivision> & lane_divisions,
   const double occlusion_dist_thr) const
 {
   const auto first_detection_area_idx =
-    util::getFirstPointInsidePolygon(path_ip, lane_interval, first_detection_area);
+    util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_detection_area);
   if (!first_detection_area_idx) {
-    return std::nullopt;
+    return false;
   }
 
-  const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  const double vehicle_width = planner_data_->vehicle_info_.vehicle_width_m;
+  const auto first_inside_detection_idx_ip_opt =
+    util::getFirstPointInsidePolygon(path_ip, lane_interval_ip, first_detection_area);
+  const std::pair<size_t, size_t> lane_detection_interval_ip =
+    first_inside_detection_idx_ip_opt
+      ? std::make_pair(first_inside_detection_idx_ip_opt.value(), std::get<1>(lane_interval_ip))
+      : lane_interval_ip;
+
   const int width = occ_grid.info.width;
   const int height = occ_grid.info.height;
   const double reso = occ_grid.info.resolution;
@@ -1012,6 +1016,39 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   }
   for (const auto & poly : detection_area_cv_polygons) {
     cv::fillPoly(detection_mask, poly, cv::Scalar(255), cv::LINE_AA);
+  }
+  // (1.1)
+  // reset adjacent_lanelets area to 0 on detection_mask
+  std::vector<std::vector<cv::Point>> adjacent_lane_cv_polygons;
+  for (const auto & adjacent_lanelet : adjacent_lanelets) {
+    const auto area2d = adjacent_lanelet.polygon2d().basicPolygon();
+    Polygon2d area2d_poly;
+    for (const auto & p : area2d) {
+      area2d_poly.outer().emplace_back(p.x(), p.y());
+    }
+    area2d_poly.outer().push_back(area2d_poly.outer().front());
+    bg::correct(area2d_poly);
+    std::vector<Polygon2d> common_areas;
+    bg::intersection(area2d_poly, grid_poly, common_areas);
+    if (common_areas.empty()) {
+      continue;
+    }
+    for (size_t i = 0; i < common_areas.size(); ++i) {
+      common_areas[i].outer().push_back(common_areas[i].outer().front());
+      bg::correct(common_areas[i]);
+    }
+    for (const auto & common_area : common_areas) {
+      std::vector<cv::Point> adjacent_lane_cv_polygon;
+      for (const auto & p : common_area.outer()) {
+        const int idx_x = static_cast<int>((p.x() - origin.x) / reso);
+        const int idx_y = static_cast<int>((p.y() - origin.y) / reso);
+        adjacent_lane_cv_polygon.emplace_back(idx_x, height - 1 - idx_y);
+      }
+      adjacent_lane_cv_polygons.push_back(adjacent_lane_cv_polygon);
+    }
+  }
+  for (const auto & poly : adjacent_lane_cv_polygons) {
+    cv::fillPoly(detection_mask, poly, cv::Scalar(0), cv::LINE_AA);
   }
 
   // (2) prepare unknown mask
@@ -1062,7 +1099,7 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
   cv::Mat distance_grid(width, height, CV_8UC1, cv::Scalar(undef_pixel));
   cv::Mat projection_ind_grid(width, height, CV_32S, cv::Scalar(-1));
 
-  const auto [lane_start, lane_end] = lane_interval;
+  const auto [lane_start, lane_end] = lane_detection_interval_ip;
   for (int i = static_cast<int>(lane_end); i >= static_cast<int>(lane_start); i--) {
     const auto & path_pos = path_ip.points.at(i).point.pose.position;
     const int idx_x = (path_pos.x - origin.x) / reso;
@@ -1186,25 +1223,10 @@ std::optional<size_t> IntersectionModule::findNearestOcclusionProjectedPosition(
     distance_grid_heatmap, "color", occlusion_grid);
   occlusion_grid_pub_->publish(grid_map::GridMapRosConverter::toMessage(occlusion_grid));
   if (min_cost > min_cost_thr || !min_cost_projection_ind.has_value()) {
-    return std::nullopt;
+    return true;
+  } else {
+    return false;
   }
-
-  const auto nearest_occlusion_projection_pose =
-    path_ip.points.at(min_cost_projection_ind.value()).point.pose;
-  debug_data_.nearest_occlusion_projection_point = nearest_occlusion_projection_pose.position;
-  const double tan_wall_ang = std::tan(
-    tf2::getYaw(path_ip.points.at(min_cost_projection_ind.value()).point.pose.orientation) -
-    M_PI / 2.0);
-  const double tan_projection_ang = std::atan2(
-    nearest_occlusion_projection_pose.position.y - nearest_occlusion_point.y,
-    nearest_occlusion_projection_pose.position.x - nearest_occlusion_point.x);
-  const double tan_diff_ang =
-    std::fabs((tan_wall_ang - tan_projection_ang) / (1 + tan_wall_ang * tan_projection_ang));
-  const double footprint_offset = vehicle_width / 2.0 * tan_diff_ang;
-  const size_t baselink_max_entry_ind = static_cast<size_t>(std::max<int>(
-    0,
-    first_detection_area_idx.value() - std::ceil((baselink2front + footprint_offset) / interval)));
-  return std::make_optional<size_t>(baselink_max_entry_ind);
 }
 
 }  // namespace behavior_velocity_planner

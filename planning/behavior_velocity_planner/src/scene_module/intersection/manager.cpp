@@ -84,6 +84,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.occlusion.enable_creeping = node.declare_parameter<bool>(ns + ".occlusion.enable_creeping");
   ip.occlusion.occlusion_creep_velocity =
     node.declare_parameter<double>(ns + ".occlusion.occlusion_creep_velocity");
+  ip.occlusion.peeking_offset = node.declare_parameter<double>(ns + ".occlusion.peeking_offset");
   ip.occlusion.free_space_max = node.declare_parameter<int>(ns + ".occlusion.free_space_max");
   ip.occlusion.occupied_min = node.declare_parameter<int>(ns + ".occlusion.occupied_min");
   ip.occlusion.do_dp = node.declare_parameter<bool>(ns + ".occlusion.do_dp");
@@ -127,8 +128,17 @@ void IntersectionModuleManager::launchNewModules(
     const auto new_module = std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_, assoc_ids, enable_occlusion_detection,
       node_, logger_.get_child("intersection_module"), clock_);
-    registerModule(std::move(new_module));
     generateUUID(module_id);
+    /* set RTC status as non_occluded status initially */
+    const UUID uuid = getUUID(new_module->getModuleId());
+    const auto occlusion_uuid = new_module->getOcclusionUUID();
+    rtc_interface_.updateCooperateStatus(
+      uuid, true, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(),
+      clock_->now());
+    occlusion_rtc_interface_.updateCooperateStatus(
+      occlusion_uuid, true, std::numeric_limits<double>::lowest(),
+      std::numeric_limits<double>::lowest(), clock_->now());
+    registerModule(std::move(new_module));
   }
 }
 

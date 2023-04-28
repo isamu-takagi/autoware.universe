@@ -236,6 +236,11 @@ bool BehaviorVelocityPlannerNode::isDataReady(
       get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
     return false;
   }
+  if (!d.occupancy_grid) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of occupancy grid map");
+    return false;
+  }
   return true;
 }
 

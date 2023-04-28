@@ -112,6 +112,7 @@ public:
       double occlusion_detection_area_length;  //! used for occlusion detection
       bool enable_creeping;
       double occlusion_creep_velocity;  //! the creep velocity to occlusion limit stop lline
+      double peeking_offset;
       int free_space_max;
       int occupied_min;
       bool do_dp;
@@ -157,7 +158,7 @@ public:
   {
     occlusion_first_stop_activated_ = activation;
   }
-  bool isOccluded() const { return is_occluded_; }
+  bool isOccluded() const { return is_actually_occluded_ || is_forcefully_occluded_; }
 
 private:
   rclcpp::Node & node_;
@@ -174,7 +175,8 @@ private:
   // for occlusion detection
   const bool enable_occlusion_detection_;
   std::optional<std::vector<util::DetectionLaneDivision>> detection_divisions_;
-  bool is_occluded_ = false;
+  bool is_actually_occluded_ = false;    //! occlusion based on occupancy_grid
+  bool is_forcefully_occluded_ = false;  //! fake occlusion forced by external operator
   OcclusionState occlusion_state_ = OcclusionState::NONE;
   // NOTE: uuid_ is base member
   // for occlusion clearance decision
@@ -183,7 +185,7 @@ private:
   double occlusion_stop_distance_;
   bool occlusion_activated_ = true;
   // for first stop in two-phase stop
-  const UUID occlusion_first_stop_uuid_;  // TODO(Mamoru Sobue): replace with uuid_
+  const UUID occlusion_first_stop_uuid_;
   bool occlusion_first_stop_safety_ = true;
   double occlusion_first_stop_distance_;
   bool occlusion_first_stop_activated_ = true;
@@ -318,11 +320,12 @@ private:
     const Polygon2d & stuck_vehicle_detect_area,
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
-  std::optional<size_t> findNearestOcclusionProjectedPosition(
+  bool isOcclusionCleared(
     const nav_msgs::msg::OccupancyGrid & occ_grid,
     const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
+    lanelet::ConstLanelets adjacent_lanelets,
     const lanelet::CompoundPolygon3d & first_detection_area,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip, const double interval,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path_ip,
     const std::pair<size_t, size_t> & lane_interval,
     const std::vector<util::DetectionLaneDivision> & lane_divisions,
     const double occlusion_dist_thr) const;

@@ -36,7 +36,7 @@ struct BehaviorPathPlannerParameters
   ModuleConfigParameters config_avoidance;
   ModuleConfigParameters config_avoidance_by_lc;
   ModuleConfigParameters config_pull_out;
-  ModuleConfigParameters config_pull_over;
+  ModuleConfigParameters config_goal_planner;
   ModuleConfigParameters config_side_shift;
   ModuleConfigParameters config_lane_change_left;
   ModuleConfigParameters config_lane_change_right;
@@ -49,12 +49,17 @@ struct BehaviorPathPlannerParameters
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
 
+  // common parameters
+  double min_acc;
+  double max_acc;
+
   // lane change parameters
   double lane_changing_lateral_jerk{0.5};
   double lane_changing_lateral_acc{0.315};
   double lane_changing_lateral_acc_at_low_velocity{0.15};
   double lateral_acc_switching_velocity{0.4};
   double minimum_lane_changing_velocity{5.6};
+  double lane_change_prepare_duration{4.0};
   double minimum_prepare_length;
 
   double minimum_pull_over_length;
@@ -106,9 +111,6 @@ struct BehaviorPathPlannerParameters
 
   double rear_vehicle_reaction_time;
   double rear_vehicle_safety_time_margin;
-
-  // lane change
-  double lane_change_prepare_duration;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_
