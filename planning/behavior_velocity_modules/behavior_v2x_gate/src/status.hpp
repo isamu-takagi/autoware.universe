@@ -17,14 +17,15 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_v2x_msgs/srv/acquire_gate_lock.hpp>
-#include <tier4_v2x_msgs/srv/release_gate_lock.hpp>
+#include <tier4_v2x_msgs/msg/gate_lock_client_status.hpp>
+#include <tier4_v2x_msgs/msg/gate_lock_client_status_array.hpp>
+#include <tier4_v2x_msgs/msg/gate_lock_server_status.hpp>
+#include <tier4_v2x_msgs/msg/gate_lock_server_status_array.hpp>
 
 #include <lanelet2_core/Forward.h>
 
-#include <map>
+#include <deque>
 #include <memory>
-#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -32,11 +33,18 @@
 namespace behavior_velocity_planner::v2x_gate
 {
 
+using tier4_v2x_msgs::msg::GateLockClientStatus;
+using tier4_v2x_msgs::msg::GateLockClientStatusArray;
+using tier4_v2x_msgs::msg::GateLockServerStatus;
+using tier4_v2x_msgs::msg::GateLockServerStatusArray;
+
+/*
 struct ClientStatus
 {
   std::set<lanelet::Id> gates;
   double distance;
 };
+*/
 
 struct ServerStatus
 {
@@ -44,47 +52,30 @@ struct ServerStatus
   bool cancel;
 };
 
-struct RequestStatus
+struct SyncStatus
 {
   std::set<lanelet::Id> gates;
-  rclcpp::Time stamp;
-};
-
-class LockServer
-{
-public:
-  explicit LockServer(rclcpp::Node * node);
-  rclcpp::Time now() const { return clock_->now(); }
-  const auto & srv_acquire() { return srv_acquire_; }
-  const auto & srv_release() { return srv_release_; }
-
-private:
-  using AcquireGateLock = tier4_v2x_msgs::srv::AcquireGateLock;
-  using ReleaseGateLock = tier4_v2x_msgs::srv::ReleaseGateLock;
-  rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Client<AcquireGateLock>::SharedPtr srv_acquire_;
-  rclcpp::Client<ReleaseGateLock>::SharedPtr srv_release_;
+  uint64_t sequence;
 };
 
 class LockTarget
 {
 public:
   LockTarget(const std::string & category, const lanelet::Id target);
-  void acquire(const ClientStatus & status);
-  void release();
-  void update(LockServer & server);
   ServerStatus status() const;
+  void update(const std::set<lanelet::Id> & gates, double distance);
+
+  GateLockClientStatus get_client_status();
+  void set_server_status(const GateLockServerStatus & status);
 
 private:
-  using AcquireGateLock = tier4_v2x_msgs::srv::AcquireGateLock;
-  using ReleaseGateLock = tier4_v2x_msgs::srv::ReleaseGateLock;
   std::string category_;
   std::string target_;
-  ClientStatus client_status_;
-  ServerStatus server_status_;
-
-  AcquireGateLock::Request::ConstSharedPtr acquire_request_;
-  void on_acquire_response(const rclcpp::Client<AcquireGateLock>::SharedFuture future);
+  std::deque<SyncStatus> queue_;
+  SyncStatus client_;
+  SyncStatus server_;
+  bool cancel_;
+  double distance_;
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

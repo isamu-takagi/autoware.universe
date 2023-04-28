@@ -19,6 +19,7 @@
 namespace
 {
 
+/*
 std::string to_string(const std::set<lanelet::Id> & ids)
 {
   std::string text;
@@ -27,6 +28,7 @@ std::string to_string(const std::set<lanelet::Id> & ids)
   }
   return text;
 }
+*/
 
 std::vector<std::string> to_message_gates(const std::set<lanelet::Id> & ids)
 {
@@ -46,17 +48,43 @@ LockTarget::LockTarget(const std::string & category, const lanelet::Id target)
 {
   category_ = category;
   target_ = std::to_string(target);
+  cancel_ = false;
+  distance_ = 0;
+  client_.sequence = 0;
+  server_.sequence = 0;
 }
 
-void LockTarget::acquire(const ClientStatus & status)
+ServerStatus LockTarget::status() const
 {
-  client_status_ = status;
+  return ServerStatus{};
 }
 
-void LockTarget::release()
+void LockTarget::update(const std::set<lanelet::Id> & gates, double distance)
 {
+  if (client_.gates != gates) {
+    client_.gates = gates;
+    client_.sequence += 1;
+  }
+  distance_ = distance;
 }
 
+GateLockClientStatus LockTarget::get_client_status()
+{
+  GateLockClientStatus status;
+  status.target.category = category_;
+  status.target.target = target_;
+  status.target.gates = to_message_gates(client_.gates);
+  status.target.sequence = client_.sequence;
+  status.priority = distance_;
+  return status;
+}
+
+void LockTarget::set_server_status(const GateLockServerStatus & status)
+{
+  (void)status;
+}
+
+/*
 void LockTarget::update(LockServer & server)
 {
   const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
@@ -86,25 +114,6 @@ void LockTarget::update(LockServer & server)
     }
   }
 }
-
-void LockTarget::on_acquire_response(const rclcpp::Client<AcquireGateLock>::SharedFuture future)
-{
-  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
-  const auto res = future.get();
-  RCLCPP_INFO_STREAM(logger, " - request acquire response: " << res->status.success);
-  acquire_request_ = nullptr;
-}
-
-ServerStatus LockTarget::status() const
-{
-  return ServerStatus{};
-}
-
-LockServer::LockServer(rclcpp::Node * node)
-{
-  clock_ = node->get_clock();
-  srv_acquire_ = node->create_client<AcquireGateLock>("/test/gate_lock/acquire");
-  srv_release_ = node->create_client<ReleaseGateLock>("/test/gate_lock/release");
-}
+*/
 
 }  // namespace behavior_velocity_planner::v2x_gate

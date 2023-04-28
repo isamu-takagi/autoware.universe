@@ -48,7 +48,8 @@ namespace behavior_velocity_planner::v2x_gate
 void SceneManager::init(rclcpp::Node * node)
 {
   node_ = node;
-  server_ = std::make_unique<LockServer>(node);
+  pub_lock_update_ =
+    node->create_publisher<GateLockClientStatusArray>("/test/gate_lock/update", rclcpp::QoS(1));
 }
 
 void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId &)
@@ -83,7 +84,7 @@ void SceneManager::plan(PathWithLaneId * path)
     }
   }
 
-  // Create module.
+  // Create scenes.
   for (const auto & gate : gates_on_route) {
     const auto id = gate->id();
     if (!scenes_.count(id)) {
@@ -92,6 +93,10 @@ void SceneManager::plan(PathWithLaneId * path)
     }
   }
 
+  // Delete scenes.
+  // TODO(Takagi, Isamu): implement
+
+  // Update scenes;
   FrameData frame;
   frame.data = data_;
   frame.lane_ids_on_path = std::set<lanelet::Id>(lane_ids_on_path.begin(), lane_ids_on_path.end());
@@ -101,10 +106,13 @@ void SceneManager::plan(PathWithLaneId * path)
   }
 
   // Synchronize status
+  GateLockClientStatusArray message;
   for (const auto & [lane, scene] : scenes_) {
-    scene->lock()->update(*server_);
+    message.statuses.push_back(scene->lock()->get_client_status());
   }
+  pub_lock_update_->publish(message);
 
+  // TODO(Takagi, Isamu): Merge update and plan functions.
   data_ = nullptr;
 }
 
