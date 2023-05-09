@@ -19,7 +19,6 @@
 namespace
 {
 
-/*
 std::string to_string(const std::set<lanelet::Id> & ids)
 {
   std::string text;
@@ -28,7 +27,6 @@ std::string to_string(const std::set<lanelet::Id> & ids)
   }
   return text;
 }
-*/
 
 std::vector<std::string> to_message_gates(const std::set<lanelet::Id> & ids)
 {
@@ -50,31 +48,48 @@ LockTarget::LockTarget(const std::string & category, const lanelet::Id target)
   target_ = std::to_string(target);
   cancel_ = false;
   distance_ = 0;
-  client_.sequence = 0;
-  server_.sequence = 0;
+
+  SyncStatus status;
+  status.gates = std::set<lanelet::Id>();
+  status.sequence = 0;
+  status_.push_back(status);
 }
 
 ServerStatus LockTarget::status() const
 {
-  return ServerStatus{};
+  const auto & server = status_.front();
+  ServerStatus status;
+  status.gates = server.gates;
+  status.cancel = cancel_;
+  return status;
 }
 
 void LockTarget::update(const std::set<lanelet::Id> & gates, double distance)
 {
-  if (client_.gates != gates) {
-    client_.gates = gates;
-    client_.sequence += 1;
+  const auto & latest = status_.back();
+  if (latest.gates != gates) {
+    SyncStatus status;
+    status.gates = gates;
+    status.sequence = latest.sequence + 1;
+    status_.push_back(status);
   }
   distance_ = distance;
+
+  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
+  for (const auto & status : status_) {
+    RCLCPP_INFO_STREAM(
+      logger, " - seq: " << status.sequence << ", gates: " << to_string(status.gates));
+  }
 }
 
 GateLockClientStatus LockTarget::get_client_status()
 {
+  const auto & latest = status_.back();
   GateLockClientStatus status;
   status.target.category = category_;
   status.target.target = target_;
-  status.target.gates = to_message_gates(client_.gates);
-  status.target.sequence = client_.sequence;
+  status.target.gates = to_message_gates(latest.gates);
+  status.target.sequence = latest.sequence;
   status.priority = distance_;
   return status;
 }

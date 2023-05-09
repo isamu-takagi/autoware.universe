@@ -17,9 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_v2x_msgs/msg/gate_lock_client_status.hpp>
 #include <tier4_v2x_msgs/msg/gate_lock_client_status_array.hpp>
-#include <tier4_v2x_msgs/msg/gate_lock_server_status.hpp>
 #include <tier4_v2x_msgs/msg/gate_lock_server_status_array.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -71,9 +69,7 @@ public:
 private:
   std::string category_;
   std::string target_;
-  std::deque<SyncStatus> queue_;
-  SyncStatus client_;
-  SyncStatus server_;
+  std::deque<SyncStatus> status_;
   bool cancel_;
   double distance_;
 };

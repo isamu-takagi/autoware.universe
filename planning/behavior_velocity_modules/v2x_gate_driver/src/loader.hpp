@@ -17,10 +17,16 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_v2x_msgs/srv/acquire_gate_lock.hpp>
+#include <tier4_v2x_msgs/msg/gate_lock_client_status_array.hpp>
+#include <tier4_v2x_msgs/msg/gate_lock_server_status_array.hpp>
+
+#include <deque>
 
 namespace v2x_gate_driver
 {
+
+using tier4_v2x_msgs::msg::GateLockClientStatusArray;
+using tier4_v2x_msgs::msg::GateLockServerStatusArray;
 
 class Loader : public rclcpp::Node
 {
@@ -28,11 +34,11 @@ public:
   explicit Loader(const rclcpp::NodeOptions & options);
 
 private:
-  using AcquireGateLock = tier4_v2x_msgs::srv::AcquireGateLock;
-  rclcpp::Service<AcquireGateLock>::SharedPtr srv_acquire_;
+  rclcpp::Subscription<GateLockClientStatusArray>::SharedPtr sub_update_;
+  rclcpp::Publisher<GateLockServerStatusArray>::SharedPtr pub_status_;
+  void on_status(const GateLockClientStatusArray::ConstSharedPtr msg);
 
-  void on_acquire(
-    const AcquireGateLock::Request::SharedPtr req, const AcquireGateLock::Response::SharedPtr res);
+  std::deque<GateLockServerStatusArray> temp_;
 };
 
 }  // namespace v2x_gate_driver

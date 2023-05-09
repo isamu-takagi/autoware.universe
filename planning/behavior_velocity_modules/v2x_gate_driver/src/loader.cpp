@@ -29,22 +29,38 @@ std::string join(const std::vector<std::string> & ids)
 namespace v2x_gate_driver
 {
 
-Loader::Loader(const rclcpp::NodeOptions & options) : Node("v2x_gate_driver", options)
+GateLockServerStatusArray convert(const GateLockClientStatusArray & in)
 {
-  srv_acquire_ = create_service<AcquireGateLock>(
-    "~/srv/acquire",
-    std::bind(&Loader::on_acquire, this, std::placeholders::_1, std::placeholders::_2));
+  GateLockServerStatusArray out;
+  for (const auto & client : in.statuses) {
+    tier4_v2x_msgs::msg::GateLockServerStatus server;
+    server.target = client.target;
+    out.statuses.push_back(server);
+  }
+  return out;
 }
 
-void Loader::on_acquire(
-  const AcquireGateLock::Request::SharedPtr req, const AcquireGateLock::Response::SharedPtr res)
+Loader::Loader(const rclcpp::NodeOptions & options) : Node("v2x_gate_driver", options)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "on_acquire");
-  RCLCPP_INFO_STREAM(get_logger(), " - " << req->target.category);
-  RCLCPP_INFO_STREAM(get_logger(), " - " << req->target.target);
-  RCLCPP_INFO_STREAM(get_logger(), " - " << join(req->target.gates));
-  get_clock()->sleep_for(rclcpp::Duration::from_seconds(1.0));
-  res->status.success = true;
+  sub_update_ = create_subscription<GateLockClientStatusArray>(
+    "~/sub/update", rclcpp::QoS(1), std::bind(&Loader::on_status, this, std::placeholders::_1));
+
+  pub_status_ = create_publisher<GateLockServerStatusArray>("~/pub/status", rclcpp::QoS(1));
+}
+
+void Loader::on_status(const GateLockClientStatusArray::ConstSharedPtr msg)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "on_status");
+  for (const auto & status : msg->statuses) {
+    const auto & t = status.target;
+    RCLCPP_INFO_STREAM(get_logger(), " - " << t.category << " " << t.target << " " << t.sequence);
+  }
+
+  temp_.push_back(convert(*msg));
+  if (30 < temp_.size()) {
+    pub_status_->publish(temp_.front());
+    temp_.pop_front();
+  }
 }
 
 }  // namespace v2x_gate_driver
