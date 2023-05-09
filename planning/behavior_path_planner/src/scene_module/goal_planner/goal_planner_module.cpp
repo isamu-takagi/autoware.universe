@@ -85,14 +85,12 @@ GoalPlannerModule::GoalPlannerModule(
     if (parameters_->enable_arc_forward_parking) {
       constexpr bool is_forward = true;
       pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, *parameters, getGeometricGoalPlannerParameters(), lane_departure_checker,
-        occupancy_grid_map_, is_forward));
+        node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
     }
     if (parameters_->enable_arc_backward_parking) {
       constexpr bool is_forward = false;
       pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, *parameters, getGeometricGoalPlannerParameters(), lane_departure_checker,
-        occupancy_grid_map_, is_forward));
+        node, *parameters, lane_departure_checker, occupancy_grid_map_, is_forward));
     }
   }
   if (pull_over_planners_.empty()) {
@@ -250,28 +248,6 @@ BehaviorModuleOutput GoalPlannerModule::run()
   return plan();
 }
 
-ParallelParkingParameters GoalPlannerModule::getGeometricGoalPlannerParameters() const
-{
-  ParallelParkingParameters params{};
-
-  params.th_arrived_distance = parameters_->th_arrived_distance;
-  params.th_stopped_velocity = parameters_->th_stopped_velocity;
-  params.after_forward_parking_straight_distance =
-    parameters_->after_forward_parking_straight_distance;
-  params.after_backward_parking_straight_distance =
-    parameters_->after_backward_parking_straight_distance;
-  params.forward_parking_velocity = parameters_->forward_parking_velocity;
-  params.backward_parking_velocity = parameters_->backward_parking_velocity;
-  params.forward_parking_lane_departure_margin = parameters_->forward_parking_lane_departure_margin;
-  params.backward_parking_lane_departure_margin =
-    parameters_->backward_parking_lane_departure_margin;
-  params.arc_path_interval = parameters_->arc_path_interval;
-  params.maximum_deceleration = parameters_->maximum_deceleration;
-  params.max_steer_angle = parameters_->pull_over_max_steer_angle;
-
-  return params;
-}
-
 void GoalPlannerModule::processOnEntry()
 {
   const auto & route_handler = planner_data_->route_handler;
@@ -300,7 +276,6 @@ void GoalPlannerModule::processOnEntry()
   // initialize when receiving new route
   if (!last_received_time_ || *last_received_time_ != route_handler->getRouteHeader().stamp) {
     // Initialize parallel parking planner status
-    parallel_parking_parameters_ = getGeometricGoalPlannerParameters();
     resetStatus();
 
     // calculate goal candidates
@@ -345,7 +320,11 @@ bool GoalPlannerModule::isExecutionRequested() const
     route_handler->isAllowedGoalModification() || checkOriginalGoalIsInShoulder();
   const double request_length =
     allow_goal_modification ? calcModuleRequestLength() : parameters_->minimum_request_length;
-  if (self_to_goal_arc_length < 0.0 || self_to_goal_arc_length > request_length) {
+  const double backward_goal_search_length =
+    allow_goal_modification ? parameters_->backward_goal_search_length : 0.0;
+  if (
+    self_to_goal_arc_length < -backward_goal_search_length ||
+    self_to_goal_arc_length > request_length) {
     return false;
   }
 
@@ -442,6 +421,11 @@ Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
 
 ModuleStatus GoalPlannerModule::updateState()
 {
+  // finish module only when the goal is fixed
+  if (!allow_goal_modification_ && hasFinishedGoalPlanner()) {
+    current_state_ = ModuleStatus::SUCCESS;
+  }
+
   // pull_out module will be run when setting new goal, so not need finishing pull_over module.
   // Finishing it causes wrong lane_following path generation.
   return current_state_;
@@ -510,6 +494,11 @@ BehaviorModuleOutput GoalPlannerModule::plan()
   if (allow_goal_modification_) {
     return planWithGoalModification();
   } else {
+    // for fixed goals, only minor path refinements are made,
+    // so other modules are always allowed to run.
+    setIsSimultaneousExecutableAsApprovedModule(true);
+    setIsSimultaneousExecutableAsCandidateModule(true);
+    fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
     return fixed_goal_planner_->plan(planner_data_);
   }
 }
@@ -718,7 +707,13 @@ BehaviorModuleOutput GoalPlannerModule::planWithGoalModification()
 
   // set hazard and turn signal
   if (status_.has_decided_path) {
-    output.turn_signal_info = calcTurnSignalInfo();
+    const auto original_signal = getPreviousModuleOutput().turn_signal_info;
+    const auto new_signal = calcTurnSignalInfo();
+    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path->points);
+    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+      *output.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
+      planner_data_->parameters.ego_nearest_dist_threshold,
+      planner_data_->parameters.ego_nearest_yaw_threshold);
   }
 
   const auto distance_to_path_change = calcDistanceToPathChange();
@@ -777,6 +772,11 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
   if (allow_goal_modification_) {
     return planWaitingApprovalWithGoalModification();
   } else {
+    // for fixed goals, only minor path refinements are made,
+    // so other modules are always allowed to run.
+    setIsSimultaneousExecutableAsApprovedModule(true);
+    setIsSimultaneousExecutableAsCandidateModule(true);
+    fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
     return fixed_goal_planner_->plan(planner_data_);
   }
 }
@@ -1022,12 +1022,13 @@ bool GoalPlannerModule::hasFinishedCurrentPath()
 
 bool GoalPlannerModule::isOnGoal() const
 {
-  const auto current_pose = planner_data_->self_odometry->pose.pose;
-  return calcDistance2d(current_pose, modified_goal_pose_->goal_pose) <
-         parameters_->th_arrived_distance;
+  const Pose current_pose = planner_data_->self_odometry->pose.pose;
+  const Pose goal_pose = modified_goal_pose_ ? modified_goal_pose_->goal_pose
+                                             : planner_data_->route_handler->getGoalPose();
+  return calcDistance2d(current_pose, goal_pose) < parameters_->th_arrived_distance;
 }
 
-bool GoalPlannerModule::hasFinishedPullOver()
+bool GoalPlannerModule::hasFinishedGoalPlanner()
 {
   return isOnGoal() && isStopped();
 }

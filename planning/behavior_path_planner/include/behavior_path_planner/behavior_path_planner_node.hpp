@@ -21,6 +21,7 @@
 #ifdef USE_OLD_ARCHITECTURE
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/dynamic_avoidance_module.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/goal_planner_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
@@ -28,7 +29,7 @@
 #else
 #include "behavior_path_planner/planner_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/manager.hpp"
-#include "behavior_path_planner/scene_module/avoidance_by_lc/manager.hpp"
+#include "behavior_path_planner/scene_module/dynamic_avoidance/manager.hpp"
 #include "behavior_path_planner/scene_module/goal_planner/manager.hpp"
 #include "behavior_path_planner/scene_module/lane_change/manager.hpp"
 #include "behavior_path_planner/scene_module/pull_out/manager.hpp"
@@ -36,9 +37,7 @@
 #endif
 
 #include "behavior_path_planner/steering_factor_interface.hpp"
-#include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utils/avoidance/avoidance_module_data.hpp"
-#include "behavior_path_planner/utils/avoidance_by_lc/module_data.hpp"
 #include "behavior_path_planner/utils/goal_planner/goal_planner_parameters.hpp"
 #include "behavior_path_planner/utils/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/utils/lane_following/module_data.hpp"
@@ -74,6 +73,7 @@ namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -135,8 +135,6 @@ private:
   bool has_received_map_{false};
   bool has_received_route_{false};
 
-  TurnSignalDecider turn_signal_decider_;
-
   std::mutex mutex_pd_;       // mutex for planner_data_
   std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
   std::mutex mutex_map_;      // mutex for has_received_map_ and map_ptr_
@@ -148,6 +146,7 @@ private:
   // parameters
   std::shared_ptr<AvoidanceParameters> avoidance_param_ptr_;
   std::shared_ptr<AvoidanceByLCParameters> avoidance_by_lc_param_ptr_;
+  std::shared_ptr<DynamicAvoidanceParameters> dynamic_avoidance_param_ptr_;
   std::shared_ptr<SideShiftParameters> side_shift_param_ptr_;
   std::shared_ptr<LaneChangeParameters> lane_change_param_ptr_;
   std::shared_ptr<PullOutParameters> pull_out_param_ptr_;
@@ -160,6 +159,7 @@ private:
 #endif
 
   AvoidanceParameters getAvoidanceParam();
+  DynamicAvoidanceParameters getDynamicAvoidanceParam();
   LaneChangeParameters getLaneChangeParam();
   SideShiftParameters getSideShiftParam();
   GoalPlannerParameters getGoalPlannerParam();
@@ -180,12 +180,6 @@ private:
   void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
-  /**
-   * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
-   */
-  PathWithLaneId modifyPathForSmoothGoalConnection(
-    const PathWithLaneId & path,
-    const std::shared_ptr<PlannerData> & planner_data) const;  // (TODO) move to util
   OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
   /**
@@ -223,7 +217,8 @@ private:
   /**
    * @brief publish steering factor from intersection
    */
-  void publish_steering_factor(const TurnIndicatorsCommand & turn_signal);
+  void publish_steering_factor(
+    const std::shared_ptr<PlannerData> & planner_data, const TurnIndicatorsCommand & turn_signal);
 
   /**
    * @brief publish left and right bound
