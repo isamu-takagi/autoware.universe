@@ -39,8 +39,11 @@ public:
 private:
   rclcpp::Node * node_;
   rclcpp::Publisher<GateLockClientStatusArray>::SharedPtr pub_lock_update_;
+  rclcpp::Subscription<GateLockServerStatusArray>::SharedPtr sub_lock_status_;
   PlannerData2::ConstSharedPtr data_;
   std::unordered_map<lanelet::Id, SceneModule::SharedPtr> scenes_;
+
+  void on_lock_status(const GateLockServerStatusArray::ConstSharedPtr msg);
 };
 
 }  // namespace behavior_velocity_planner::v2x_gate

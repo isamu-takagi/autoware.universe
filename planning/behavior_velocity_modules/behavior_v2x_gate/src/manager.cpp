@@ -21,7 +21,9 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace
@@ -50,6 +52,9 @@ void SceneManager::init(rclcpp::Node * node)
   node_ = node;
   pub_lock_update_ =
     node->create_publisher<GateLockClientStatusArray>("/test/gate_lock/update", rclcpp::QoS(1));
+  sub_lock_status_ = node->create_subscription<GateLockServerStatusArray>(
+    "/test/gate_lock/status", rclcpp::QoS(1),
+    std::bind(&SceneManager::on_lock_status, this, std::placeholders::_1));
 }
 
 void SceneManager::update(const PlannerData2::ConstSharedPtr & data, const PathWithLaneId &)
@@ -124,6 +129,21 @@ boost::optional<int> SceneManager::getFirstStopPathPointIndex()
 const char * SceneManager::getModuleName()
 {
   return "v2x_gate";
+}
+
+void SceneManager::on_lock_status(const GateLockServerStatusArray::ConstSharedPtr msg)
+{
+  std::unordered_map<std::pair<std::string, std::string>, GateLockServerStatus> statuses;
+  for (const auto & status : msg->statuses) {
+    const auto key = std::make_pair(status.target.category, status.target.target);
+    statuses[key] = status;
+  }
+  for (const auto & [lane, scene] : scenes_) {
+    const auto key = scene->lock()->get_key();
+    if (statuses.count(key)) {
+      scene->lock()->set_server_status(statuses.at(key));
+    }
+  }
 }
 
 }  // namespace behavior_velocity_planner::v2x_gate

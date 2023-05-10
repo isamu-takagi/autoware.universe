@@ -96,7 +96,13 @@ GateLockClientStatus LockTarget::get_client_status()
 
 void LockTarget::set_server_status(const GateLockServerStatus & status)
 {
-  (void)status;
+  const auto iter = std::find_if(status_.begin(), status_.end(), [status](auto s) {
+    return s.sequence == status.target.sequence;
+  });
+  const auto dist = std::distance(status_.begin(), iter);
+
+  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
+  RCLCPP_INFO_STREAM(logger, "update: " << dist);
 }
 
 /*

@@ -65,6 +65,7 @@ public:
 
   GateLockClientStatus get_client_status();
   void set_server_status(const GateLockServerStatus & status);
+  auto get_key() { return std::make_pair(category_, target_); }
 
 private:
   std::string category_;
