@@ -353,8 +353,10 @@ ObjectData AvoidanceModule::createObjectData(
     object_data, object_closest_pose, object_data.overhang_pose.position);
 
   // Check whether the the ego should avoid the object.
+  const auto t = utils::getHighestProbLabel(object.classification);
+  const auto object_parameter = parameters_->object_parameters.at(t);
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto safety_margin = 0.5 * vehicle_width + parameters_->lateral_passable_safety_buffer;
+  const auto safety_margin = 0.5 * vehicle_width + object_parameter.safety_buffer_lateral;
   object_data.avoid_required =
     (utils::avoidance::isOnRight(object_data) &&
      std::abs(object_data.overhang_dist) < safety_margin) ||
@@ -2523,18 +2525,25 @@ void AvoidanceModule::generateExtendedDrivableArea(BehaviorModuleOutput & output
   }
 
   {  // for new architecture
+    DrivableAreaInfo current_drivable_area_info;
     // generate drivable lanes
-    output.drivable_area_info.drivable_lanes = utils::combineDrivableLanes(
-      getPreviousModuleOutput().drivable_area_info.drivable_lanes, drivable_lanes);
+    current_drivable_area_info.drivable_lanes = drivable_lanes;
     // generate obstacle polygons
-    output.drivable_area_info.obstacles = utils::avoidance::generateObstaclePolygonsForDrivableArea(
-      avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    current_drivable_area_info.obstacles =
+      utils::avoidance::generateObstaclePolygonsForDrivableArea(
+        avoidance_data_.target_objects, parameters_, planner_data_->parameters.vehicle_width / 2.0);
+    // expand hatched road markings
+    current_drivable_area_info.enable_expanding_hatched_road_markings =
+      parameters_->use_hatched_road_markings;
+
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
   }
 
   {  // for old architecture
     // NOTE: Obstacles to avoid are not extracted from the drivable area with an old architecture.
     utils::generateDrivableArea(
-      *output.path, drivable_lanes, planner_data_->parameters.vehicle_length, planner_data_);
+      *output.path, drivable_lanes, false, planner_data_->parameters.vehicle_length, planner_data_);
   }
 }
 
@@ -2783,7 +2792,18 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
 
   BehaviorModuleOutput output;
-  output.turn_signal_info = calcTurnSignalInfo(avoidance_path);
+
+  // turn signal info
+  {
+    const auto original_signal = getPreviousModuleOutput().turn_signal_info;
+    const auto new_signal = calcTurnSignalInfo(avoidance_path);
+    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(avoidance_path.path.points);
+    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+      avoidance_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
+      planner_data_->parameters.ego_nearest_dist_threshold,
+      planner_data_->parameters.ego_nearest_yaw_threshold);
+  }
+
   // sparse resampling for computational cost
   {
     avoidance_path.path =
@@ -3034,7 +3054,7 @@ AvoidLineArray AvoidanceModule::findNewShiftLine(
     // DEBUG_PRINT("%s, shift current: %f, candidate: %f", pfx, current_shift,
     // candidate.end_shift_length);
 
-    const auto new_point_threshold = parameters_->avoidance_execution_lateral_threshold;
+    const auto new_point_threshold = parameters_->lateral_execution_threshold;
     if (std::abs(candidate.end_shift_length - current_shift) > new_point_threshold) {
       if (calcJerk(candidate) > parameters_->max_lateral_jerk) {
         DEBUG_PRINT(
