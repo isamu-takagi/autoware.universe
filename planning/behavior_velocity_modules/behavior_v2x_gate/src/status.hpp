@@ -36,14 +36,6 @@ using tier4_v2x_msgs::msg::GateLockClientStatusArray;
 using tier4_v2x_msgs::msg::GateLockServerStatus;
 using tier4_v2x_msgs::msg::GateLockServerStatusArray;
 
-/*
-struct ClientStatus
-{
-  std::set<lanelet::Id> gates;
-  double distance;
-};
-*/
-
 struct ServerStatus
 {
   std::set<lanelet::Id> gates;

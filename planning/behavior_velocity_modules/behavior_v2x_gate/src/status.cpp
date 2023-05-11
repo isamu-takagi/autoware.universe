@@ -74,12 +74,6 @@ void LockTarget::update(const std::set<lanelet::Id> & gates, double distance)
     status_.push_back(status);
   }
   distance_ = distance;
-
-  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
-  for (const auto & status : status_) {
-    RCLCPP_INFO_STREAM(
-      logger, " - seq: " << status.sequence << ", gates: " << to_string(status.gates));
-  }
 }
 
 GateLockClientStatus LockTarget::get_client_status()
@@ -99,42 +93,10 @@ void LockTarget::set_server_status(const GateLockServerStatus & status)
   const auto iter = std::find_if(status_.begin(), status_.end(), [status](auto s) {
     return s.sequence == status.target.sequence;
   });
-  const auto dist = std::distance(status_.begin(), iter);
-
-  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
-  RCLCPP_INFO_STREAM(logger, "update: " << dist);
-}
-
-/*
-void LockTarget::update(LockServer & server)
-{
-  const auto logger = rclcpp::get_logger("behavior_velocity_planner.v2x_gate.status");
-  RCLCPP_INFO_STREAM(logger, "status update");
-  RCLCPP_INFO_STREAM(logger, " - client gates: " << to_string(client_status_.gates));
-  RCLCPP_INFO_STREAM(logger, " - server gates: " << to_string(server_status_.gates));
-
-  if (client_status_.gates != server_status_.gates) {
-    if (client_status_.gates.empty()) {
-      RCLCPP_INFO_STREAM(logger, " - request release");
-    } else {
-      if (!acquire_request_) {
-        RCLCPP_INFO_STREAM(logger, " - request acquire");
-        const auto srv = server.srv_acquire();
-        if (srv->service_is_ready()) {
-          const auto req = std::make_shared<AcquireGateLock::Request>();
-          req->target.category = category_;
-          req->target.target = target_;
-          req->target.gates = to_message_gates(client_status_.gates);
-          req->priority = client_status_.distance;
-          srv->async_send_request(
-            req, std::bind(&LockTarget::on_acquire_response, this, std::placeholders::_1));
-          acquire_request_ = req;
-          RCLCPP_INFO_STREAM(logger, " - request acquire done");
-        }
-      }
-    }
+  if (iter != status_.end()) {
+    status_.erase(status_.begin(), iter);
+    cancel_ = status.cancel;
   }
 }
-*/
 
 }  // namespace behavior_velocity_planner::v2x_gate

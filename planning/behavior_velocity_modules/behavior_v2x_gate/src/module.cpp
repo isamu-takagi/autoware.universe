@@ -127,6 +127,9 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   const auto gates = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
   lock_->update(gates, 0.0);
 
+  const auto status = lock_->status();
+  // RCLCPP_INFO_STREAM(logger, " - server status: " << to_string(status.gates));
+
   const auto ego = find_ego_segment_index(path->points, frame.data);
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
 
