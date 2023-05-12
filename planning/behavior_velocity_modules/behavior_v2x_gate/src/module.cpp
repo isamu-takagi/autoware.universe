@@ -115,42 +115,32 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   // Get gate lines on the path.
   const auto acquire_lines = filter_lines(gate_->getAcquireLines(), frame.lane_ids_on_path);
   const auto release_lines = filter_lines(gate_->getReleaseLines(), frame.lane_ids_on_path);
-  const auto request_lines = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
 
-  const auto server = lock_->status();
+  // Get vehicle position
+  const auto vehicle_point = find_ego_segment_index(path->points, frame.data);
+  const auto acquire_point = get_first_cross_point(*path, frame, vehicle_point, acquire_lines);
+  const auto release_point = get_first_cross_point(*path, frame, vehicle_point, release_lines);
 
-  if (server.lines != request_lines) {
-    const auto ego = find_ego_segment_index(path->points, frame.data);
-    const auto acquire_point = get_first_cross_point(*path, frame, ego, acquire_lines);
-    if (acquire_point) {
-      const auto & point = acquire_point.value();
-      planning_utils::insertStopPoint(point.pose.position, point.index, *path);
+  if (acquire_point) {
+    const auto & point = acquire_point.value();
+    if (0.0 < point.distance) {
+      const auto status = lock_->status();
+      if (!status.lines.count(std::to_string(point.line.id()))) {
+        const auto lines = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
+        lock_->update(lines, point.distance);
+        planning_utils::insertStopPoint(point.pose.position, point.index, *path);
+      }
+      return;
     }
   }
 
-  /*
-  lock_->update(lines, 0.0);
-
-  RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
-  const auto acquire_point = get_first_cross_point(*path, frame, ego, acquire_lines);
-  const auto release_point = get_first_cross_point(*path, frame, ego, release_lines);
-
-  if (acquire_point && release_point) {
-    const auto acquire_id = acquire_point.value().line.id();
-    const auto release_id = release_point.value().line.id();
-    RCLCPP_INFO_STREAM(logger, " - target gates: " << acquire_id << " " << release_id);
+  if (release_point) {
+    const auto & point = release_point.value();
+    if (0.0 < point.distance) {
+      planning_utils::insertStopPoint(point.pose.position, point.index, *path);
+      return;
+    }
   }
-  */
-
-  /*
-    const auto [dist, index, pose] = acquire_point.value();
-    RCLCPP_INFO_STREAM(logger, " - acquire line: " << index << " " << dist);
-    planning_utils::insertStopPoint(pose.position, index, *path);
-
-    const auto [dist, index, pose] = release_point.value();
-    RCLCPP_INFO_STREAM(logger, " - release line: " << index << " " << dist);
-    planning_utils::insertStopPoint(pose.position, index, *path);
-  */
 }
 
 }  // namespace behavior_velocity_planner::v2x_gate
