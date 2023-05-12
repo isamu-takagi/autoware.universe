@@ -18,7 +18,7 @@
 #include <utilization/arc_lane_util.hpp>  // TODO(Takagi, Isamu): move header
 #include <utilization/util.hpp>
 
-#include <tuple>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -90,20 +90,12 @@ LaneToLines filter_lines(const LaneToLines & lines, const std::set<lanelet::Id> 
   return result;
 }
 
-std::set<lanelet::Id> get_line_ids(const LaneToLines & lines)
+std::set<std::string> get_line_ids(const LaneToLines & lines)
 {
-  std::set<lanelet::Id> result;
+  std::set<std::string> result;
   for (const auto & [lane, line] : lines) {
-    result.insert(line.id());
+    result.insert(std::to_string(line.id()));
   }
-  return result;
-}
-
-std::set<lanelet::Id> get_union(const std::set<lanelet::Id> & a, const std::set<lanelet::Id> & b)
-{
-  std::set<lanelet::Id> result;
-  for (const auto & v : a) result.insert(v);
-  for (const auto & v : b) result.insert(v);
   return result;
 }
 
@@ -123,16 +115,23 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
   // Get gate lines on the path.
   const auto acquire_lines = filter_lines(gate_->getAcquireLines(), frame.lane_ids_on_path);
   const auto release_lines = filter_lines(gate_->getReleaseLines(), frame.lane_ids_on_path);
+  const auto request_lines = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
 
-  const auto gates = get_union(get_line_ids(acquire_lines), get_line_ids(release_lines));
-  lock_->update(gates, 0.0);
+  const auto server = lock_->status();
 
-  const auto status = lock_->status();
-  // RCLCPP_INFO_STREAM(logger, " - server status: " << to_string(status.gates));
+  if (server.lines != request_lines) {
+    const auto ego = find_ego_segment_index(path->points, frame.data);
+    const auto acquire_point = get_first_cross_point(*path, frame, ego, acquire_lines);
+    if (acquire_point) {
+      const auto & point = acquire_point.value();
+      planning_utils::insertStopPoint(point.pose.position, point.index, *path);
+    }
+  }
 
-  const auto ego = find_ego_segment_index(path->points, frame.data);
+  /*
+  lock_->update(lines, 0.0);
+
   RCLCPP_INFO_STREAM(logger, " - current pose: " << ego.index);
-
   const auto acquire_point = get_first_cross_point(*path, frame, ego, acquire_lines);
   const auto release_point = get_first_cross_point(*path, frame, ego, release_lines);
 
@@ -141,6 +140,7 @@ void SceneModule::plan(PathWithLaneId * path, const FrameData & frame)
     const auto release_id = release_point.value().line.id();
     RCLCPP_INFO_STREAM(logger, " - target gates: " << acquire_id << " " << release_id);
   }
+  */
 
   /*
     const auto [dist, index, pose] = acquire_point.value();

@@ -36,20 +36,15 @@ using tier4_v2x_msgs::msg::GateLockClientStatusArray;
 using tier4_v2x_msgs::msg::GateLockServerStatus;
 using tier4_v2x_msgs::msg::GateLockServerStatusArray;
 
-struct GateLines
-{
-  std::set<std::string> lines_;
-};
-
 struct ServerStatus
 {
-  std::set<lanelet::Id> lines;
+  std::set<std::string> lines;
   bool cancel;
 };
 
 struct SyncStatus
 {
-  std::set<lanelet::Id> lines;
+  std::set<std::string> lines;
   uint64_t sequence;
 };
 
@@ -58,7 +53,7 @@ class LockTarget
 public:
   LockTarget(const std::string & category, const lanelet::Id area);
   ServerStatus status() const;
-  void update(const std::set<lanelet::Id> & lines, double distance);
+  void update(const std::set<std::string> & lines, double distance);
 
   GateLockClientStatus get_client_status();
   void set_server_status(const GateLockServerStatus & status);
@@ -71,6 +66,34 @@ private:
   bool cancel_;
   double distance_;
 };
+
+template <class T>
+std::set<T> get_union(const std::set<T> & a, const std::set<T> & b)
+{
+  std::set<T> result;
+  for (const auto & v : a) result.insert(v);
+  for (const auto & v : b) result.insert(v);
+  return result;
+}
+
+template <class T>
+std::set<T> get_intersection(const std::set<T> & a, const std::set<T> & b)
+{
+  std::set<T> result;
+  for (const auto & v : a) {
+    if (b.count(v)) result.insert(v);
+  }
+  return result;
+}
+
+inline std::string to_string(const std::set<std::string> & ids)
+{
+  std::string result;
+  for (const auto & id : ids) {
+    result += id + " ";
+  }
+  return result;
+}
 
 }  // namespace behavior_velocity_planner::v2x_gate
 

@@ -16,20 +16,6 @@
 
 #include <vector>
 
-namespace
-{
-
-std::vector<std::string> to_message_lines(const std::set<lanelet::Id> & ids)
-{
-  std::vector<std::string> result;
-  for (const auto & id : ids) {
-    result.push_back(std::to_string(id));
-  }
-  return result;
-}
-
-}  // namespace
-
 namespace behavior_velocity_planner::v2x_gate
 {
 
@@ -38,24 +24,27 @@ LockTarget::LockTarget(const std::string & category, const lanelet::Id area)
   category_ = category;
   area_ = std::to_string(area);
   cancel_ = false;
-  distance_ = 0;
+  distance_ = 0.0;
 
   SyncStatus status;
-  status.lines = std::set<lanelet::Id>();
+  status.lines = std::set<std::string>();
   status.sequence = 0;
   status_.push_back(status);
 }
 
 ServerStatus LockTarget::status() const
 {
-  const auto & server = status_.front();
+  const auto & latest = status_.back();
   ServerStatus status;
-  status.lines = server.lines;
+  status.lines = latest.lines;
   status.cancel = cancel_;
+  for (const auto & sync : status_) {
+    status.lines = get_intersection(status.lines, sync.lines);
+  }
   return status;
 }
 
-void LockTarget::update(const std::set<lanelet::Id> & lines, double distance)
+void LockTarget::update(const std::set<std::string> & lines, double distance)
 {
   const auto & latest = status_.back();
   if (latest.lines != lines) {
@@ -71,10 +60,10 @@ GateLockClientStatus LockTarget::get_client_status()
 {
   const auto & latest = status_.back();
   GateLockClientStatus status;
+  status.target.sequence = latest.sequence;
   status.target.category = category_;
   status.target.area = area_;
-  status.target.lines = to_message_lines(latest.lines);
-  status.target.sequence = latest.sequence;
+  status.target.lines = std::vector<std::string>(latest.lines.begin(), latest.lines.end());
   status.priority = distance_;
   return status;
 }
