@@ -53,7 +53,7 @@ void Loader::on_status(const GateLockClientStatusArray::ConstSharedPtr msg)
   RCLCPP_INFO_STREAM(get_logger(), "on_status");
   for (const auto & status : msg->statuses) {
     const auto & t = status.target;
-    RCLCPP_INFO_STREAM(get_logger(), " - " << t.category << " " << t.target << " " << t.sequence);
+    RCLCPP_INFO_STREAM(get_logger(), " - " << t.category << " " << t.area << " " << t.sequence);
   }
 
   temp_.push_back(convert(*msg));

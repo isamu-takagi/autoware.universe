@@ -36,32 +36,37 @@ using tier4_v2x_msgs::msg::GateLockClientStatusArray;
 using tier4_v2x_msgs::msg::GateLockServerStatus;
 using tier4_v2x_msgs::msg::GateLockServerStatusArray;
 
+struct GateLines
+{
+  std::set<std::string> lines_;
+};
+
 struct ServerStatus
 {
-  std::set<lanelet::Id> gates;
+  std::set<lanelet::Id> lines;
   bool cancel;
 };
 
 struct SyncStatus
 {
-  std::set<lanelet::Id> gates;
+  std::set<lanelet::Id> lines;
   uint64_t sequence;
 };
 
 class LockTarget
 {
 public:
-  LockTarget(const std::string & category, const lanelet::Id target);
+  LockTarget(const std::string & category, const lanelet::Id area);
   ServerStatus status() const;
-  void update(const std::set<lanelet::Id> & gates, double distance);
+  void update(const std::set<lanelet::Id> & lines, double distance);
 
   GateLockClientStatus get_client_status();
   void set_server_status(const GateLockServerStatus & status);
-  auto get_key() { return std::make_pair(category_, target_); }
+  auto get_key() { return std::make_pair(category_, area_); }
 
 private:
   std::string category_;
-  std::string target_;
+  std::string area_;
   std::deque<SyncStatus> status_;
   bool cancel_;
   double distance_;

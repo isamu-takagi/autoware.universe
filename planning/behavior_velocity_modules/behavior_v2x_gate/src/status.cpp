@@ -19,16 +19,7 @@
 namespace
 {
 
-std::string to_string(const std::set<lanelet::Id> & ids)
-{
-  std::string text;
-  for (const auto & id : ids) {
-    text += std::to_string(id) + " ";
-  }
-  return text;
-}
-
-std::vector<std::string> to_message_gates(const std::set<lanelet::Id> & ids)
+std::vector<std::string> to_message_lines(const std::set<lanelet::Id> & ids)
 {
   std::vector<std::string> result;
   for (const auto & id : ids) {
@@ -42,15 +33,15 @@ std::vector<std::string> to_message_gates(const std::set<lanelet::Id> & ids)
 namespace behavior_velocity_planner::v2x_gate
 {
 
-LockTarget::LockTarget(const std::string & category, const lanelet::Id target)
+LockTarget::LockTarget(const std::string & category, const lanelet::Id area)
 {
   category_ = category;
-  target_ = std::to_string(target);
+  area_ = std::to_string(area);
   cancel_ = false;
   distance_ = 0;
 
   SyncStatus status;
-  status.gates = std::set<lanelet::Id>();
+  status.lines = std::set<lanelet::Id>();
   status.sequence = 0;
   status_.push_back(status);
 }
@@ -59,17 +50,17 @@ ServerStatus LockTarget::status() const
 {
   const auto & server = status_.front();
   ServerStatus status;
-  status.gates = server.gates;
+  status.lines = server.lines;
   status.cancel = cancel_;
   return status;
 }
 
-void LockTarget::update(const std::set<lanelet::Id> & gates, double distance)
+void LockTarget::update(const std::set<lanelet::Id> & lines, double distance)
 {
   const auto & latest = status_.back();
-  if (latest.gates != gates) {
+  if (latest.lines != lines) {
     SyncStatus status;
-    status.gates = gates;
+    status.lines = lines;
     status.sequence = latest.sequence + 1;
     status_.push_back(status);
   }
@@ -81,8 +72,8 @@ GateLockClientStatus LockTarget::get_client_status()
   const auto & latest = status_.back();
   GateLockClientStatus status;
   status.target.category = category_;
-  status.target.target = target_;
-  status.target.gates = to_message_gates(latest.gates);
+  status.target.area = area_;
+  status.target.lines = to_message_lines(latest.lines);
   status.target.sequence = latest.sequence;
   status.priority = distance_;
   return status;

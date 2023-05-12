@@ -135,7 +135,7 @@ void SceneManager::on_lock_status(const GateLockServerStatusArray::ConstSharedPt
 {
   std::unordered_map<std::pair<std::string, std::string>, GateLockServerStatus> statuses;
   for (const auto & status : msg->statuses) {
-    const auto key = std::make_pair(status.target.category, status.target.target);
+    const auto key = std::make_pair(status.target.category, status.target.area);
     statuses[key] = status;
   }
   for (const auto & [lane, scene] : scenes_) {
