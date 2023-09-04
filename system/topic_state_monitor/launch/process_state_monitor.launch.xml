@@ -1,0 +1,6 @@
+<launch>
+  <arg name="param_file" default="$(find-pkg-share topic_state_monitor)/config/process_state_monitor.param.yaml"/>
+  <node pkg="topic_state_monitor" exec="process_state_monitor" name="process_state_monitor">
+    <param from="$(var param_file)"/>
+  </node>
+</launch>

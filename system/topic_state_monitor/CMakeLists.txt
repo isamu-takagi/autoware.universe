@@ -7,6 +7,7 @@ autoware_package()
 ament_auto_add_library(topic_state_monitor SHARED
   src/topic_state_monitor/topic_state_monitor.cpp
   src/topic_state_monitor_core.cpp
+  src/process_state_monitor.cpp
 )
 
 rclcpp_components_register_node(topic_state_monitor
@@ -14,6 +15,12 @@ rclcpp_components_register_node(topic_state_monitor
   EXECUTABLE topic_state_monitor_node
 )
 
+rclcpp_components_register_node(topic_state_monitor
+  PLUGIN "topic_state_monitor::ProcessStateMonitor"
+  EXECUTABLE process_state_monitor
+)
+
 ament_auto_package(INSTALL_TO_SHARE
+  config
   launch
 )

@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    timeout: 3.0
+    nodes:
+      - /rviz
