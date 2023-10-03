@@ -29,6 +29,7 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_sub(sub_state_, this, &OperationModeNode::on_state);
+  adaptor.init_sub(sub_availability_, this, &OperationModeNode::on_availability);
   adaptor.init_pub(pub_state_);
   adaptor.init_srv(srv_stop_mode_, this, &OperationModeNode::on_change_to_stop);
   adaptor.init_srv(srv_autonomous_mode_, this, &OperationModeNode::on_change_to_autonomous);
@@ -39,40 +40,23 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
   adaptor.init_cli(cli_mode_, group_cli_);
   adaptor.init_cli(cli_control_, group_cli_);
 
-  const std::vector<std::string> module_names = {
-    "sensing", "perception", "map", "localization", "planning", "control", "vehicle", "system",
-  };
-
-  for (size_t i = 0; i < module_names.size(); ++i) {
-    const auto name = "/system/component_state_monitor/component/autonomous/" + module_names[i];
-    const auto qos = rclcpp::QoS(1).transient_local();
-    const auto callback = [this, i](const ModeChangeAvailable::ConstSharedPtr msg) {
-      module_states_[i] = msg->available;
-    };
-    sub_module_states_.push_back(create_subscription<ModeChangeAvailable>(name, qos, callback));
-  }
-  module_states_.resize(module_names.size());
-
   timer_ = rclcpp::create_timer(
     this, get_clock(), rclcpp::Rate(5.0).period(), std::bind(&OperationModeNode::on_timer, this));
 
-  curr_state_.mode = OperationModeState::Message::UNKNOWN;
-  prev_state_.mode = OperationModeState::Message::UNKNOWN;
-  mode_available_[OperationModeState::Message::UNKNOWN] = false;
-  mode_available_[OperationModeState::Message::STOP] = true;
-  mode_available_[OperationModeState::Message::AUTONOMOUS] = false;
-  mode_available_[OperationModeState::Message::LOCAL] = true;
-  mode_available_[OperationModeState::Message::REMOTE] = true;
+  curr_state_.mode = OperationModeState::UNKNOWN;
+  prev_state_.mode = OperationModeState::UNKNOWN;
 }
 
 template <class ResponseT>
 void OperationModeNode::change_mode(
   const ResponseT res, const OperationModeRequest::_mode_type mode)
 {
+  /*
   if (!mode_available_[mode]) {
     throw component_interface_utils::ServiceException(
       ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change is blocked by the system.");
   }
+  */
   const auto req = std::make_shared<OperationModeRequest>();
   req->mode = mode;
   component_interface_utils::status::copy(cli_mode_->call(req), res);  // NOLINT
@@ -110,10 +94,12 @@ void OperationModeNode::on_enable_autoware_control(
   const EnableAutowareControl::Service::Request::SharedPtr,
   const EnableAutowareControl::Service::Response::SharedPtr res)
 {
+  /*
   if (!mode_available_[curr_state_.mode]) {
     throw component_interface_utils::ServiceException(
       ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change is blocked by the system.");
   }
+  */
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = true;
   component_interface_utils::status::copy(cli_control_->call(req), res);  // NOLINT
@@ -128,32 +114,40 @@ void OperationModeNode::on_disable_autoware_control(
   component_interface_utils::status::copy(cli_control_->call(req), res);  // NOLINT
 }
 
-void OperationModeNode::on_state(const OperationModeState::Message::ConstSharedPtr msg)
+void OperationModeNode::on_state(const OperationModeState::ConstSharedPtr msg)
 {
   curr_state_ = *msg;
   update_state();
 }
 
+void OperationModeNode::on_availability(const OperationModeAvailability::ConstSharedPtr msg)
+{
+  availability_ = *msg;
+  update_state();
+}
+
 void OperationModeNode::on_timer()
 {
+  /*
   bool autonomous_available = true;
   for (const auto & state : module_states_) {
     autonomous_available &= state;
   }
   mode_available_[OperationModeState::Message::AUTONOMOUS] = autonomous_available;
-
+  */
   update_state();
 }
 
 void OperationModeNode::update_state()
 {
   // Clear stamp to compare other fields.
-  OperationModeState::Message state = curr_state_;
+  OperationModeState state = curr_state_;
   state.stamp = builtin_interfaces::msg::Time();
-  state.is_stop_mode_available &= mode_available_[OperationModeState::Message::STOP];
-  state.is_autonomous_mode_available &= mode_available_[OperationModeState::Message::AUTONOMOUS];
-  state.is_local_mode_available &= mode_available_[OperationModeState::Message::LOCAL];
-  state.is_remote_mode_available &= mode_available_[OperationModeState::Message::REMOTE];
+  state.is_stop_mode_available = state.is_stop_mode_available && availability_.stop;
+  state.is_autonomous_mode_available =
+    state.is_autonomous_mode_available && availability_.autonomous;
+  state.is_local_mode_available = state.is_local_mode_available && availability_.local;
+  state.is_remote_mode_available = state.is_remote_mode_available && availability_.remote;
 
   if (prev_state_ != state) {
     prev_state_ = state;

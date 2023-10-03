@@ -19,6 +19,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <tier4_system_msgs/msg/operation_mode_availability.hpp>
 #include <tier4_system_msgs/srv/change_autoware_control.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
 
@@ -44,6 +45,15 @@ struct ChangeOperationMode
 {
   using Service = tier4_system_msgs::srv::ChangeOperationMode;
   static constexpr char name[] = "/system/operation_mode/change_operation_mode";
+};
+
+struct OperationModeAvailability
+{
+  using Message = tier4_system_msgs::msg::OperationModeAvailability;
+  static constexpr char name[] = "/system/operation_mode/availability";
+  static constexpr size_t depth = 1;
+  static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
+  static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
 struct OperationModeState

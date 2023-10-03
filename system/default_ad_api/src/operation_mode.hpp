@@ -20,12 +20,6 @@
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <unordered_map>
-#include <vector>
-
-// TODO(Takagi, Isamu): define interface
-#include <tier4_system_msgs/msg/mode_change_available.hpp>
-
 // This file should be included after messages.
 #include "utils/types.hpp"
 
@@ -37,7 +31,7 @@ public:
   explicit OperationModeNode(const rclcpp::NodeOptions & options);
 
 private:
-  using OperationModeState = autoware_ad_api::operation_mode::OperationModeState;
+  using OperationModeState = autoware_ad_api::operation_mode::OperationModeState::Message;
   using EnableAutowareControl = autoware_ad_api::operation_mode::EnableAutowareControl;
   using DisableAutowareControl = autoware_ad_api::operation_mode::DisableAutowareControl;
   using ChangeToStop = autoware_ad_api::operation_mode::ChangeToStop;
@@ -46,11 +40,11 @@ private:
   using ChangeToRemote = autoware_ad_api::operation_mode::ChangeToRemote;
   using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
   using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
-  using ModeChangeAvailable = tier4_system_msgs::msg::ModeChangeAvailable;
+  using OperationModeAvailability = system_interface::OperationModeAvailability::Message;
 
-  OperationModeState::Message curr_state_;
-  OperationModeState::Message prev_state_;
-  std::unordered_map<OperationModeState::Message::_mode_type, bool> mode_available_;
+  OperationModeState curr_state_;
+  OperationModeState prev_state_;
+  OperationModeAvailability availability_;
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -62,11 +56,9 @@ private:
   Srv<autoware_ad_api::operation_mode::EnableAutowareControl> srv_enable_control_;
   Srv<autoware_ad_api::operation_mode::DisableAutowareControl> srv_disable_control_;
   Sub<system_interface::OperationModeState> sub_state_;
+  Sub<system_interface::OperationModeAvailability> sub_availability_;
   Cli<system_interface::ChangeOperationMode> cli_mode_;
   Cli<system_interface::ChangeAutowareControl> cli_control_;
-
-  std::vector<bool> module_states_;
-  std::vector<rclcpp::Subscription<ModeChangeAvailable>::SharedPtr> sub_module_states_;
 
   void on_change_to_stop(
     const ChangeToStop::Service::Request::SharedPtr req,
@@ -87,7 +79,8 @@ private:
     const DisableAutowareControl::Service::Request::SharedPtr req,
     const DisableAutowareControl::Service::Response::SharedPtr res);
 
-  void on_state(const OperationModeState::Message::ConstSharedPtr msg);
+  void on_state(const OperationModeState::ConstSharedPtr msg);
+  void on_availability(const OperationModeAvailability::ConstSharedPtr msg);
   void on_timer();
   void update_state();
 
