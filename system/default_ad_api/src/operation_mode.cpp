@@ -40,9 +40,6 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
   adaptor.init_cli(cli_mode_, group_cli_);
   adaptor.init_cli(cli_control_, group_cli_);
 
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), rclcpp::Rate(5.0).period(), std::bind(&OperationModeNode::on_timer, this));
-
   curr_state_.mode = OperationModeState::UNKNOWN;
   prev_state_.mode = OperationModeState::UNKNOWN;
 }
@@ -51,15 +48,29 @@ template <class ResponseT>
 void OperationModeNode::change_mode(
   const ResponseT res, const OperationModeRequest::_mode_type mode)
 {
-  /*
-  if (!mode_available_[mode]) {
+  if (!check_diag_state(mode)) {
     throw component_interface_utils::ServiceException(
-      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change is blocked by the system.");
+      ServiceResponse::ERROR_NOT_AVAILABLE, "Mode change is blocked by diagnostics.");
   }
-  */
   const auto req = std::make_shared<OperationModeRequest>();
   req->mode = mode;
   component_interface_utils::status::copy(cli_mode_->call(req), res);  // NOLINT
+}
+
+bool OperationModeNode::check_diag_state(OperationModeState::_mode_type mode) const
+{
+  // Check only the mode diagnostics and leave the rest to the transition manager.
+  switch (mode) {
+    case OperationModeState::STOP:
+      return diags_.stop;
+    case OperationModeState::AUTONOMOUS:
+      return diags_.autonomous;
+    case OperationModeState::LOCAL:
+      return diags_.local;
+    case OperationModeState::REMOTE:
+      return diags_.remote;
+  }
+  return false;
 }
 
 void OperationModeNode::on_change_to_stop(
@@ -94,12 +105,10 @@ void OperationModeNode::on_enable_autoware_control(
   const EnableAutowareControl::Service::Request::SharedPtr,
   const EnableAutowareControl::Service::Response::SharedPtr res)
 {
-  /*
-  if (!mode_available_[curr_state_.mode]) {
+  if (!check_diag_state(curr_state_.mode)) {
     throw component_interface_utils::ServiceException(
-      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change is blocked by the system.");
+      ServiceResponse::ERROR_NOT_AVAILABLE, "Mode change is blocked by diagnostics.");
   }
-  */
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = true;
   component_interface_utils::status::copy(cli_control_->call(req), res);  // NOLINT
@@ -122,32 +131,18 @@ void OperationModeNode::on_state(const OperationModeState::ConstSharedPtr msg)
 
 void OperationModeNode::on_availability(const OperationModeAvailability::ConstSharedPtr msg)
 {
-  availability_ = *msg;
-  update_state();
-}
-
-void OperationModeNode::on_timer()
-{
-  /*
-  bool autonomous_available = true;
-  for (const auto & state : module_states_) {
-    autonomous_available &= state;
-  }
-  mode_available_[OperationModeState::Message::AUTONOMOUS] = autonomous_available;
-  */
+  diags_ = *msg;
   update_state();
 }
 
 void OperationModeNode::update_state()
 {
-  // Clear stamp to compare other fields.
   OperationModeState state = curr_state_;
-  state.stamp = builtin_interfaces::msg::Time();
-  state.is_stop_mode_available = state.is_stop_mode_available && availability_.stop;
-  state.is_autonomous_mode_available =
-    state.is_autonomous_mode_available && availability_.autonomous;
-  state.is_local_mode_available = state.is_local_mode_available && availability_.local;
-  state.is_remote_mode_available = state.is_remote_mode_available && availability_.remote;
+  state.stamp = builtin_interfaces::msg::Time();  // Clear stamp to compare other fields.
+  state.is_stop_mode_available = state.is_stop_mode_available && diags_.stop;
+  state.is_autonomous_mode_available = state.is_autonomous_mode_available && diags_.autonomous;
+  state.is_local_mode_available = state.is_local_mode_available && diags_.local;
+  state.is_remote_mode_available = state.is_remote_mode_available && diags_.remote;
 
   if (prev_state_ != state) {
     prev_state_ = state;

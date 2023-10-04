@@ -42,12 +42,11 @@ private:
   using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
   using OperationModeAvailability = system_interface::OperationModeAvailability::Message;
 
+  OperationModeAvailability diags_;
   OperationModeState curr_state_;
   OperationModeState prev_state_;
-  OperationModeAvailability availability_;
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  rclcpp::TimerBase::SharedPtr timer_;
   Pub<autoware_ad_api::operation_mode::OperationModeState> pub_state_;
   Srv<autoware_ad_api::operation_mode::ChangeToStop> srv_stop_mode_;
   Srv<autoware_ad_api::operation_mode::ChangeToAutonomous> srv_autonomous_mode_;
@@ -81,8 +80,8 @@ private:
 
   void on_state(const OperationModeState::ConstSharedPtr msg);
   void on_availability(const OperationModeAvailability::ConstSharedPtr msg);
-  void on_timer();
   void update_state();
+  bool check_diag_state(OperationModeState::_mode_type mode) const;
 
   template <class ResponseT>
   void change_mode(const ResponseT res, const OperationModeRequest::_mode_type mode);
