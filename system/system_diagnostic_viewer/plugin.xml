@@ -1,0 +1,16 @@
+<library path="python">
+  <class name="SystemDiagnosticMonitor" type="system_diagnostic_viewer.plugin.SystemDiagnosticMonitorPlugin" base_class_type="rqt_gui_py::Plugin">
+    <description>
+    </description>
+    <qtgui>
+      <group>
+        <label>Visualization</label>
+        <icon type="theme">folder</icon>
+        <statustip></statustip>
+      </group>
+      <label>System Diagnostic Monitor</label>
+      <icon type="theme">utilities-system-monitor</icon>
+      <statustip></statustip>
+    </qtgui>
+  </class>
+</library>
