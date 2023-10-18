@@ -12,18 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rqt_gui_py.plugin import Plugin
 
-
-class SystemDiagnosticMonitorPlugin(Plugin):
-    def __init__(self, context):
-        super().__init__(context)
-
-    def shutdown_plugin(self):
+class DiagnosticNode:
+    def __init__(self, status):
         pass
 
-    def save_settings(self, plugin_settings, instance_settings):
-        pass
 
-    def restore_settings(self, plugin_settings, instance_settings):
+class DiagnosticGraph:
+    def __init__(self, graph):
         pass

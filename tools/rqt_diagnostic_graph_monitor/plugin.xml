@@ -1,5 +1,5 @@
 <library path="python">
-  <class name="SystemDiagnosticMonitor" type="system_diagnostic_viewer.plugin.SystemDiagnosticMonitorPlugin" base_class_type="rqt_gui_py::Plugin">
+  <class name="DiagnosticGraphMonitor" type="rqt_diagnostic_graph_monitor.plugin.Plugin" base_class_type="rqt_gui_py::Plugin">
     <description>
     </description>
     <qtgui>
