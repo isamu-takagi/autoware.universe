@@ -7,22 +7,22 @@ files:
   - { package: system_diagnostic_monitor, path: config/vehicle.yaml }
   - { package: system_diagnostic_monitor, path: config/system.yaml }
 
-units:
+nodes:
   - path: /autoware
     type: and
     list:
-      - { type: link, path: /autoware/operation/stop }
-      - { type: link, path: /autoware/operation/autonomous }
-      - { type: link, path: /autoware/operation/local }
-      - { type: link, path: /autoware/operation/remote }
-      - { type: link, path: /autoware/operation/emergency-stop }
-      - { type: link, path: /autoware/operation/comfortable-stop }
-      - { type: link, path: /autoware/operation/pull-over }
+      - { type: link, path: /autoware/modes/stop }
+      - { type: link, path: /autoware/modes/autonomous }
+      - { type: link, path: /autoware/modes/local }
+      - { type: link, path: /autoware/modes/remote }
+      - { type: link, path: /autoware/modes/emergency-stop }
+      - { type: link, path: /autoware/modes/comfortable-stop }
+      - { type: link, path: /autoware/modes/pull-over }
 
-  - path: /autoware/operation/stop
+  - path: /autoware/modes/stop
     type: debug-ok
 
-  - path: /autoware/operation/autonomous
+  - path: /autoware/modes/autonomous
     type: and
     list:
       - { type: link, path: /autoware/map }
@@ -33,25 +33,25 @@ units:
       - { type: link, path: /autoware/vehicle }
       - { type: link, path: /autoware/system }
 
-  - path: /autoware/operation/local
+  - path: /autoware/modes/local
     type: and
     list:
       - { type: link, path: /autoware/vehicle }
       - { type: link, path: /autoware/system }
 
-  - path: /autoware/operation/remote
+  - path: /autoware/modes/remote
     type: and
     list:
       - { type: link, path: /autoware/vehicle }
       - { type: link, path: /autoware/system }
 
-  - path: /autoware/operation/emergency-stop
+  - path: /autoware/modes/emergency-stop
     type: and
     list:
       - { type: link, path: /autoware/vehicle }
       - { type: link, path: /autoware/system }
 
-  - path: /autoware/operation/comfortable-stop
+  - path: /autoware/modes/comfortable-stop
     type: and
     list:
       - { type: link, path: /autoware/map }
@@ -62,7 +62,7 @@ units:
       - { type: link, path: /autoware/vehicle }
       - { type: link, path: /autoware/system }
 
-  - path: /autoware/operation/pull-over
+  - path: /autoware/modes/pull-over
     type: and
     list:
       - { type: link, path: /autoware/map }

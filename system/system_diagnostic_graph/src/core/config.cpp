@@ -221,7 +221,7 @@ ConfigFile load_config_file(const FileConfig & file)
   std::vector<YAML::Node> units;
   std::vector<YAML::Node> diags;
   for (const auto & node : dict.take_list("nodes")) {
-    const auto type = node["type"].as<std::string>();
+    const auto type = node["type"].as<std::string>("diag");
     if (type == "diag") {
       diags.push_back(node);
     } else {

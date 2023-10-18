@@ -1,4 +1,4 @@
-units:
+nodes:
   - path: /hardware/summary/error
     type: and
     list:
@@ -69,7 +69,6 @@ units:
       - { type: link, path: /hardware/process/003-memory/proc-3 }
       - { type: link, path: /hardware/process/003-memory/proc-4 }
 
-diags:
   - path: /hardware/cpu/001-temperature
     name: "cpu_monitor: CPU Temperature"
   - path: /hardware/cpu/002-usage
