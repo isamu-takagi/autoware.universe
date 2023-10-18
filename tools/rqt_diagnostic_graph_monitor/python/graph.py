@@ -13,11 +13,30 @@
 # limitations under the License.
 
 
-class DiagnosticNode:
-    def __init__(self, status):
-        pass
+class Node:
+    def __init__(self, node):
+        self.status = node.status
+        self.links = node.links
+        self.parents = 0
 
 
-class DiagnosticGraph:
+class Graph:
     def __init__(self, graph):
-        pass
+        self.nodes = [Node(node) for node in graph.nodes]
+        for node in self.nodes:
+            for link in node.links:
+                self.nodes[link.index].parents += 1
+
+    def dump(self, logger):
+        for node in self.nodes:
+            t = self.node_type(len(node.links), node.parents)
+            logger.info(f"{t}: {node.status.name}")
+        logger.info("==========")
+
+    @staticmethod
+    def node_type(c, p):
+        if p == 0:
+            return "R"
+        if c == 0:
+            return "L"
+        return "U"

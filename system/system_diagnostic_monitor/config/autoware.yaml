@@ -8,17 +8,6 @@ files:
   - { package: system_diagnostic_monitor, path: config/system.yaml }
 
 nodes:
-  - path: /autoware
-    type: and
-    list:
-      - { type: link, path: /autoware/modes/stop }
-      - { type: link, path: /autoware/modes/autonomous }
-      - { type: link, path: /autoware/modes/local }
-      - { type: link, path: /autoware/modes/remote }
-      - { type: link, path: /autoware/modes/emergency-stop }
-      - { type: link, path: /autoware/modes/comfortable-stop }
-      - { type: link, path: /autoware/modes/pull-over }
-
   - path: /autoware/modes/stop
     type: debug-ok
 

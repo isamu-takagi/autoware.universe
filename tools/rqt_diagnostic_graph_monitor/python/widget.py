@@ -12,14 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from python_qt_binding import QtWidgets
+from rclpy.node import Node
+from rqt_diagnostic_graph_monitor.graph import Graph
+from tier4_system_msgs.msg import DiagnosticGraph
 
 
-class Widget(QtWidgets.QSplitter):
-    def __init__(self, node, topic="diagnostics"):
+class MonitorWidget(QtWidgets.QSplitter):
+    def __init__(self, node: Node):
         super().__init__()
+        node.create_subscription(DiagnosticGraph, "/diagnostics_graph", self.callback, 5)
+        self.node = node
         self.addWidget(QtWidgets.QTreeWidget())
         self.addWidget(QtWidgets.QLabel("TEST"))
 
     def shutdown(self):
         pass
+
+    def callback(self, msg):
+        graph = Graph(msg)
+        graph.dump(self.node.get_logger())

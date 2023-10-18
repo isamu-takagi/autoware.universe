@@ -30,15 +30,10 @@ namespace system_diagnostic_graph
 
 using LinkStatus = std::vector<std::pair<BaseNode *, bool>>;
 
-void extend(LinkStatus & a, const LinkStatus & b)
-{
-  a.insert(a.end(), b.begin(), b.end());
-}
-
-void extend_false(LinkStatus & a, const LinkStatus & b)
+void extend(LinkStatus & a, const LinkStatus & b, bool mask)
 {
   for (const auto & p : b) {
-    a.push_back(std::make_pair(p.first, false));
+    a.push_back(std::make_pair(p.first, p.second && mask));
   }
 }
 
@@ -116,14 +111,15 @@ ExprStatus AndExpr::eval() const
     return status;
   }
 
+  bool flag = true;
   ExprStatus status;
   status.level = DiagnosticStatus::OK;
   for (const auto & expr : list_) {
     const auto result = expr->eval();
     status.level = std::max(status.level, result.level);
-    extend(status.links, result.links);
+    extend(status.links, result.links, flag);
     if (short_circuit_ && status.level != DiagnosticStatus::OK) {
-      break;
+      flag = false;
     }
   }
   status.level = std::min(status.level, DiagnosticStatus::ERROR);
@@ -158,7 +154,7 @@ ExprStatus OrExpr::eval() const
   for (const auto & expr : list_) {
     const auto result = expr->eval();
     status.level = std::min(status.level, result.level);
-    extend(status.links, result.links);
+    extend(status.links, result.links, true);
   }
   status.level = std::min(status.level, DiagnosticStatus::ERROR);
   return status;

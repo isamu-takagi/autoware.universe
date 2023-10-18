@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import rqt_diagnostic_graph_monitor.widget
-import rqt_gui_py.plugin
+from rqt_diagnostic_graph_monitor.widget import MonitorWidget
+from rqt_gui_py.plugin import Plugin
 
 
-class Plugin(rqt_gui_py.plugin.Plugin):
+class MonitorPlugin(Plugin):
     def __init__(self, context):
         super().__init__(context)
-        self._widget = rqt_diagnostic_graph_monitor.widget.Widget(context.node)
+        self._widget = MonitorWidget(context.node)
         context.add_widget(self._widget)
 
     def shutdown_plugin(self):

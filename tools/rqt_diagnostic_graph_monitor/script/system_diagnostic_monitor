@@ -5,4 +5,4 @@ import sys
 import rqt_gui.main
 
 rqt_main = rqt_gui.main.Main()
-sys.exit(rqt_main.main(sys.argv, standalone="rqt_diagnostic_graph_monitor.plugin.Plugin"))
+sys.exit(rqt_main.main(sys.argv, standalone="rqt_diagnostic_graph_monitor.plugin.MonitorPlugin"))
