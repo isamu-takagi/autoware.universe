@@ -1,8 +1,0 @@
-nodes:
-  - path: /autoware/localization
-    type: and
-    list:
-      - { type: link, path: /autoware/localization/state }
-
-  - path: /autoware/localization/state
-    name: "component_state_diagnostics: localization_state"
