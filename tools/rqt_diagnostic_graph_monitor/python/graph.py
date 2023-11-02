@@ -17,26 +17,16 @@ class Node:
     def __init__(self, node):
         self.status = node.status
         self.links = node.links
-        self.parents = 0
+        self.parents = []
+
+    def update(self, nodes):
+        self.links = [(nodes[link.index], link.used) for link in self.links]
+        for link, used in self.links:
+            link.parents.append((self, used))
 
 
 class Graph:
     def __init__(self, graph):
         self.nodes = [Node(node) for node in graph.nodes]
         for node in self.nodes:
-            for link in node.links:
-                self.nodes[link.index].parents += 1
-
-    def dump(self, logger):
-        for node in self.nodes:
-            t = self.node_type(len(node.links), node.parents)
-            logger.info(f"{t}: {node.status.name}")
-        logger.info("==========")
-
-    @staticmethod
-    def node_type(c, p):
-        if p == 0:
-            return "R"
-        if c == 0:
-            return "L"
-        return "U"
+            node.update(self.nodes)

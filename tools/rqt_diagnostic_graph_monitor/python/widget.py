@@ -12,24 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
-from rclpy.node import Node
-from rqt_diagnostic_graph_monitor.graph import Graph
-from tier4_system_msgs.msg import DiagnosticGraph
+from rqt_diagnostic_graph_monitor.module import MonitorModule
+
+
+class MonitorItem:
+    def __init__(self, node):
+        self.item = QtWidgets.QTreeWidgetItem([node.status.name])
+        self.node = node
 
 
 class MonitorWidget(QtWidgets.QSplitter):
-    def __init__(self, node: Node):
+    def __init__(self, module: MonitorModule):
         super().__init__()
-        node.create_subscription(DiagnosticGraph, "/diagnostics_graph", self.callback, 5)
-        self.node = node
-        self.addWidget(QtWidgets.QTreeWidget())
+        self.module = module
+        self.items = {}
+        self.root_items = []
+        self.tree = QtWidgets.QTreeWidget()
+        self.addWidget(self.tree)
         self.addWidget(QtWidgets.QLabel("TEST"))
 
-    def shutdown(self):
-        pass
+        self._timer = QtCore.QTimer()
+        self._timer.timeout.connect(self.on_timer)
+        self._timer.start(1000)
 
-    def callback(self, msg):
-        graph = Graph(msg)
-        graph.dump(self.node.get_logger())
+    def shutdown(self):
+        self.module.shutdown()
+
+    def on_timer(self):
+        for node in self.module.graph.nodes:
+            p = len(node.parents)
+            c = len(node.links)
+            print(f"({p}, {c}) {node.status.name}")
+
+            if node.status.name not in self.items:
+                self.items[node.status.name] = MonitorItem(node)
+            self.items[node.status.name].node = node
+
+        root_items = []
+        for item in self.items.values():
+            if len(item.node.parents) != 1:
+                root_items.append(item)
+
+        if root_items != self.root_items:
+            for item in root_items:
+                self.tree.addTopLevelItem(item.item)
+
+        print(root_items == self.root_items)
+        self.root_items = root_items

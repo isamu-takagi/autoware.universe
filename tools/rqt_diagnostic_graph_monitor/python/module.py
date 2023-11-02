@@ -12,22 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from rqt_diagnostic_graph_monitor.module import MonitorModule
-from rqt_diagnostic_graph_monitor.widget import MonitorWidget
-from rqt_gui_py.plugin import Plugin
+
+from rclpy.node import Node
+from rqt_diagnostic_graph_monitor.graph import Graph
+from tier4_system_msgs.msg import DiagnosticGraph
 
 
-class MonitorPlugin(Plugin):
-    def __init__(self, context):
-        super().__init__(context)
-        self._widget = MonitorWidget(MonitorModule(context.node))
-        context.add_widget(self._widget)
+class MonitorModule:
+    def __init__(self, node: Node):
+        self.node = node
+        self.sub = node.create_subscription(DiagnosticGraph, "/diagnostics_graph", self.callback, 5)
+        self.graph = None
 
-    def shutdown_plugin(self):
-        self._widget.shutdown()
+    def shutdown(self):
+        self.node.destroy_subscription(self.sub)
 
-    def save_settings(self, plugin_settings, instance_settings):
-        pass
-
-    def restore_settings(self, plugin_settings, instance_settings):
-        pass
+    def callback(self, msg):
+        self.graph = Graph(msg)
