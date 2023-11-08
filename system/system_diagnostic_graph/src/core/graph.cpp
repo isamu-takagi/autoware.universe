@@ -157,7 +157,6 @@ void Graph::init(const std::string & file, const std::string & mode)
     const auto diag = dynamic_cast<DiagUnit *>(node.get());
     if (diag) {
       diags_[diag->name()] = diag;
-      std::cout << diag->name() << std::endl;
     }
   }
   nodes_ = std::move(nodes);
