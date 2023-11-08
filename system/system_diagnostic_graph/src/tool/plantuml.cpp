@@ -25,6 +25,7 @@ namespace system_diagnostic_graph
 
 struct UnitData
 {
+  std::string type;
   std::string path;
   std::vector<UnitData *> children;
   std::vector<UnitData *> parents;
@@ -32,36 +33,63 @@ struct UnitData
 
 std::vector<std::unique_ptr<UnitData>> load_unit_data(const std::string & path)
 {
-  std::unordered_map<BaseUnit *, std::unique_ptr<UnitData>> mapping;
-  Graph graph;
-  graph.init(path);
+  std::vector<std::unique_ptr<UnitData>> result;
+  {
+    std::unordered_map<BaseUnit *, std::unique_ptr<UnitData>> mapping;
+    Graph graph;
+    graph.init(path);
 
-  for (const auto & node : graph.nodes()) {
-    auto data = std::make_unique<UnitData>();
-    data->path = node->path();
-    mapping[node] = std::move(data);
-  }
+    for (const auto & node : graph.nodes()) {
+      auto data = std::make_unique<UnitData>();
+      data->path = node->path();
+      mapping[node] = std::move(data);
+    }
 
-  for (const auto & [node, data] : mapping) {
-    for (const auto & link : node->children()) {
-      const auto parent = data.get();
-      const auto child = mapping.at(link).get();
-      child->parents.push_back(parent);
-      parent->children.push_back(child);
+    for (const auto & [node, data] : mapping) {
+      for (const auto & link : node->children()) {
+        const auto parent = data.get();
+        const auto child = mapping.at(link).get();
+        child->parents.push_back(parent);
+        parent->children.push_back(child);
+      }
+    }
+
+    for (auto & [node, data] : mapping) {
+      result.push_back(std::move(data));
     }
   }
 
-  std::vector<std::unique_ptr<UnitData>> result;
-  for (auto & [node, data] : mapping) {
-    result.push_back(std::move(data));
+  // Convert to forest.
+  /*
+  {
+    std::unordered_map<UnitData *, std::unique_ptr<UnitData>> links;
+    for (const auto & unit : result) {
+      if (1 < unit->parents.size()) {
+        auto link = std::make_unique<UnitData>();
+        link->type = "link";
+        link->path = unit->path;
+        links[unit.get()] = std::move(link);
+      }
+    }
+
+    for (const auto & unit : result) {
+      for (auto & link : unit->children) {
+        link = links.count(link) ? links.at(link).get() : link;
+      }
+    }
+
+    for (auto & [unit, link] : links) {
+      result.push_back(std::move(link));
+    }
   }
+  */
   return result;
 }
 
-void dump_unit_card(const UnitData * unit, const std::string & suffix)
+void dump_unit_card(const UnitData * unit)
 {
   const auto color = "#FFFFFF";
-  std::cout << "card " << unit << suffix << " " << color << " [" << std::endl;
+  std::cout << "card " << unit << " " << color << " [" << std::endl;
   std::cout << unit->path << std::endl;
   std::cout << "]" << std::endl;
 }
@@ -69,12 +97,7 @@ void dump_unit_card(const UnitData * unit, const std::string & suffix)
 void dump_unit_data(const std::vector<std::unique_ptr<UnitData>> & units)
 {
   for (const auto & unit : units) {
-    if (unit->parents.size() == 1) {
-      dump_unit_card(unit.get(), "");
-    } else {
-      dump_unit_card(unit.get(), "_p");
-      dump_unit_card(unit.get(), "_c");
-    }
+    dump_unit_card(unit.get());
   }
 
   for (const auto & unit : units) {
