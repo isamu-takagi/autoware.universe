@@ -6,3 +6,17 @@ nodes:
 
   - path: /autoware/localization/state
     diag: "component_state_diagnostics: localization_state"
+
+  # pose_twist_fusion_filter_pose
+
+  - path: /autoware/localization/topic_status
+    diag: ": localization_topic_status"
+
+  - path: /autoware/localization/matching_score
+    diag: "ndt_scan_matcher"
+
+  - path: /autoware/localization/accuracy
+    diag: "localization: localization_error_monitor"
+
+  - path: /autoware/localization/sensor_fusion_status
+    diag: "localization: ekf_localizer"
