@@ -7,13 +7,14 @@ nodes:
   - path: /autoware/localization/state
     diag: "component_state_diagnostics: localization_state"
 
-  # pose_twist_fusion_filter_pose
+  - path: /autoware/localization/topic_rate_check/pose_twist_fusion
+    diag: "topic_state_monitor_pose_twist_fusion_filter_pose: localization_topic_status"
 
-  - path: /autoware/localization/topic_status
-    diag: ": localization_topic_status"
+  - path: /autoware/localization/topic_rate_check/transform
+    diag: "topic_state_monitor_transform_map_to_base_link: localization_topic_status"
 
   - path: /autoware/localization/matching_score
-    diag: "ndt_scan_matcher"
+    diag: ndt_scan_matcher
 
   - path: /autoware/localization/accuracy
     diag: "localization: localization_error_monitor"
