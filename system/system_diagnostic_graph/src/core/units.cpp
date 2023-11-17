@@ -40,13 +40,6 @@ auto resolve(const BaseUnit::NodeDict & dict, const std::vector<UnitConfig::Shar
   return result;
 }
 
-auto resolve(const BaseUnit::NodeDict & dict, const std::string & path)
-{
-  std::vector<BaseUnit *> result;
-  result.push_back(dict.paths.at(path));
-  return result;
-}
-
 BaseUnit::BaseUnit(const std::string & path) : path_(path)
 {
   index_ = 0;

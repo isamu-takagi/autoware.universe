@@ -43,6 +43,7 @@ public:
 
 private:
   std::vector<std::unique_ptr<BaseUnit>> nodes_;
+  std::vector<BaseUnit *> units_;
   std::unordered_map<std::string, DiagUnit *> diags_;
 };
 

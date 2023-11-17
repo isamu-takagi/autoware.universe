@@ -149,17 +149,26 @@ void Graph::init(const std::string & file, const std::string & mode)
   // Sort units in topological order for update dependencies.
   nodes = topological_sort(std::move(nodes));
 
-  for (size_t index = 0; index < nodes.size(); ++index) {
-    nodes[index]->set_index(index);
-  }
-
+  // List diag nodes that have diag name.
   for (const auto & node : nodes) {
     const auto diag = dynamic_cast<DiagUnit *>(node.get());
     if (diag) {
       diags_[diag->name()] = diag;
-      std::cout << diag->name() << std::endl;
     }
   }
+
+  // List unit nodes that have path name.
+  for (const auto & node : nodes) {
+    if (!node->path().empty()) {
+      units_.push_back(node.get());
+    }
+  }
+
+  // Set unit index.
+  for (size_t index = 0; index < units_.size(); ++index) {
+    units_[index]->set_index(index);
+  }
+
   nodes_ = std::move(nodes);
 }
 
@@ -171,7 +180,6 @@ void Graph::callback(const rclcpp::Time & stamp, const DiagnosticArray & array)
       iter->second->callback(stamp, status);
     } else {
       // TODO(Takagi, Isamu)
-      std::cout << "unknown diag: " << status.name << std::endl;
     }
   }
 }
@@ -184,8 +192,8 @@ DiagnosticGraph Graph::report(const rclcpp::Time & stamp)
 
   DiagnosticGraph message;
   message.stamp = stamp;
-  message.nodes.reserve(nodes_.size());
-  for (const auto & node : nodes_) {
+  message.nodes.reserve(units_.size());
+  for (const auto & node : units_) {
     const auto report = node->report();
     DiagnosticNode temp;
     temp.status.name = node->path();

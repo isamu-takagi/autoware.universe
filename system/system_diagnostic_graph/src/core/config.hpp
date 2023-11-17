@@ -64,18 +64,28 @@ struct UnitConfig : public BaseConfig
   std::vector<UnitConfig::SharedPtr> children;
 };
 
+struct EditConfig : public BaseConfig
+{
+  using SharedPtr = std::shared_ptr<EditConfig>;
+  using BaseConfig::BaseConfig;
+  std::string type;
+  std::string path;
+};
+
 struct FileConfig : public BaseConfig
 {
   using SharedPtr = std::shared_ptr<FileConfig>;
   using BaseConfig::BaseConfig;
   std::vector<PathConfig::SharedPtr> paths;
   std::vector<UnitConfig::SharedPtr> nodes;
+  std::vector<EditConfig::SharedPtr> edits;
 };
 
 struct RootConfig
 {
   std::vector<FileConfig::SharedPtr> files;
   std::vector<UnitConfig::SharedPtr> nodes;
+  std::vector<EditConfig::SharedPtr> edits;
 };
 
 template <class T>
