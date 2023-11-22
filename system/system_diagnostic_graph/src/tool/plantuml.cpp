@@ -23,24 +23,31 @@
 namespace system_diagnostic_graph
 {
 
-struct UnitData
+struct GraphNode
 {
+  using UniquePtr = std::unique_ptr<GraphNode>;
   std::string type;
   std::string path;
-  std::vector<UnitData *> children;
-  std::vector<UnitData *> parents;
+  std::vector<GraphNode *> children;
+  std::vector<GraphNode *> parents;
 };
 
-std::vector<std::unique_ptr<UnitData>> load_unit_data(const std::string & path)
+struct GraphRoot
 {
-  std::vector<std::unique_ptr<UnitData>> result;
+  std::vector<GraphNode::UniquePtr> owner;
+  std::vector<GraphNode *> nodes;
+};
+
+GraphRoot load_graph_nodes(const std::string & path)
+{
+  GraphRoot result;
   {
-    std::unordered_map<BaseUnit *, std::unique_ptr<UnitData>> mapping;
+    std::unordered_map<BaseUnit *, GraphNode::UniquePtr> mapping;
     Graph graph;
     graph.init(path);
 
     for (const auto & node : graph.nodes()) {
-      auto data = std::make_unique<UnitData>();
+      auto data = std::make_unique<GraphNode>();
       data->path = node->path();
       mapping[node] = std::move(data);
     }
@@ -55,61 +62,67 @@ std::vector<std::unique_ptr<UnitData>> load_unit_data(const std::string & path)
     }
 
     for (auto & [node, data] : mapping) {
-      result.push_back(std::move(data));
+      result.owner.push_back(std::move(data));
+    }
+    for (const auto & node : result.owner) {
+      result.nodes.push_back(node.get());
     }
   }
-
-  // Convert to forest.
-  /*
-  {
-    std::unordered_map<UnitData *, std::unique_ptr<UnitData>> links;
-    for (const auto & unit : result) {
-      if (1 < unit->parents.size()) {
-        auto link = std::make_unique<UnitData>();
-        link->type = "link";
-        link->path = unit->path;
-        links[unit.get()] = std::move(link);
-      }
-    }
-
-    for (const auto & unit : result) {
-      for (auto & link : unit->children) {
-        link = links.count(link) ? links.at(link).get() : link;
-      }
-    }
-
-    for (auto & [unit, link] : links) {
-      result.push_back(std::move(link));
-    }
-  }
-  */
   return result;
 }
 
-void dump_unit_card(const UnitData * unit)
+void dump_plantuml_path(const std::string & path)
 {
+  const auto graph = load_graph_nodes(path);
   const auto color = "#FFFFFF";
-  std::cout << "card " << unit << " " << color << " [" << std::endl;
-  std::cout << unit->path << std::endl;
-  std::cout << "]" << std::endl;
-}
 
-void dump_unit_data(const std::vector<std::unique_ptr<UnitData>> & units)
-{
-  for (const auto & unit : units) {
-    dump_unit_card(unit.get());
+  for (const auto & node : graph.nodes) {
+    std::cout << "card " << node << " " << color << " [" << std::endl;
+    std::cout << node->path << std::endl;
+    std::cout << "]" << std::endl;
   }
 
-  for (const auto & unit : units) {
-    for (const auto & child : unit->children) {
-      std::cout << unit.get() << " --> " << child << std::endl;
+  for (const auto & node : graph.nodes) {
+    for (const auto & child : node->children) {
+      std::cout << node << " --> " << child << std::endl;
     }
   }
 }
 
-void plantuml(const std::string & path)
+void dump_tree_node(const GraphNode * node, const std::string & indent = "", bool root = true)
 {
-  dump_unit_data(load_unit_data(path));
+  std::cout << indent << "- " << node->path << std::endl;
+  if (root || node->parents.size() == 1) {
+    for (const auto child : node->children) {
+      dump_tree_node(child, indent + "    ", false);
+    }
+  }
+}
+
+void dump_tree_path(const std::string & path)
+{
+  const auto graph = load_graph_nodes(path);
+
+  std::cout << "========== root nodes ==========" << std::endl;
+  for (const auto & node : graph.nodes) {
+    if (node->parents.size() == 0 && node->children.size() != 0) {
+      dump_tree_node(node);
+    }
+  }
+
+  std::cout << "========== link nodes ==========" << std::endl;
+  for (const auto & node : graph.nodes) {
+    if (node->parents.size() >= 2) {
+      dump_tree_node(node);
+    }
+  }
+
+  std::cout << "========== solo nodes ==========" << std::endl;
+  for (const auto & node : graph.nodes) {
+    if (node->parents.size() == 0 && node->children.size() == 0) {
+      dump_tree_node(node);
+    }
+  }
 }
 
 }  // namespace system_diagnostic_graph
@@ -120,5 +133,5 @@ int main(int argc, char ** argv)
     std::cerr << "usage: plantuml <path>" << std::endl;
     return 1;
   }
-  system_diagnostic_graph::plantuml(argv[1]);
+  system_diagnostic_graph::dump_tree_path(argv[1]);
 }
