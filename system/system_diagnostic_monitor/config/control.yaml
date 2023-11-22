@@ -10,3 +10,27 @@ nodes:
 
   - path: /autoware/control/topic_rate_check/control_command
     diag: "topic_state_monitor_control_command_control_cmd: control_topic_status"
+
+  - path: /autoware/control/node_alive_monitoring/vehicle_cmd_gate
+    diag: "vehicle_cmd_gate: heartbeat"
+
+  - path: /autoware/control/emergency_braking
+    diag: ": aeb_emergency_stop"
+
+  - path: /autoware/control/performance_monitoring/lane_departure
+    diag: ": lane_departure"
+
+  - path: /autoware/control/performance_monitoring/trajectory_deviation
+    diag: ": trajectory_deviation"
+
+  - path: /autoware/control/performance_monitoring/control_state
+    diag: ": control_state"
+
+  - path: /autoware/control/external/selector
+    diag: "external_cmd_selector: heartbeat"
+
+  - path: /autoware/control/external/local
+    diag: ": joy_controller_connection"
+
+  - path: /autoware/control/external/remote
+    diag: ": remote_control_topic_status"
