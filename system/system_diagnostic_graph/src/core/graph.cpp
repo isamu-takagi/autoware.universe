@@ -180,7 +180,6 @@ void Graph::callback(const rclcpp::Time & stamp, const DiagnosticArray & array)
       iter->second->callback(stamp, status);
     } else {
       // TODO(Takagi, Isamu)
-      std::cout << "unknown diag: " << status.name << std::endl;
     }
   }
 }

@@ -2,11 +2,22 @@ nodes:
   - path: /autoware/planning
     type: short-circuit-and
     list:
-      - { type: link, link: /autoware/planning/routing/state }
+      - type: link
+        link: /autoware/planning/routing/state
       - type: and
         list:
           - { type: link, link: /autoware/planning/topic_rate_check/route }
           - { type: link, link: /autoware/planning/topic_rate_check/trajectory }
+          - { type: link, link: /autoware/planning/trajectory-validation/finite }
+          - { type: link, link: /autoware/planning/trajectory-validation/interval }
+          - { type: link, link: /autoware/planning/trajectory-validation/curvature }
+          - { type: link, link: /autoware/planning/trajectory-validation/angle }
+          - { type: link, link: /autoware/planning/trajectory-validation/lateral-acceleration }
+          - { type: link, link: /autoware/planning/trajectory-validation/acceleration }
+          - { type: link, link: /autoware/planning/trajectory-validation/deceleration }
+          - { type: link, link: /autoware/planning/trajectory-validation/steering }
+          - { type: link, link: /autoware/planning/trajectory-validation/steering-rate }
+          - { type: link, link: /autoware/planning/trajectory-validation/velocity-deviation }
 
   - path: /autoware/planning/routing/state
     diag: "component_state_diagnostics: route_state"
