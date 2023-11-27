@@ -49,6 +49,7 @@ GraphRoot load_graph_nodes(const std::string & path)
     for (const auto & node : graph.nodes()) {
       auto data = std::make_unique<GraphNode>();
       data->path = node->path();
+      data->type = node->type();
       mapping[node] = std::move(data);
     }
 
@@ -91,7 +92,10 @@ void dump_plantuml_path(const std::string & path)
 
 void dump_tree_node(const GraphNode * node, const std::string & indent = "", bool root = true)
 {
-  std::cout << indent << "- " << node->path << std::endl;
+  const auto path = node->path.empty() ? "" : node->path + " ";
+  const auto type = "(" + node->type + ")";
+  std::cout << indent << "- " << path << type << std::endl;
+
   if (root || node->parents.size() == 1) {
     for (const auto child : node->children) {
       dump_tree_node(child, indent + "    ", false);

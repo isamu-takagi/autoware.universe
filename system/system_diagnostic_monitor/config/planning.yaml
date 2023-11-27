@@ -8,16 +8,7 @@ nodes:
         list:
           - { type: link, link: /autoware/planning/topic_rate_check/route }
           - { type: link, link: /autoware/planning/topic_rate_check/trajectory }
-          - { type: link, link: /autoware/planning/trajectory-validation/finite }
-          - { type: link, link: /autoware/planning/trajectory-validation/interval }
-          - { type: link, link: /autoware/planning/trajectory-validation/curvature }
-          - { type: link, link: /autoware/planning/trajectory-validation/angle }
-          - { type: link, link: /autoware/planning/trajectory-validation/lateral-acceleration }
-          - { type: link, link: /autoware/planning/trajectory-validation/acceleration }
-          - { type: link, link: /autoware/planning/trajectory-validation/deceleration }
-          - { type: link, link: /autoware/planning/trajectory-validation/steering }
-          - { type: link, link: /autoware/planning/trajectory-validation/steering-rate }
-          - { type: link, link: /autoware/planning/trajectory-validation/velocity-deviation }
+          - { type: link, link: /autoware/planning/trajectory_validation }
 
   - path: /autoware/planning/routing/state
     diag: "component_state_diagnostics: route_state"
@@ -27,6 +18,20 @@ nodes:
 
   - path: /autoware/planning/topic_rate_check/trajectory
     diag: "topic_state_monitor_scenario_planning_trajectory: planning_topic_status"
+
+  - path: /autoware/planning/trajectory_validation
+    type: and
+    list:
+      - { type: link, link: /autoware/planning/trajectory_validation/finite }
+      - { type: link, link: /autoware/planning/trajectory_validation/interval }
+      - { type: link, link: /autoware/planning/trajectory_validation/curvature }
+      - { type: link, link: /autoware/planning/trajectory_validation/angle }
+      - { type: link, link: /autoware/planning/trajectory_validation/lateral_acceleration }
+      - { type: link, link: /autoware/planning/trajectory_validation/acceleration }
+      - { type: link, link: /autoware/planning/trajectory_validation/deceleration }
+      - { type: link, link: /autoware/planning/trajectory_validation/steering }
+      - { type: link, link: /autoware/planning/trajectory_validation/steering_rate }
+      - { type: link, link: /autoware/planning/trajectory_validation/velocity_deviation }
 
   - path: /autoware/planning/trajectory_validation/finite
     diag: "planning_validator: trajectory_validation_finite"

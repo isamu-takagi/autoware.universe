@@ -3,6 +3,7 @@ nodes:
     type: and
     list:
       - { type: link, link: /autoware/perception/topic_rate_check/objects }
+      - { type: link, link: /autoware/perception/topic_rate_check/pointcloud }
 
   - path: /autoware/perception/topic_rate_check/objects
     diag: "topic_state_monitor_object_recognition_objects: perception_topic_status"
