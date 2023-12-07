@@ -103,6 +103,9 @@ BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
   if (config->type == "or") {
     return std::make_unique<OrUnit>(config->path);
   }
+  if (config->type == "warn-to-error") {
+    return std::make_unique<RemapUnit>(config->path);
+  }
   if (config->type == "ok") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::OK);
   }

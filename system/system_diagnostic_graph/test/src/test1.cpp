@@ -14,18 +14,11 @@
 
 #include "core/error.hpp"
 #include "core/graph.hpp"
+#include "utils.hpp"
 
 #include <gtest/gtest.h>
 
-#include <filesystem>
-#include <iostream>
-
 using namespace system_diagnostic_graph;  // NOLINT(build/namespaces)
-
-std::filesystem::path resource(const std::string & path)
-{
-  return std::filesystem::path(TEST_RESOURCE_PATH) / path;
-}
 
 TEST(ConfigFile, RootNotFound)
 {

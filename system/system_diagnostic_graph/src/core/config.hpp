@@ -18,6 +18,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -32,6 +33,7 @@ struct ConfigData
   ConfigData type(const std::string & name) const;
   ConfigData node(const size_t index) const;
 
+  std::optional<YAML::Node> take_yaml(const std::string & name);
   std::string take_text(const std::string & name);
   std::string take_text(const std::string & name, const std::string & fail);
   std::vector<YAML::Node> take_list(const std::string & name);

@@ -79,6 +79,17 @@ ConfigData ConfigData::node(const size_t index) const
   return data;
 }
 
+std::optional<YAML::Node> ConfigData::take_yaml(const std::string & name)
+{
+  if (!object.count(name)) {
+    return std::nullopt;
+  }
+
+  const auto yaml = object.at(name);
+  object.erase(name);
+  return yaml;
+}
+
 std::string ConfigData::take_text(const std::string & name)
 {
   if (!object.count(name)) {
@@ -253,6 +264,11 @@ UnitConfig::SharedPtr parse_node_config(const ConfigData & data)
 
   for (const auto & [index, yaml] : enumerate(node->data.take_list("list"))) {
     const auto child = data.node(index).load(yaml);
+    node->children.push_back(parse_node_config(child));
+  }
+  if (const auto yaml = node->data.take_yaml("node")) {
+    // TODO(Takagi, Isamu): use text mark
+    const auto child = data.node(0).load(yaml.value());
     node->children.push_back(parse_node_config(child));
   }
   return node;

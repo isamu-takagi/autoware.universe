@@ -14,6 +14,8 @@
 
 #include "units.hpp"
 
+#include "error.hpp"
+
 #include <algorithm>
 #include <string>
 #include <utility>
@@ -139,6 +141,23 @@ void OrUnit::update(const rclcpp::Time &)
     merge(links_, status.links, true);
   }
   level_ = std::min(level_, DiagnosticStatus::ERROR);
+}
+
+void RemapUnit::init(const UnitConfig::SharedPtr & config, const NodeDict & dict)
+{
+  if (config->children.size() != 1) {
+    throw error<FieldNotFound>("required field is not found", "node", config->data);
+  }
+  children_ = resolve(dict, config->children);
+}
+
+void RemapUnit::update(const rclcpp::Time &)
+{
+  const auto status = children_.front()->status();
+  level_ = status.level;
+  links_ = status.links;
+
+  if (level_ == DiagnosticStatus::WARN) level_ = DiagnosticStatus::ERROR;
 }
 
 DebugUnit::DebugUnit(const std::string & path, DiagnosticLevel level) : BaseUnit(path)

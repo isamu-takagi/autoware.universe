@@ -110,6 +110,15 @@ public:
   std::string type() const override { return "or"; }
 };
 
+class RemapUnit : public BaseUnit
+{
+public:
+  using BaseUnit::BaseUnit;
+  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
+  void update(const rclcpp::Time & stamp) override;
+  std::string type() const override { return "remap"; }
+};
+
 class DebugUnit : public BaseUnit
 {
 public:
