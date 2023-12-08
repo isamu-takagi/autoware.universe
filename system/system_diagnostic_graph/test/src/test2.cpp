@@ -28,6 +28,18 @@ using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using tier4_system_msgs::msg::DiagnosticGraph;
 
+constexpr auto OK = DiagnosticStatus::OK;
+constexpr auto WARN = DiagnosticStatus::WARN;
+constexpr auto ERROR = DiagnosticStatus::ERROR;
+constexpr auto STALE = DiagnosticStatus::STALE;
+
+struct TestData
+{
+  std::string config;
+  std::vector<uint8_t> levels;
+  uint8_t result;
+};
+
 DiagnosticArray create_input(const std::vector<uint8_t> & levels)
 {
   DiagnosticArray array;
@@ -50,29 +62,47 @@ bool check_output(const DiagnosticGraph & graph, uint8_t level)
   return false;
 }
 
-TEST(Aggregation, Remap1)
+void check_graph(const TestData & test)
 {
   const auto stamp = rclcpp::Clock().now();
   Graph graph;
-  graph.init(resource("remap.yaml"));
-  graph.callback(stamp, create_input({DiagnosticStatus::OK}));
-  EXPECT_TRUE(check_output(graph.report(stamp), DiagnosticStatus::OK));
+  graph.init(resource(test.config));
+  graph.callback(stamp, create_input(test.levels));
+  EXPECT_TRUE(check_output(graph.report(stamp), test.result));
 }
 
-TEST(Aggregation, Remap2)
+TEST(Aggregation, WarnToError1)
 {
-  const auto stamp = rclcpp::Clock().now();
-  Graph graph;
-  graph.init(resource("remap.yaml"));
-  graph.callback(stamp, create_input({DiagnosticStatus::WARN}));
-  EXPECT_TRUE(check_output(graph.report(stamp), DiagnosticStatus::ERROR));
+  TestData test;
+  test.config = "test2/warn-to-error.yaml";
+  test.levels = {OK};
+  test.result = OK;
+  check_graph(test);
 }
 
-TEST(Aggregation, Remap3)
+TEST(Aggregation, WarnToError2)
 {
-  const auto stamp = rclcpp::Clock().now();
-  Graph graph;
-  graph.init(resource("remap.yaml"));
-  graph.callback(stamp, create_input({DiagnosticStatus::ERROR}));
-  EXPECT_TRUE(check_output(graph.report(stamp), DiagnosticStatus::ERROR));
+  TestData test;
+  test.config = "test2/warn-to-error.yaml";
+  test.levels = {WARN};
+  test.result = ERROR;
+  check_graph(test);
+}
+
+TEST(Aggregation, WarnToError3)
+{
+  TestData test;
+  test.config = "test2/warn-to-error.yaml";
+  test.levels = {ERROR};
+  test.result = ERROR;
+  check_graph(test);
+}
+
+TEST(Aggregation, WarnToError4)
+{
+  TestData test;
+  test.config = "test2/warn-to-error.yaml";
+  test.levels = {STALE};
+  test.result = STALE;
+  check_graph(test);
 }
