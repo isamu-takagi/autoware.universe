@@ -113,10 +113,13 @@ public:
 class RemapUnit : public BaseUnit
 {
 public:
-  using BaseUnit::BaseUnit;
+  RemapUnit(const std::string & path, DiagnosticLevel remap_warn);
   void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
   void update(const rclcpp::Time & stamp) override;
   std::string type() const override { return "remap"; }
+
+private:
+  DiagnosticLevel remap_warn_;
 };
 
 class DebugUnit : public BaseUnit

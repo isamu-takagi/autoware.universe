@@ -103,8 +103,11 @@ BaseUnit::UniquePtr make_node(const UnitConfig::SharedPtr & config)
   if (config->type == "or") {
     return std::make_unique<OrUnit>(config->path);
   }
+  if (config->type == "warn-to-ok") {
+    return std::make_unique<RemapUnit>(config->path, DiagnosticStatus::OK);
+  }
   if (config->type == "warn-to-error") {
-    return std::make_unique<RemapUnit>(config->path);
+    return std::make_unique<RemapUnit>(config->path, DiagnosticStatus::ERROR);
   }
   if (config->type == "ok") {
     return std::make_unique<DebugUnit>(config->path, DiagnosticStatus::OK);
@@ -131,10 +134,8 @@ Graph::~Graph()
   // for unique_ptr
 }
 
-void Graph::init(const std::string & file, const std::string & mode)
+void Graph::init(const std::string & file)
 {
-  (void)mode;  // TODO(Takagi, Isamu)
-
   BaseUnit::UniquePtrList nodes;
   BaseUnit::NodeDict dict;
 
@@ -182,7 +183,7 @@ void Graph::callback(const rclcpp::Time & stamp, const DiagnosticArray & array)
     if (iter != diags_.end()) {
       iter->second->callback(stamp, status);
     } else {
-      // TODO(Takagi, Isamu)
+      unknowns_[status.name] = status.level;
     }
   }
 }

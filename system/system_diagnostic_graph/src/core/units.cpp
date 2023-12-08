@@ -64,8 +64,8 @@ BaseUnit::NodeData BaseUnit::report() const
 
 void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
 {
-  timeout_ = 3.0;  // TODO(Takagi, Isamu): parameterize
   name_ = config->data.take_text("diag");
+  timeout_ = config->data.take<double>("timeout", 1.0);
 }
 
 void DiagUnit::update(const rclcpp::Time & stamp)
@@ -143,10 +143,15 @@ void OrUnit::update(const rclcpp::Time &)
   level_ = std::min(level_, DiagnosticStatus::ERROR);
 }
 
+RemapUnit::RemapUnit(const std::string & path, DiagnosticLevel remap_warn) : BaseUnit(path)
+{
+  remap_warn_ = remap_warn;
+}
+
 void RemapUnit::init(const UnitConfig::SharedPtr & config, const NodeDict & dict)
 {
   if (config->children.size() != 1) {
-    throw error<FieldNotFound>("required field is not found", "node", config->data);
+    throw error<InvalidValue>("list size must be 1", config->data);
   }
   children_ = resolve(dict, config->children);
 }
@@ -157,7 +162,7 @@ void RemapUnit::update(const rclcpp::Time &)
   level_ = status.level;
   links_ = status.links;
 
-  if (level_ == DiagnosticStatus::WARN) level_ = DiagnosticStatus::ERROR;
+  if (level_ == DiagnosticStatus::WARN) level_ = remap_warn_;
 }
 
 DebugUnit::DebugUnit(const std::string & path, DiagnosticLevel level) : BaseUnit(path)

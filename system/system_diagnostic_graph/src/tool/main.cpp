@@ -107,21 +107,20 @@ void dump_tree_path(const std::string & path)
 {
   const auto graph = load_graph_nodes(path);
 
-  std::cout << "========== root nodes ==========" << std::endl;
+  std::cout << "===== root nodes =================================" << std::endl;
   for (const auto & node : graph.nodes) {
     if (node->parents.size() == 0 && node->children.size() != 0) {
       dump_tree_node(node);
     }
   }
-
-  std::cout << "========== link nodes ==========" << std::endl;
+  std::cout << "===== intermediate nodes =========================" << std::endl;
   for (const auto & node : graph.nodes) {
     if (node->parents.size() >= 2) {
       dump_tree_node(node);
     }
   }
 
-  std::cout << "========== solo nodes ==========" << std::endl;
+  std::cout << "===== isolated nodes =============================" << std::endl;
   for (const auto & node : graph.nodes) {
     if (node->parents.size() == 0 && node->children.size() == 0) {
       dump_tree_node(node);
@@ -134,7 +133,7 @@ void dump_tree_path(const std::string & path)
 int main(int argc, char ** argv)
 {
   if (argc != 2) {
-    std::cerr << "usage: plantuml <path>" << std::endl;
+    std::cerr << "usage: " << argv[0] << " <path>" << std::endl;
     return 1;
   }
   system_diagnostic_graph::dump_tree_path(argv[1]);

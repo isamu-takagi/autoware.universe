@@ -68,15 +68,13 @@ ConfigData ConfigData::load(YAML::Node yaml)
 ConfigData ConfigData::type(const std::string & name) const
 {
   ConfigData data(file);
-  data.mark = name;
+  data.mark = mark.empty() ? name : mark + "-" + name;
   return data;
 }
 
 ConfigData ConfigData::node(const size_t index) const
 {
-  ConfigData data(file);
-  data.mark = mark + "-" + std::to_string(index);
-  return data;
+  return type(std::to_string(index));
 }
 
 std::optional<YAML::Node> ConfigData::take_yaml(const std::string & name)
@@ -264,11 +262,6 @@ UnitConfig::SharedPtr parse_node_config(const ConfigData & data)
 
   for (const auto & [index, yaml] : enumerate(node->data.take_list("list"))) {
     const auto child = data.node(index).load(yaml);
-    node->children.push_back(parse_node_config(child));
-  }
-  if (const auto yaml = node->data.take_yaml("node")) {
-    // TODO(Takagi, Isamu): use text mark
-    const auto child = data.node(0).load(yaml.value());
     node->children.push_back(parse_node_config(child));
   }
   return node;

@@ -33,11 +33,15 @@ constexpr auto WARN = DiagnosticStatus::WARN;
 constexpr auto ERROR = DiagnosticStatus::ERROR;
 constexpr auto STALE = DiagnosticStatus::STALE;
 
-struct TestData
+struct GraphTestParam
 {
   std::string config;
-  std::vector<uint8_t> levels;
+  std::vector<uint8_t> inputs;
   uint8_t result;
+};
+
+class GraphTest : public testing::TestWithParam<GraphTestParam>
+{
 };
 
 DiagnosticArray create_input(const std::vector<uint8_t> & levels)
@@ -52,57 +56,88 @@ DiagnosticArray create_input(const std::vector<uint8_t> & levels)
   return array;
 };
 
-bool check_output(const DiagnosticGraph & graph, uint8_t level)
+uint8_t get_output(const DiagnosticGraph & graph)
 {
   for (const auto & node : graph.nodes) {
-    if (node.status.name == "output" && node.status.level == level) {
-      return true;
+    if (node.status.name == "output") {
+      return node.status.level;
     }
   }
-  return false;
+  throw std::runtime_error("output node is not found");
 }
 
-void check_graph(const TestData & test)
+TEST_P(GraphTest, Aggregation)
 {
+  const auto param = GetParam();
   const auto stamp = rclcpp::Clock().now();
   Graph graph;
-  graph.init(resource(test.config));
-  graph.callback(stamp, create_input(test.levels));
-  EXPECT_TRUE(check_output(graph.report(stamp), test.result));
+  graph.init(resource(param.config));
+  graph.callback(stamp, create_input(param.inputs));
+
+  const auto output = get_output(graph.report(stamp));
+  EXPECT_EQ(output, param.result);
 }
 
-TEST(Aggregation, WarnToError1)
-{
-  TestData test;
-  test.config = "test2/warn-to-error.yaml";
-  test.levels = {OK};
-  test.result = OK;
-  check_graph(test);
-}
+// clang-format off
 
-TEST(Aggregation, WarnToError2)
-{
-  TestData test;
-  test.config = "test2/warn-to-error.yaml";
-  test.levels = {WARN};
-  test.result = ERROR;
-  check_graph(test);
-}
+INSTANTIATE_TEST_SUITE_P(And, GraphTest,
+  testing::Values(
+    GraphTestParam{"test2/and.yaml", {OK,    OK   }, OK   },
+    GraphTestParam{"test2/and.yaml", {OK,    WARN }, WARN },
+    GraphTestParam{"test2/and.yaml", {OK,    ERROR}, ERROR},
+    GraphTestParam{"test2/and.yaml", {OK,    STALE}, ERROR},
+    GraphTestParam{"test2/and.yaml", {WARN,  OK   }, WARN },
+    GraphTestParam{"test2/and.yaml", {WARN,  WARN }, WARN },
+    GraphTestParam{"test2/and.yaml", {WARN,  ERROR}, ERROR},
+    GraphTestParam{"test2/and.yaml", {WARN,  STALE}, ERROR},
+    GraphTestParam{"test2/and.yaml", {ERROR, OK   }, ERROR},
+    GraphTestParam{"test2/and.yaml", {ERROR, WARN }, ERROR},
+    GraphTestParam{"test2/and.yaml", {ERROR, ERROR}, ERROR},
+    GraphTestParam{"test2/and.yaml", {ERROR, STALE}, ERROR},
+    GraphTestParam{"test2/and.yaml", {STALE, OK   }, ERROR},
+    GraphTestParam{"test2/and.yaml", {STALE, WARN }, ERROR},
+    GraphTestParam{"test2/and.yaml", {STALE, ERROR}, ERROR},
+    GraphTestParam{"test2/and.yaml", {STALE, STALE}, ERROR}
+  )
+);
 
-TEST(Aggregation, WarnToError3)
-{
-  TestData test;
-  test.config = "test2/warn-to-error.yaml";
-  test.levels = {ERROR};
-  test.result = ERROR;
-  check_graph(test);
-}
+INSTANTIATE_TEST_SUITE_P(Or, GraphTest,
+  testing::Values(
+    GraphTestParam{"test2/or.yaml", {OK,    OK   }, OK   },
+    GraphTestParam{"test2/or.yaml", {OK,    WARN }, OK   },
+    GraphTestParam{"test2/or.yaml", {OK,    ERROR}, OK   },
+    GraphTestParam{"test2/or.yaml", {OK,    STALE}, OK   },
+    GraphTestParam{"test2/or.yaml", {WARN,  OK   }, OK   },
+    GraphTestParam{"test2/or.yaml", {WARN,  WARN }, WARN },
+    GraphTestParam{"test2/or.yaml", {WARN,  ERROR}, WARN },
+    GraphTestParam{"test2/or.yaml", {WARN,  STALE}, WARN },
+    GraphTestParam{"test2/or.yaml", {ERROR, OK   }, OK   },
+    GraphTestParam{"test2/or.yaml", {ERROR, WARN }, WARN },
+    GraphTestParam{"test2/or.yaml", {ERROR, ERROR}, ERROR},
+    GraphTestParam{"test2/or.yaml", {ERROR, STALE}, ERROR},
+    GraphTestParam{"test2/or.yaml", {STALE, OK   }, OK   },
+    GraphTestParam{"test2/or.yaml", {STALE, WARN }, WARN },
+    GraphTestParam{"test2/or.yaml", {STALE, ERROR}, ERROR},
+    GraphTestParam{"test2/or.yaml", {STALE, STALE}, ERROR}
+  )
+);
 
-TEST(Aggregation, WarnToError4)
-{
-  TestData test;
-  test.config = "test2/warn-to-error.yaml";
-  test.levels = {STALE};
-  test.result = STALE;
-  check_graph(test);
-}
+INSTANTIATE_TEST_SUITE_P(WarnToOk, GraphTest,
+  testing::Values(
+    GraphTestParam{"test2/warn-to-ok.yaml", {OK   }, OK   },
+    GraphTestParam{"test2/warn-to-ok.yaml", {WARN }, OK},
+    GraphTestParam{"test2/warn-to-ok.yaml", {ERROR}, ERROR},
+    GraphTestParam{"test2/warn-to-ok.yaml", {STALE}, STALE}
+  )
+);
+
+INSTANTIATE_TEST_SUITE_P(WarnToError, GraphTest,
+  testing::Values(
+    GraphTestParam{"test2/warn-to-error.yaml", {OK   }, OK   },
+    GraphTestParam{"test2/warn-to-error.yaml", {WARN }, ERROR},
+    GraphTestParam{"test2/warn-to-error.yaml", {ERROR}, ERROR},
+    GraphTestParam{"test2/warn-to-error.yaml", {STALE}, STALE}
+  )
+);
+
+// clang-format on

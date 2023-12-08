@@ -33,6 +33,13 @@ struct ConfigData
   ConfigData type(const std::string & name) const;
   ConfigData node(const size_t index) const;
 
+  template <class T>
+  T take(const std::string & name, const T & fail)
+  {
+    const auto yaml = take_yaml(name);
+    return yaml ? yaml.value().as<T>() : fail;
+  }
+
   std::optional<YAML::Node> take_yaml(const std::string & name);
   std::string take_text(const std::string & name);
   std::string take_text(const std::string & name, const std::string & fail);

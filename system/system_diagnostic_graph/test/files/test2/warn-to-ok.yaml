@@ -1,6 +1,6 @@
 nodes:
   - path: output
-    type: warn-to-error
+    type: warn-to-ok
     list:
       - path: input-0
         type: diag
