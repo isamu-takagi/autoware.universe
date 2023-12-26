@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.14)
+project(autoware_interface_test)
+
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+ament_auto_add_executable(test_pub_raw src/test_pub_raw.cpp)
+ament_auto_add_executable(test_sub_raw src/test_sub_raw.cpp)
+ament_auto_add_executable(test_pub_dev src/test_pub_dev.cpp)
+ament_auto_add_executable(test_sub_dev src/test_sub_dev.cpp)
+ament_auto_package()
