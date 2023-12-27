@@ -45,11 +45,11 @@ struct Interface
 
 template <>
 struct rclcpp::TypeAdapter<
-  vehicle_control_interface::steering_status::v1::CustomMessage,
+  vehicle_control_interface::steering_status::dev::CustomMessage,
   autoware_vehicle_msgs::msg::SteeringReport>
 {
   using is_specialized = std::true_type;
-  using custom_type = vehicle_control_interface::steering_status::v1::CustomMessage;
+  using custom_type = vehicle_control_interface::steering_status::dev::CustomMessage;
   using ros_message_type = autoware_vehicle_msgs::msg::SteeringReport;
 
   static void convert_to_ros_message(const custom_type & custom, ros_message_type & rosidl)

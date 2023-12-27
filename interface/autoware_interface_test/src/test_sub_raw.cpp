@@ -22,7 +22,7 @@ public:
   TestSubRaw();
 
 private:
-  using Interface = vehicle_control_interface::steering_status::dev::Interface;
+  using Interface = vehicle_control_interface::steering_status::raw::Interface;
   autoware_interface_library::Subscription<Interface>::SharedPtr sub_;
   void on_msg(const Interface::Message::SharedPtr msg);
 };
