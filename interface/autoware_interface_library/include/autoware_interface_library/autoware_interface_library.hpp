@@ -15,6 +15,9 @@
 #ifndef AUTOWARE_INTERFACE_LIBRARY__AUTOWARE_INTERFACE_LIBRARY_HPP_
 #define AUTOWARE_INTERFACE_LIBRARY__AUTOWARE_INTERFACE_LIBRARY_HPP_
 
+#include "impl/message.hpp"
+#include "impl/service.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -23,18 +26,6 @@
 
 namespace autoware_interface_library
 {
-
-template <class T>
-using Publisher = rclcpp::Publisher<typename T::Adaptor>;
-
-template <class T>
-using Subscription = rclcpp::Subscription<typename T::Adaptor>;
-
-template <class T>
-using Client = rclcpp::Client<typename T::Adaptor>;
-
-template <class T>
-using Service = rclcpp::Service<typename T::Adaptor>;
 
 class AutowareInterfaceAdaptor
 {
@@ -55,6 +46,16 @@ public:
     const auto name = T::get_name();
     const auto qos = T::get_pub_qos();
     return node_->create_publisher<typename T::Adaptor>(name, qos, std::forward<Args>(args)...);
+  }
+
+  template <class T, class... Args>
+  auto create_client(Args &&... args)
+  {
+    using RosType = typename T::Adaptor::ros_message_type;
+    const auto name = T::get_name();
+    const auto qos = T::get_cli_qos().get_rmw_qos_profile();
+    const auto client = node_->create_client<RosType>(name, qos, std::forward<Args>(args)...);
+    return std::make_shared<Client<T>>(client);
   }
 
   template <class T, class... Args>
