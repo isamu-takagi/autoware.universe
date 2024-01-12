@@ -25,13 +25,15 @@ private:
   using Interface = vehicle_control_interface::control_mode_request::dev::Interface;
   autoware_interface_library::Client<Interface>::SharedPtr cli_;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::CallbackGroup::SharedPtr group_;
   void on_timer();
 };
 
 TestCliDev::TestCliDev() : Node("test_cli_dev")
 {
   autoware_interface_library::AutowareInterfaceAdaptor interface(this);
-  cli_ = interface.create_client<Interface>();
+  group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  cli_ = interface.create_client<Interface>(group_);
 
   const auto period = rclcpp::Rate(1.0).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });
@@ -39,17 +41,23 @@ TestCliDev::TestCliDev() : Node("test_cli_dev")
 
 void TestCliDev::on_timer()
 {
-  using SharedFuture = autoware_interface_library::Client<Interface>::SharedFuture;
-  const auto callback = [](SharedFuture future) { (void)future; };
+  const auto callback = [this](Interface::Response::SharedPtr res) {
+    RCLCPP_INFO_STREAM(get_logger(), "res1:" << std::boolalpha << res->success2);
+  };
 
-  const auto req = std::make_shared<Interface::Request>();
-  cli_->async_send_request(req, callback);
+  Interface::Request::SharedPtr req = std::make_shared<Interface::Request>();
+  req->mode2 = Interface::Service::Mode::AUTONOMOUS;
+  RCLCPP_INFO_STREAM(get_logger(), "req");
+
+  auto future = cli_->async_send_request(req, callback);
+  Interface::Response::SharedPtr res = future.get();
+  RCLCPP_INFO_STREAM(get_logger(), "res2:" << std::boolalpha << res->success2);
 }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::executors::SingleThreadedExecutor executor;
+  rclcpp::executors::MultiThreadedExecutor executor;
   auto node = std::make_shared<TestCliDev>();
   executor.add_node(node);
   executor.spin();

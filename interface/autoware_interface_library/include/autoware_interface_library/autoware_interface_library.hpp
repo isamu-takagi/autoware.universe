@@ -58,6 +58,26 @@ public:
     return std::make_shared<Client<T>>(client);
   }
 
+  template <class T, class C>
+  auto create_service(C && callback)
+  {
+    auto wrapper = [callback](
+                     typename T::RosType::Request::SharedPtr req,
+                     typename T::RosType::Response::SharedPtr res) {
+      const auto custom_req = std::make_shared<typename T::Request>();
+      const auto custom_res = std::make_shared<typename T::Response>();
+      T::Adaptor::convert_to_custom_service_request(*req, *custom_req);
+      callback(custom_req, custom_res);
+      T::Adaptor::convert_to_ros_service_response(*custom_res, *res);
+    };
+
+    using RosType = typename T::Adaptor::ros_message_type;
+    const auto name = T::get_name();
+    const auto qos = T::get_srv_qos().get_rmw_qos_profile();
+    const auto service = node_->create_service<RosType>(name, wrapper, qos);
+    return std::make_shared<Service<T>>(service);
+  }
+
   template <class T, class... Args>
   auto create_subscription(const std::string & name, const rclcpp::QoS & qos, Args &&... args)
   {

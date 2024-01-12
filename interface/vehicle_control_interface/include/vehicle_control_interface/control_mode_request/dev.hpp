@@ -20,6 +20,7 @@
 
 #include <autoware_vehicle_msgs/srv/control_mode_command.hpp>
 
+#include <memory>
 #include <string>
 
 namespace vehicle_control_interface::control_mode_request::dev
@@ -37,13 +38,15 @@ struct CustomService
 
   struct Request
   {
+    using SharedPtr = std::shared_ptr<Request>;
     builtin_interfaces::msg::Time stamp;
-    Mode mode;
+    Mode mode2;
   };
 
   struct Response
   {
-    bool success;
+    using SharedPtr = std::shared_ptr<Response>;
+    bool success2;
   };
 };
 
@@ -90,7 +93,7 @@ struct rclcpp::TypeAdapter<
   {
     using vehicle_control_interface::control_mode_request::dev::convert_to_rosidl_mode;
     rosidl.stamp = custom.stamp;
-    rosidl.mode = convert_to_rosidl_mode(custom.mode);
+    rosidl.mode = convert_to_rosidl_mode(custom.mode2);
   }
 
   static void convert_to_custom_service_request(
@@ -98,19 +101,19 @@ struct rclcpp::TypeAdapter<
   {
     using vehicle_control_interface::control_mode_request::dev::convert_to_custom_mode;
     custom.stamp = rosidl.stamp;
-    custom.mode = convert_to_custom_mode(rosidl.mode);
+    custom.mode2 = convert_to_custom_mode(rosidl.mode);
   }
 
   static void convert_to_ros_service_response(
     const custom_type::Response & custom, ros_message_type::Response & rosidl)
   {
-    rosidl.success = custom.success;
+    rosidl.success = custom.success2;
   }
 
   static void convert_to_custom_service_response(
     const ros_message_type::Response & rosidl, custom_type::Response & custom)
   {
-    custom.success = rosidl.success;
+    custom.success2 = rosidl.success;
   }
 };
 

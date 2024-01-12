@@ -24,40 +24,70 @@
 namespace autoware_interface_library
 {
 
+namespace detail
+{
+
+template <typename T>
+struct FutureAndRequestId
+{
+  using Future = std::shared_future<typename T::Adaptor::ros_message_type::Response::SharedPtr>;
+  using SharedResponse = std::shared_ptr<typename T::Response>;
+
+  Future future;
+  int64_t request_id;
+
+  FutureAndRequestId(Future && future, int64_t req_id) : future(future), request_id(req_id) {}
+
+  SharedResponse get()
+  {
+    SharedResponse custom = std::make_shared<typename T::Response>();
+    T::Adaptor::convert_to_custom_service_response(*future.get(), *custom);
+    return custom;
+  }
+};
+
+}  // namespace detail
+
 template <class T>
 class Client
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Client)
   using RosType = typename T::Adaptor::ros_message_type;
-  using WrapType = rclcpp::Client<RosType>;
-
+  using RosClient = rclcpp::Client<RosType>;
   using SharedRequest = std::shared_ptr<typename T::Request>;
   using SharedResponse = std::shared_ptr<typename T::Response>;
+  using SharedFutureAndRequestId = detail::FutureAndRequestId<T>;
 
-  using SharedFuture = std::shared_future<SharedResponse>;
+  explicit Client(typename RosClient::SharedPtr client) { client_ = client; }
 
-  explicit Client(typename WrapType::SharedPtr client) { client_ = client; }
-
+  /*
   auto async_send_request(SharedRequest custom)
   {
     const auto rosidl = std::make_shared<typename RosType::Request>();
     T::Adaptor::convert_to_ros_service_request(*custom, *rosidl);
     return client_->async_send_request(rosidl);
   }
+  */
 
-  template <class... Args>
-  auto async_send_request(SharedRequest custom, Args &&... args)
+  template <class CallbackT>
+  auto async_send_request(SharedRequest request, CallbackT && callback)
   {
-    const auto rosidl = std::make_shared<typename RosType::Request>();
-    T::Adaptor::convert_to_ros_service_request(*custom, *rosidl);
+    auto wrapper = [callback](typename RosClient::SharedFuture future) {
+      SharedResponse custom = std::make_shared<typename T::Response>();
+      T::Adaptor::convert_to_custom_service_response(*future.get(), *custom);
+      callback(custom);
+    };
 
-    const auto wrapper = [](WrapType::SharedFuture future) {};
-    return client_->async_send_request(rosidl, std::forward<Args>(args)...);
+    auto rosidl = std::make_shared<typename RosType::Request>();
+    T::Adaptor::convert_to_ros_service_request(*request, *rosidl);
+
+    auto result = client_->async_send_request(rosidl, wrapper);
+    return SharedFutureAndRequestId(std::move(result.future), result.request_id);
   }
 
 private:
-  typename WrapType::SharedPtr client_;
+  typename RosClient::SharedPtr client_;
 };
 
 template <class T>
@@ -65,6 +95,13 @@ class Service
 {
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
+  using RosType = typename T::Adaptor::ros_message_type;
+  using RosService = rclcpp::Service<RosType>;
+
+  explicit Service(typename RosService::SharedPtr service) { service_ = service; }
+
+private:
+  typename RosService::SharedPtr service_;
 };
 
 }  // namespace autoware_interface_library
