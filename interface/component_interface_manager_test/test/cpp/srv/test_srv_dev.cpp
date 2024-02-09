@@ -14,40 +14,40 @@
 
 #include <autoware_interface_library/autoware_interface_library.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vehicle_control_interface/steering_status/dev.hpp>
+#include <vehicle_control_interface/control_mode_request/dev.hpp>
 
-class TestPubDev : public rclcpp::Node
+class TestSrvDev : public rclcpp::Node
 {
 public:
-  TestPubDev();
+  TestSrvDev();
 
 private:
-  using Interface = vehicle_control_interface::steering_status::dev::Interface;
-  autoware_interface_library::Publisher<Interface>::SharedPtr pub_;
-  rclcpp::TimerBase::SharedPtr timer_;
-  void on_timer();
+  using Interface = vehicle_control_interface::control_mode_request::dev::Interface;
+  autoware_interface_library::Service<Interface>::SharedPtr srv_;
+  void on_service(Interface::Request::SharedPtr req, Interface::Response::SharedPtr res);
 };
 
-TestPubDev::TestPubDev() : Node("test_pub_dev")
+TestSrvDev::TestSrvDev() : Node("test_srv_dev")
 {
-  autoware_interface_library::AutowareInterfaceAdaptor interface(this);
-  pub_ = interface.create_publisher<Interface>();
+  using std::placeholders::_1;
+  using std::placeholders::_2;
 
-  const auto period = rclcpp::Rate(1.0).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });
+  autoware_interface_library::ComponentInterfaceManager manager(this);
+  srv_ = manager.create_service<Interface>(std::bind(&TestSrvDev::on_service, this, _1, _2));
 }
 
-void TestPubDev::on_timer()
+void TestSrvDev::on_service(Interface::Request::SharedPtr req, Interface::Response::SharedPtr res)
 {
-  Interface::Message msg;
-  pub_->publish(msg);
+  (void)req;
+  (void)res;
+  RCLCPP_INFO_STREAM(get_logger(), "call service");
 }
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<TestPubDev>();
+  auto node = std::make_shared<TestSrvDev>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);

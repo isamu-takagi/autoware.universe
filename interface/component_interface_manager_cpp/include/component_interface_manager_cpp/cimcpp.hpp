@@ -12,22 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_MANAGER_CPP__IMPL__MESSAGE_HPP_
-#define COMPONENT_INTERFACE_MANAGER_CPP__IMPL__MESSAGE_HPP_
+#ifndef COMPONENT_INTERFACE_MANAGER_CPP__CIMCPP_HPP_
+#define COMPONENT_INTERFACE_MANAGER_CPP__CIMCPP_HPP_
 
-#include <component_interface_manager_cpp/message_traits.hpp>
-#include <rclcpp/publisher.hpp>
-#include <rclcpp/subscription.hpp>
+#include <component_interface_manager_cpp/component_interface_manager_cpp.hpp>
+namespace cimcpp = component_interface_manager_cpp;
 
-namespace component_interface_manager_cpp
-{
-
-template <class T>
-using Publisher = rclcpp::Publisher<typename MessageTraits<T>::Adaptor>;
-
-template <class T>
-using Subscription = rclcpp::Subscription<typename MessageTraits<T>::Adaptor>;
-
-}  // namespace component_interface_manager_cpp
-
-#endif  // COMPONENT_INTERFACE_MANAGER_CPP__IMPL__MESSAGE_HPP_
+#endif  // COMPONENT_INTERFACE_MANAGER_CPP__CIMCPP_HPP_

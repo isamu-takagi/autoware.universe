@@ -12,26 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_MANAGER_CPP__MESSAGE_INTERFACE_BASE_HPP_
-#define COMPONENT_INTERFACE_MANAGER_CPP__MESSAGE_INTERFACE_BASE_HPP_
+#ifndef COMPONENT_INTERFACE_MANAGER_CPP__MESSAGE_TRAITS_HPP_
+#define COMPONENT_INTERFACE_MANAGER_CPP__MESSAGE_TRAITS_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <utility>
+#include <rclcpp/qos.hpp>
+#include <rclcpp/type_adapter.hpp>
 
 namespace component_interface_manager_cpp
 {
 
-template <class T, class S>
-struct MessageInterfaceBase
-{
-  using Setting = S;
-  using Message = typename T::Message;
-  using Adaptor = typename T::Adaptor;
-  using Subscription = typename rclcpp::Subscription<Adaptor>::SharedPtr;
-  using Publisher = typename rclcpp::Publisher<Adaptor>::SharedPtr;
-};
+template <typename T>
+struct MessageTraits;
 
 }  // namespace component_interface_manager_cpp
 
-#endif  // COMPONENT_INTERFACE_MANAGER_CPP__MESSAGE_INTERFACE_BASE_HPP_
+#endif  // COMPONENT_INTERFACE_MANAGER_CPP__MESSAGE_TRAITS_HPP_

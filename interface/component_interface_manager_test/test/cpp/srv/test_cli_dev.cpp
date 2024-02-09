@@ -31,9 +31,9 @@ private:
 
 TestCliDev::TestCliDev() : Node("test_cli_dev")
 {
-  autoware_interface_library::AutowareInterfaceAdaptor interface(this);
+  autoware_interface_library::ComponentInterfaceManager manager(this);
   group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  cli_ = interface.create_client<Interface>(group_);
+  cli_ = manager.create_client<Interface>(group_);
 
   const auto period = rclcpp::Rate(1.0).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });

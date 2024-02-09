@@ -18,6 +18,7 @@
 #include "impl/message.hpp"
 #include "impl/service.hpp"
 
+#include <component_interface_manager_cpp/message_traits.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
@@ -27,25 +28,29 @@
 namespace component_interface_manager_cpp
 {
 
-class AutowareInterfaceAdaptor
+class ComponentInterfaceManager
 {
 public:
-  explicit AutowareInterfaceAdaptor(rclcpp::Node * node) : node_(node) {}
+  explicit ComponentInterfaceManager(rclcpp::Node * node) : node_(node) {}
 
   template <class T, class... Args>
   auto create_subscription(Args &&... args)
   {
-    const auto name = T::get_name();
-    const auto qos = T::get_sub_qos();
-    return node_->create_subscription<typename T::Adaptor>(name, qos, std::forward<Args>(args)...);
+    using Traits = MessageTraits<T>;
+    const auto name = Traits::get_name();
+    const auto qos = Traits::get_sub_qos();
+    return node_->create_subscription<typename Traits::Adaptor>(
+      name, qos, std::forward<Args>(args)...);
   }
 
   template <class T, class... Args>
   auto create_publisher(Args &&... args)
   {
-    const auto name = T::get_name();
-    const auto qos = T::get_pub_qos();
-    return node_->create_publisher<typename T::Adaptor>(name, qos, std::forward<Args>(args)...);
+    using Traits = MessageTraits<T>;
+    const auto name = Traits::get_name();
+    const auto qos = Traits::get_pub_qos();
+    return node_->create_publisher<typename Traits::Adaptor>(
+      name, qos, std::forward<Args>(args)...);
   }
 
   template <class T, class... Args>
