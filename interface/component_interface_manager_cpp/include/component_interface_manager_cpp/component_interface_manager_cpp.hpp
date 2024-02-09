@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_INTERFACE_LIBRARY__AUTOWARE_INTERFACE_LIBRARY_HPP_
-#define AUTOWARE_INTERFACE_LIBRARY__AUTOWARE_INTERFACE_LIBRARY_HPP_
+#ifndef COMPONENT_INTERFACE_MANAGER_CPP__COMPONENT_INTERFACE_MANAGER_CPP_HPP_
+#define COMPONENT_INTERFACE_MANAGER_CPP__COMPONENT_INTERFACE_MANAGER_CPP_HPP_
 
 #include "impl/message.hpp"
 #include "impl/service.hpp"
@@ -24,7 +24,7 @@
 #include <string>
 #include <utility>
 
-namespace autoware_interface_library
+namespace component_interface_manager_cpp
 {
 
 class AutowareInterfaceAdaptor
@@ -94,6 +94,6 @@ private:
   rclcpp::Node * node_;
 };
 
-}  // namespace autoware_interface_library
+}  // namespace component_interface_manager_cpp
 
-#endif  // AUTOWARE_INTERFACE_LIBRARY__AUTOWARE_INTERFACE_LIBRARY_HPP_
+#endif  // COMPONENT_INTERFACE_MANAGER_CPP__COMPONENT_INTERFACE_MANAGER_CPP_HPP_

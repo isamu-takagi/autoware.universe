@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_INTERFACE_LIBRARY__IMPL__MESSAGE_HPP_
-#define AUTOWARE_INTERFACE_LIBRARY__IMPL__MESSAGE_HPP_
+#ifndef COMPONENT_INTERFACE_MANAGER_CPP__IMPL__MESSAGE_HPP_
+#define COMPONENT_INTERFACE_MANAGER_CPP__IMPL__MESSAGE_HPP_
 
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/subscription.hpp>
 
-namespace autoware_interface_library
+namespace component_interface_manager_cpp
 {
 
 template <class T>
@@ -27,6 +27,6 @@ using Publisher = rclcpp::Publisher<typename T::Adaptor>;
 template <class T>
 using Subscription = rclcpp::Subscription<typename T::Adaptor>;
 
-}  // namespace autoware_interface_library
+}  // namespace component_interface_manager_cpp
 
-#endif  // AUTOWARE_INTERFACE_LIBRARY__IMPL__MESSAGE_HPP_
+#endif  // COMPONENT_INTERFACE_MANAGER_CPP__IMPL__MESSAGE_HPP_
