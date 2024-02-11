@@ -12,6 +12,7 @@
 
   <depend>component_interface_manager_cpp</depend>
   <depend>component_interface_manager_py</depend>
+  <depend>example_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
