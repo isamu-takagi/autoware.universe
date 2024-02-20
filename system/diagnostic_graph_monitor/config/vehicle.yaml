@@ -1,0 +1,12 @@
+nodes:
+  - path: /vehicle
+    type: and
+    list:
+      - { type: link, link: /vehicle/topic_rate_check/velocity }
+      - { type: link, link: /vehicle/topic_rate_check/steering }
+
+  - path: /vehicle/topic_rate_check/velocity
+    diag: "topic_state_monitor_vehicle_status_velocity_status: vehicle_topic_status"
+
+  - path: /vehicle/topic_rate_check/steering
+    diag: "topic_state_monitor_vehicle_status_steering_status: vehicle_topic_status"

@@ -1,0 +1,19 @@
+nodes:
+  - path: /system
+    type: and
+    list:
+      - { type: link, link: /system/duplicated_node_checker }
+      - { type: link, link: /system/topic_rate_check/emergency_control_command }
+      - { type: link, link: /system/emergency_stop_operation }
+
+  - path: /system/duplicated_node_checker
+    diag: "duplicated_node_checker: duplicated_node_checker"
+
+  - path: /system/service_log_checker
+    diag: "service_log_checker: response_status"
+
+  - path: /system/topic_rate_check/emergency_control_command
+    diag: "topic_state_monitor_system_emergency_control_cmd: system_topic_status"
+
+  - path: /system/emergency_stop_operation
+    diag: "vehicle_cmd_gate: emergency_stop_operation"

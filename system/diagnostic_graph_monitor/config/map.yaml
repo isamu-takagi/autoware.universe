@@ -1,0 +1,12 @@
+nodes:
+  - path: /map
+    type: and
+    list:
+      - { type: link, link: /map/topic_rate_check/vector_map }
+      - { type: link, link: /map/topic_rate_check/pointcloud_map }
+
+  - path: /map/topic_rate_check/vector_map
+    diag: "topic_state_monitor_vector_map: map_topic_status"
+
+  - path: /map/topic_rate_check/pointcloud_map
+    diag: "topic_state_monitor_pointcloud_map: map_topic_status"

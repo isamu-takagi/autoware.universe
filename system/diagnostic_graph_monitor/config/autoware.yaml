@@ -1,0 +1,63 @@
+files:
+  - { path: $(dirname)/map.yaml }
+  - { path: $(dirname)/localization.yaml }
+  - { path: $(dirname)/planning.yaml }
+  - { path: $(dirname)/perception.yaml }
+  - { path: $(dirname)/control.yaml }
+  - { path: $(dirname)/vehicle.yaml }
+  - { path: $(dirname)/system.yaml }
+
+nodes:
+  - path: /autoware/modes/stop
+    type: ok
+
+  - path: /autoware/modes/autonomous
+    type: and
+    list:
+      - { type: link, link: /map }
+      - { type: link, link: /localization }
+      - { type: link, link: /planning }
+      - { type: link, link: /perception }
+      - { type: link, link: /control }
+      - { type: link, link: /vehicle }
+      - { type: link, link: /system }
+
+  - path: /autoware/modes/local
+    type: and
+    list:
+      - { type: link, link: /vehicle }
+      - { type: link, link: /system }
+
+  - path: /autoware/modes/remote
+    type: and
+    list:
+      - { type: link, link: /vehicle }
+      - { type: link, link: /system }
+
+  - path: /autoware/modes/emergency_stop
+    type: and
+    list:
+      - { type: link, link: /vehicle }
+      - { type: link, link: /system }
+
+  - path: /autoware/modes/comfortable_stop
+    type: and
+    list:
+      - { type: link, link: /map }
+      - { type: link, link: /localization }
+      - { type: link, link: /planning }
+      - { type: link, link: /perception }
+      - { type: link, link: /control }
+      - { type: link, link: /vehicle }
+      - { type: link, link: /system }
+
+  - path: /autoware/modes/pull_over
+    type: and
+    list:
+      - { type: link, link: /map }
+      - { type: link, link: /localization }
+      - { type: link, link: /planning }
+      - { type: link, link: /perception }
+      - { type: link, link: /control }
+      - { type: link, link: /vehicle }
+      - { type: link, link: /system }
