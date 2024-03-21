@@ -15,37 +15,48 @@
 #include "units.hpp"
 
 #include "error.hpp"
-
-#include <algorithm>
-#include <string>
-#include <utility>
-#include <vector>
+#include "factory.hpp"
 
 namespace diagnostic_graph_aggregator
 {
 
-UnitNewLink * LinkFactory::create(UnitConfig::SharedPtr config)
+std::vector<BaseUnit *> BaseUnit::get_child_units() const
 {
-  const auto iter = links_.emplace(config, std::make_unique<UnitNewLink>());
-  return iter->second.get();
+  std::vector<BaseUnit *> result;
+  for (const auto & link : get_child_links()) result.push_back(link->get_child());
+  return result;
 }
 
-BaseNewUnit * UnitFactory::create(UnitConfig::SharedPtr config, LinkFactory & links)
-{
-  if (config->type == "diag") {
-    const auto & diag = diags_.emplace_back(std::make_unique<DiagNewUnit>(config, links));
-    return diag.get();
-  }
-  throw error<UnknownType>("unknown node type", config->type, config->data);
-}
-
-DiagNewUnit::DiagNewUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
+DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
 {
   (void)config;
   (void)links;
+  struct_.path = config->path;
 }
 
-using LinkList = std::vector<std::pair<const BaseUnit *, bool>>;
+MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit)
+{
+  short_circuit_ = short_circuit;
+
+  struct_.path = config->path;
+  links_ = links.create(this, config->children);
+}
+
+MinUnit::MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
+{
+  struct_.path = config->path;
+  links_ = links.create(this, config->children);
+}
+
+ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level)
+{
+  (void)config;
+  (void)level;
+  struct_.path = config->path;
+}
+
+/*
+using LinkList = std::vector<std::pair<const BaseTempUnit *, bool>>;
 
 void merge(LinkList & a, const LinkList & b, bool uses)
 {
@@ -54,22 +65,13 @@ void merge(LinkList & a, const LinkList & b, bool uses)
   }
 }
 
-auto resolve(const BaseUnit::NodeDict & dict, const std::vector<UnitConfig::SharedPtr> & children)
-{
-  std::vector<BaseUnit *> result;
-  for (const auto & child : children) {
-    result.push_back(dict.configs.at(child));
-  }
-  return result;
-}
-
-BaseUnit::BaseUnit(const std::string & path) : path_(path)
+BaseTempUnit::BaseTempUnit(const std::string & path) : path_(path)
 {
   index_ = 0;
   level_ = DiagnosticStatus::OK;
 }
 
-BaseUnit::NodeData BaseUnit::status() const
+BaseTempUnit::NodeData BaseTempUnit::status() const
 {
   if (path_.empty()) {
     return {level_, links_};
@@ -78,18 +80,18 @@ BaseUnit::NodeData BaseUnit::status() const
   }
 }
 
-BaseUnit::NodeData BaseUnit::report() const
+BaseTempUnit::NodeData BaseTempUnit::report() const
 {
   return {level_, links_};
 }
 
-void DiagUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
+void DiagTempUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
 {
   name_ = config->data.take_text("diag");
   timeout_ = config->data.take<double>("timeout", 1.0);
 }
 
-void DiagUnit::update(const rclcpp::Time & stamp)
+void DiagTempUnit::update(const rclcpp::Time & stamp)
 {
   if (diagnostics_) {
     const auto updated = diagnostics_.value().first;
@@ -106,20 +108,12 @@ void DiagUnit::update(const rclcpp::Time & stamp)
   }
 }
 
-void DiagUnit::callback(const rclcpp::Time & stamp, const DiagnosticStatus & status)
+void DiagTempUnit::callback(const rclcpp::Time & stamp, const DiagnosticStatus & status)
 {
   diagnostics_ = std::make_pair(stamp, status);
 }
 
-AndUnit::AndUnit(const std::string & path, bool short_circuit) : BaseUnit(path)
-{
-  short_circuit_ = short_circuit;
-}
 
-void AndUnit::init(const UnitConfig::SharedPtr & config, const NodeDict & dict)
-{
-  children_ = resolve(dict, config->children);
-}
 
 void AndUnit::update(const rclcpp::Time &)
 {
@@ -142,11 +136,6 @@ void AndUnit::update(const rclcpp::Time &)
   level_ = std::min(level_, DiagnosticStatus::ERROR);
 }
 
-void OrUnit::init(const UnitConfig::SharedPtr & config, const NodeDict & dict)
-{
-  children_ = resolve(dict, config->children);
-}
-
 void OrUnit::update(const rclcpp::Time &)
 {
   if (children_.empty()) {
@@ -164,7 +153,7 @@ void OrUnit::update(const rclcpp::Time &)
   level_ = std::min(level_, DiagnosticStatus::ERROR);
 }
 
-RemapUnit::RemapUnit(const std::string & path, DiagnosticLevel remap_warn) : BaseUnit(path)
+RemapUnit::RemapUnit(const std::string & path, DiagnosticLevel remap_warn) : BaseTempUnit(path)
 {
   remap_warn_ = remap_warn;
 }
@@ -186,17 +175,11 @@ void RemapUnit::update(const rclcpp::Time &)
   if (level_ == DiagnosticStatus::WARN) level_ = remap_warn_;
 }
 
-DebugUnit::DebugUnit(const std::string & path, DiagnosticLevel level) : BaseUnit(path)
+DebugUnit::DebugUnit(const std::string & path, DiagnosticLevel level) : BaseTempUnit(path)
 {
   level_ = level;  // overwrite
 }
 
-void DebugUnit::init(const UnitConfig::SharedPtr &, const NodeDict &)
-{
-}
-
-void DebugUnit::update(const rclcpp::Time &)
-{
-}
+*/
 
 }  // namespace diagnostic_graph_aggregator

@@ -27,9 +27,6 @@
 #include <utility>
 #include <vector>
 
-// DEBUG
-#include <iostream>
-
 namespace diagnostic_graph_aggregator
 {
 

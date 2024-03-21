@@ -42,13 +42,18 @@ using tier4_system_msgs::msg::DiagLinkStatus;
 using tier4_system_msgs::msg::DiagLinkStruct;
 using tier4_system_msgs::msg::DiagNodeStatus;
 using tier4_system_msgs::msg::DiagNodeStruct;
+using DiagnosticLevel = DiagnosticStatus::_level_type;
+
+// Remove
 using tier4_system_msgs::msg::DiagnosticGraph;
 using tier4_system_msgs::msg::DiagnosticLink;
 using tier4_system_msgs::msg::DiagnosticNode;
-using DiagnosticLevel = DiagnosticStatus::_level_type;
 
+class UnitLink;
 class BaseUnit;
+class NodeUnit;
 class DiagUnit;
+class LinkFactory;
 
 }  // namespace diagnostic_graph_aggregator
 

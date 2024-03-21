@@ -41,6 +41,7 @@ std::string get_level_text(DiagnosticLevel level)
   return "UNKNOWN";
 }
 
+/*
 void Graph::debug()
 {
   std::vector<DiagDebugData> lines;
@@ -71,5 +72,6 @@ void Graph::debug()
     std::cout << "|" << std::endl;
   }
 }
+*/
 
 }  // namespace diagnostic_graph_aggregator

@@ -24,7 +24,7 @@ GraphRoot load_graph_nodes(const std::string & path)
 {
   GraphRoot result;
   {
-    std::unordered_map<BaseUnit *, GraphNode::UniquePtr> mapping;
+    std::unordered_map<BaseTempUnit *, GraphNode::UniquePtr> mapping;
     Graph graph;
     graph.init(path);
 

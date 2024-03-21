@@ -20,106 +20,122 @@
 
 #include <rclcpp/time.hpp>
 
-#include <memory>
-#include <optional>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
 
-class UnitNewLink;
-class BaseNewUnit;
-class NodeNewUnit;
-class DiagNewUnit;
-
-class LinkFactory
+class UnitLink
 {
 public:
-  UnitNewLink * create(UnitConfig::SharedPtr config);
+  BaseUnit * get_parent() const { return parent_; }
+  BaseUnit * get_child() const { return child_; }
 
 private:
-  std::unordered_multimap<UnitConfig::SharedPtr, std::unique_ptr<UnitNewLink>> links_;
-};
-
-class UnitFactory
-{
-public:
-  BaseNewUnit * create(UnitConfig::SharedPtr config, LinkFactory & links);
-
-private:
-  std::vector<std::unique_ptr<NodeNewUnit>> nodes_;
-  std::vector<std::unique_ptr<DiagNewUnit>> diags_;
-};
-
-class UnitNewLink
-{
-private:
-  BaseNewUnit * dst_;  // parent
-  BaseNewUnit * src_;  // child
-};
-
-class BaseNewUnit
-{
-public:
-  virtual DiagnosticLevel get_level() const = 0;
-};
-
-class NodeNewUnit : public BaseNewUnit
-{
-public:
-  DiagNodeStruct get_struct() const { return struct_; }
-  DiagNodeStatus get_status() const { return status_; }
-  DiagnosticLevel get_level() const override { return status_.level; }
-
-private:
-  DiagNodeStruct struct_;
-  DiagNodeStatus status_;
-};
-
-class DiagNewUnit : public BaseNewUnit
-{
-public:
-  DiagNewUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
-  DiagLeafStruct get_struct() const { return struct_; }
-  DiagLeafStatus get_status() const { return status_; }
-  DiagnosticLevel get_level() const override { return status_.level; }
-
-private:
-  DiagLeafStruct struct_;
-  DiagLeafStatus status_;
+  friend LinkFactory;
+  BaseUnit * parent_;  // parent
+  BaseUnit * child_;   // child
 };
 
 class BaseUnit
 {
 public:
+  virtual DiagnosticLevel get_level() const = 0;
+  virtual std::string get_path() const = 0;
+  virtual std::string get_type() const = 0;
+  virtual std::vector<UnitLink *> get_child_links() const = 0;
+  virtual std::vector<BaseUnit *> get_child_units() const;
+};
+
+class NodeUnit : public BaseUnit
+{
+public:
+  DiagNodeStruct get_struct() const { return struct_; }
+  DiagNodeStatus get_status() const { return status_; }
+  DiagnosticLevel get_level() const override { return status_.level; }
+  std::string get_path() const override { return struct_.path; }
+  std::string get_type() const override { return "node"; }  // DEBUG
+
+protected:
+  DiagNodeStruct struct_;
+  DiagNodeStatus status_;
+};
+
+class DiagUnit : public BaseUnit
+{
+public:
+  DiagUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  DiagLeafStruct get_struct() const { return struct_; }
+  DiagLeafStatus get_status() const { return status_; }
+  DiagnosticLevel get_level() const override { return status_.level; }
+  std::string get_path() const override { return struct_.path; }
+  std::string get_type() const override { return "diag"; }
+  std::vector<UnitLink *> get_child_links() const override { return {}; }
+  // void callback(const rclcpp::Time & stamp, const DiagnosticStatus & status);
+
+private:
+  DiagLeafStruct struct_;
+  DiagLeafStatus status_;
+  // double timeout_;
+  // std::optional<std::pair<rclcpp::Time, DiagnosticStatus>> diagnostics_;
+  // std::string name_;
+};
+
+class MaxUnit : public NodeUnit
+{
+public:
+  MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit);
+  std::string get_type() const override { return short_circuit_ ? "short-circuit-and" : "and"; }
+  std::vector<UnitLink *> get_child_links() const override { return links_; }
+
+private:
+  bool short_circuit_;
+  std::vector<UnitLink *> links_;
+};
+
+class MinUnit : public NodeUnit
+{
+public:
+  MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  std::string get_type() const override { return "or"; }
+  std::vector<UnitLink *> get_child_links() const override { return links_; }
+
+private:
+  std::vector<UnitLink *> links_;
+};
+
+class ConstUnit : public NodeUnit
+{
+public:
+  ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level);
+  std::string get_type() const override { return "const"; }
+  std::vector<UnitLink *> get_child_links() const override { return {}; }
+};
+
+/*
+class BaseTempUnit
+{
+public:
   struct NodeDict
   {
-    std::unordered_map<UnitConfig::SharedPtr, BaseUnit *> configs;
-    std::unordered_map<std::string, BaseUnit *> paths;
+    std::unordered_map<UnitConfig::SharedPtr, BaseTempUnit *> configs;
+    std::unordered_map<std::string, BaseTempUnit *> paths;
   };
   struct NodeData
   {
     DiagnosticLevel level;
-    std::vector<std::pair<const BaseUnit *, bool>> links;
+    std::vector<std::pair<const BaseTempUnit *, bool>> links;
   };
-  using UniquePtr = std::unique_ptr<BaseUnit>;
-  using UniquePtrList = std::vector<std::unique_ptr<BaseUnit>>;
 
-  explicit BaseUnit(const std::string & path);
-  virtual ~BaseUnit() = default;
+  explicit BaseTempUnit(const std::string & path);
+  virtual ~BaseTempUnit() = default;
   virtual void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) = 0;
   virtual void update(const rclcpp::Time & stamp) = 0;
-  virtual std::string type() const = 0;
 
   NodeData status() const;
   NodeData report() const;
   DiagnosticLevel level() const { return level_; }
-
-  auto path() const { return path_; }
-  auto children() const { return children_; }
 
   size_t index() const { return index_; }
   void set_index(const size_t index) { index_ = index; }
@@ -127,71 +143,14 @@ public:
 protected:
   DiagnosticLevel level_;
   std::string path_;
-  std::vector<BaseUnit *> children_;
-  std::vector<std::pair<const BaseUnit *, bool>> links_;
+  std::vector<BaseTempUnit *> children_;
+  std::vector<std::pair<const BaseTempUnit *, bool>> links_;
 
 private:
   size_t index_;
 };
 
-class DiagUnit : public BaseUnit
-{
-public:
-  using BaseUnit::BaseUnit;
-  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void update(const rclcpp::Time & stamp) override;
-  std::string type() const override { return "diag"; }
-
-  std::string name() const { return name_; }
-  void callback(const rclcpp::Time & stamp, const DiagnosticStatus & status);
-
-private:
-  double timeout_;
-  std::optional<std::pair<rclcpp::Time, DiagnosticStatus>> diagnostics_;
-  std::string name_;
-};
-
-class AndUnit : public BaseUnit
-{
-public:
-  AndUnit(const std::string & path, bool short_circuit);
-  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void update(const rclcpp::Time & stamp) override;
-  std::string type() const override { return short_circuit_ ? "short-circuit-and" : "and"; }
-
-private:
-  bool short_circuit_;
-};
-
-class OrUnit : public BaseUnit
-{
-public:
-  using BaseUnit::BaseUnit;
-  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void update(const rclcpp::Time & stamp) override;
-  std::string type() const override { return "or"; }
-};
-
-class RemapUnit : public BaseUnit
-{
-public:
-  RemapUnit(const std::string & path, DiagnosticLevel remap_warn);
-  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void update(const rclcpp::Time & stamp) override;
-  std::string type() const override { return "remap"; }
-
-private:
-  DiagnosticLevel remap_warn_;
-};
-
-class DebugUnit : public BaseUnit
-{
-public:
-  DebugUnit(const std::string & path, DiagnosticLevel level);
-  void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) override;
-  void update(const rclcpp::Time & stamp) override;
-  std::string type() const override { return "const"; }
-};
+*/
 
 }  // namespace diagnostic_graph_aggregator
 

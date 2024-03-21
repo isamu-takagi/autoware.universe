@@ -21,30 +21,23 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
 
-class Graph final
+struct Graph
 {
-public:
-  Graph();
-  ~Graph();
+  static Graph load(const std::string & file);
+  Graph() = default;
+  Graph(const Graph &) = delete;
+  Graph(Graph &&) = default;
+  ~Graph();  // To delete unique_ptr.
 
-  void init(const std::string & file);
-  void callback(const rclcpp::Time & stamp, const DiagnosticArray & array);
-  void debug();
-  DiagnosticGraph report(const rclcpp::Time & stamp);
-  std::vector<BaseUnit *> nodes() const;
-
-private:
-  std::vector<std::unique_ptr<BaseUnit>> nodes_;
-  std::vector<BaseUnit *> units_;
-  std::unordered_map<std::string, DiagUnit *> diags_;
-  std::unordered_map<std::string, DiagnosticLevel> unknowns_;
+  std::vector<std::unique_ptr<NodeUnit>> nodes;
+  std::vector<std::unique_ptr<DiagUnit>> diags;
+  std::vector<std::unique_ptr<UnitLink>> links;
+  std::vector<BaseUnit *> units;
 };
 
 }  // namespace diagnostic_graph_aggregator
