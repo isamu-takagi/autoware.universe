@@ -30,6 +30,68 @@
 namespace diagnostic_graph_aggregator
 {
 
+class UnitNewLink;
+class BaseNewUnit;
+class NodeNewUnit;
+class DiagNewUnit;
+
+class LinkFactory
+{
+public:
+  UnitNewLink * create(UnitConfig::SharedPtr config);
+
+private:
+  std::unordered_multimap<UnitConfig::SharedPtr, std::unique_ptr<UnitNewLink>> links_;
+};
+
+class UnitFactory
+{
+public:
+  BaseNewUnit * create(UnitConfig::SharedPtr config, LinkFactory & links);
+
+private:
+  std::vector<std::unique_ptr<NodeNewUnit>> nodes_;
+  std::vector<std::unique_ptr<DiagNewUnit>> diags_;
+};
+
+class UnitNewLink
+{
+private:
+  BaseNewUnit * dst_;  // parent
+  BaseNewUnit * src_;  // child
+};
+
+class BaseNewUnit
+{
+public:
+  virtual DiagnosticLevel get_level() const = 0;
+};
+
+class NodeNewUnit : public BaseNewUnit
+{
+public:
+  DiagNodeStruct get_struct() const { return struct_; }
+  DiagNodeStatus get_status() const { return status_; }
+  DiagnosticLevel get_level() const override { return status_.level; }
+
+private:
+  DiagNodeStruct struct_;
+  DiagNodeStatus status_;
+};
+
+class DiagNewUnit : public BaseNewUnit
+{
+public:
+  DiagNewUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  DiagLeafStruct get_struct() const { return struct_; }
+  DiagLeafStatus get_status() const { return status_; }
+  DiagnosticLevel get_level() const override { return status_.level; }
+
+private:
+  DiagLeafStruct struct_;
+  DiagLeafStatus status_;
+};
+
 class BaseUnit
 {
 public:

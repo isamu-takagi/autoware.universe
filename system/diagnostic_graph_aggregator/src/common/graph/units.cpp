@@ -24,6 +24,27 @@
 namespace diagnostic_graph_aggregator
 {
 
+UnitNewLink * LinkFactory::create(UnitConfig::SharedPtr config)
+{
+  const auto iter = links_.emplace(config, std::make_unique<UnitNewLink>());
+  return iter->second.get();
+}
+
+BaseNewUnit * UnitFactory::create(UnitConfig::SharedPtr config, LinkFactory & links)
+{
+  if (config->type == "diag") {
+    const auto & diag = diags_.emplace_back(std::make_unique<DiagNewUnit>(config, links));
+    return diag.get();
+  }
+  throw error<UnknownType>("unknown node type", config->type, config->data);
+}
+
+DiagNewUnit::DiagNewUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
+{
+  (void)config;
+  (void)links;
+}
+
 using LinkList = std::vector<std::pair<const BaseUnit *, bool>>;
 
 void merge(LinkList & a, const LinkList & b, bool uses)

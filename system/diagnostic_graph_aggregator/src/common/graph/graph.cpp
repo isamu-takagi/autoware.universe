@@ -136,6 +136,17 @@ Graph::~Graph()
 
 void Graph::init(const std::string & file)
 {
+  {
+    UnitFactory unit_factory;
+    LinkFactory link_factory;
+    std::unordered_map<UnitConfig::SharedPtr, BaseNewUnit *> units;
+
+    for (const auto & config : load_root_config(file).nodes) {
+      const auto node = unit_factory.create(config, link_factory);
+      units[config] = node;
+    }
+  }
+
   BaseUnit::UniquePtrList nodes;
   BaseUnit::NodeDict dict;
 
