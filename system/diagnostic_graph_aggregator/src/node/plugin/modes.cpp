@@ -25,11 +25,11 @@
 namespace diagnostic_graph_aggregator
 {
 
-OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseTempUnit *> & graph)
+OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseUnit *> & graph)
 {
   pub_ = node.create_publisher<Availability>("/system/operation_mode/availability", rclcpp::QoS(1));
 
-  using PathDict = std::unordered_map<std::string, BaseTempUnit *>;
+  using PathDict = std::unordered_map<std::string, BaseUnit *>;
   PathDict paths;
   for (const auto & node : graph) {
     paths[node->path()] = node;
@@ -56,9 +56,7 @@ OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseTempUn
 
 void OperationModes::update(const rclcpp::Time & stamp) const
 {
-  const auto is_ok = [](const BaseTempUnit * node) {
-    return node->level() == DiagnosticStatus::OK;
-  };
+  const auto is_ok = [](const BaseUnit * node) { return node->level() == DiagnosticStatus::OK; };
 
   // clang-format off
   Availability message;

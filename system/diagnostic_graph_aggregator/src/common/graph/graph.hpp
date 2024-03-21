@@ -28,16 +28,17 @@ namespace diagnostic_graph_aggregator
 
 struct Graph
 {
-  static Graph load(const std::string & file);
-  Graph() = default;
-  Graph(const Graph &) = delete;
-  Graph(Graph &&) = default;
-  ~Graph();  // To delete unique_ptr.
+  void load(const std::string & file);
 
   std::vector<std::unique_ptr<NodeUnit>> nodes;
   std::vector<std::unique_ptr<DiagUnit>> diags;
   std::vector<std::unique_ptr<UnitLink>> links;
   std::vector<BaseUnit *> units;
+
+  Graph() = default;
+  Graph(const Graph &) = delete;
+  Graph(Graph &&) = default;
+  ~Graph();  // To delete unique_ptr.
 };
 
 }  // namespace diagnostic_graph_aggregator

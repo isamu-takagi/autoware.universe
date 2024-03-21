@@ -67,7 +67,12 @@ std::vector<BaseUnit *> topological_sort(const Graph & graph)
   return std::vector<BaseUnit *>(result.rbegin(), result.rend());
 }
 
-Graph Graph::load(const std::string & file)
+Graph::~Graph()
+{
+  // To delete unique_ptr.
+}
+
+void Graph::load(const std::string & file)
 {
   UnitFactory unit_factory;
   LinkFactory link_factory;
@@ -80,15 +85,11 @@ Graph Graph::load(const std::string & file)
     link_factory.connect(unit, config);
   }
 
-  Graph graph;
-  graph.nodes = unit_factory.release_nodes();
-  graph.diags = unit_factory.release_diags();
-  graph.links = link_factory.release_links();
-  graph.units = topological_sort(graph);
-  return graph;
+  nodes = unit_factory.release_nodes();
+  diags = unit_factory.release_diags();
+  links = link_factory.release_links();
+  units = topological_sort(*this);
 }
-
-Graph::~Graph() = default;
 
 /*
 void Graph::init(const std::string & file)

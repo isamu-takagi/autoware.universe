@@ -24,13 +24,13 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
 {
   // Init diagnostics graph.
   {
-    const auto file = declare_parameter<std::string>("graph_file");
-    graph_.init(file);
+    const auto graph_file = declare_parameter<std::string>("graph_file");
+    graph_.load(graph_file);
   }
 
   // Init plugins.
   if (declare_parameter<bool>("use_operation_mode_availability")) {
-    modes_ = std::make_unique<OperationModes>(*this, graph_.nodes());
+    modes_ = std::make_unique<OperationModes>(*this, graph_.units);
   }
 
   // Init ros interface.
@@ -60,6 +60,7 @@ void AggregatorNode::on_timer()
 {
   const auto stamp = now();
   pub_graph_->publish(graph_.report(stamp));
+
   if (debug_) graph_.debug();
   if (modes_) modes_->update(stamp);
 }
