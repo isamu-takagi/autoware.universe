@@ -53,9 +53,9 @@ std::vector<std::unique_ptr<UnitLink>> LinkFactory::release_links()
   return result;
 }
 
-std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config, LinkFactory & links)
+std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config)
 {
-  return std::make_unique<DiagUnit>(config, links);
+  return std::make_unique<DiagUnit>(config);
 }
 
 std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory & links)
@@ -95,7 +95,7 @@ std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory 
 BaseUnit * UnitFactory::create(UnitConfig::SharedPtr config, LinkFactory & links)
 {
   if (config->type == "diag") {
-    return diags_.emplace_back(create_diag(config, links)).get();
+    return diags_.emplace_back(create_diag(config)).get();
   } else {
     return nodes_.emplace_back(create_node(config, links)).get();
   }
@@ -103,11 +103,13 @@ BaseUnit * UnitFactory::create(UnitConfig::SharedPtr config, LinkFactory & links
 
 std::vector<std::unique_ptr<NodeUnit>> UnitFactory::release_nodes()
 {
+  for (size_t i = 0; i < nodes_.size(); ++i) nodes_[i]->set_index(i);
   return std::move(nodes_);
 }
 
 std::vector<std::unique_ptr<DiagUnit>> UnitFactory::release_diags()
 {
+  for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
   return std::move(diags_);
 }
 

@@ -29,6 +29,8 @@ namespace diagnostic_graph_aggregator
 class UnitLink
 {
 public:
+  DiagLinkStruct get_struct() const;
+  DiagLinkStatus get_status() const;
   BaseUnit * get_parent() const { return parent_; }
   BaseUnit * get_child() const { return child_; }
 
@@ -46,6 +48,13 @@ public:
   virtual std::string get_type() const = 0;
   virtual std::vector<UnitLink *> get_child_links() const = 0;
   virtual std::vector<BaseUnit *> get_child_units() const;
+  virtual bool is_leaf() const = 0;
+
+  size_t get_index() const { return index_; }
+  void set_index(size_t index) { index_ = index; }
+
+private:
+  size_t index_;
 };
 
 class NodeUnit : public BaseUnit
@@ -56,6 +65,7 @@ public:
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_path() const override { return struct_.path; }
   std::string get_type() const override { return "node"; }  // DEBUG
+  bool is_leaf() const override { return false; }
 
 protected:
   DiagNodeStruct struct_;
@@ -65,21 +75,22 @@ protected:
 class DiagUnit : public BaseUnit
 {
 public:
-  DiagUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  explicit DiagUnit(const UnitConfig::SharedPtr & config);
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
+  std::string get_name() const { return struct_.name; }
   std::string get_path() const override { return struct_.path; }
   std::string get_type() const override { return "diag"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
-  // void callback(const rclcpp::Time & stamp, const DiagnosticStatus & status);
+  bool is_leaf() const override { return true; }
+  void on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status);
 
 private:
+  rclcpp::Time last_updated_time_;
+  double timeout_;
   DiagLeafStruct struct_;
   DiagLeafStatus status_;
-  // double timeout_;
-  // std::optional<std::pair<rclcpp::Time, DiagnosticStatus>> diagnostics_;
-  // std::string name_;
 };
 
 class MaxUnit : public NodeUnit

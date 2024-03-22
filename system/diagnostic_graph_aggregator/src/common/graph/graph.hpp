@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
@@ -28,17 +29,20 @@ namespace diagnostic_graph_aggregator
 
 struct Graph
 {
-  void load(const std::string & file);
+  void create(const std::string & file);
+  bool update(const rclcpp::Time & stamp, const DiagnosticStatus & status);
+  DiagGraphStruct create_struct(const rclcpp::Time & stamp);
+  DiagGraphStatus create_status(const rclcpp::Time & stamp);
 
-  std::vector<std::unique_ptr<NodeUnit>> nodes;
-  std::vector<std::unique_ptr<DiagUnit>> diags;
-  std::vector<std::unique_ptr<UnitLink>> links;
-  std::vector<BaseUnit *> units;
+  std::vector<std::unique_ptr<NodeUnit>> nodes_;
+  std::vector<std::unique_ptr<DiagUnit>> diags_;
+  std::vector<std::unique_ptr<UnitLink>> links_;
+  std::vector<BaseUnit *> units_;
+  std::unordered_map<std::string, DiagUnit *> names_;
 
-  Graph() = default;
-  Graph(const Graph &) = delete;
-  Graph(Graph &&) = default;
-  ~Graph();  // To delete unique_ptr.
+  // For unique_ptr.
+  Graph();
+  ~Graph();
 };
 
 }  // namespace diagnostic_graph_aggregator

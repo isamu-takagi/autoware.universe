@@ -20,6 +20,21 @@
 namespace diagnostic_graph_aggregator
 {
 
+DiagLinkStruct UnitLink::get_struct() const
+{
+  DiagLinkStruct msg;
+  msg.parent = parent_->get_index();
+  msg.child = child_->get_index();
+  msg.is_leaf = child_->is_leaf();
+  return msg;
+}
+
+DiagLinkStatus UnitLink::get_status() const
+{
+  DiagLinkStatus msg;
+  return msg;
+}
+
 std::vector<BaseUnit *> BaseUnit::get_child_units() const
 {
   std::vector<BaseUnit *> result;
@@ -27,11 +42,18 @@ std::vector<BaseUnit *> BaseUnit::get_child_units() const
   return result;
 }
 
-DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
+DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config)
 {
-  (void)config;
-  (void)links;
   struct_.path = config->path;
+}
+
+void DiagUnit::on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status)
+{
+  last_updated_time_ = stamp;
+  status_.level = status.level;
+  status_.message = status.message;
+  status_.hardware_id = status.hardware_id;
+  status_.values = status.values;
 }
 
 MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit)
@@ -50,9 +72,8 @@ MinUnit::MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
 
 ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level)
 {
-  (void)config;
-  (void)level;
   struct_.path = config->path;
+  status_.level = level;
 }
 
 /*
@@ -107,13 +128,6 @@ void DiagTempUnit::update(const rclcpp::Time & stamp)
     level_ = DiagnosticStatus::STALE;
   }
 }
-
-void DiagTempUnit::callback(const rclcpp::Time & stamp, const DiagnosticStatus & status)
-{
-  diagnostics_ = std::make_pair(stamp, status);
-}
-
-
 
 void AndUnit::update(const rclcpp::Time &)
 {

@@ -29,7 +29,7 @@ namespace diagnostic_graph_aggregator
 class OperationModes
 {
 public:
-  OperationModes(rclcpp::Node & node, const std::vector<BaseUnit *> & graph);
+  OperationModes(rclcpp::Node & node, const std::vector<BaseUnit *> & units);
   void update(const rclcpp::Time & stamp) const;
 
 private:
