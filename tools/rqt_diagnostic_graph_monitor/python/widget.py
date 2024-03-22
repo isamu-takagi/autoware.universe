@@ -19,20 +19,22 @@ from .graph import Graph
 
 
 class MonitorItem:
-    def __init__(self, node):
-        self.item = QtWidgets.QTreeWidgetItem([node.status.name])
-        self.node = node
+    def __init__(self, unit):
+        self.item = QtWidgets.QTreeWidgetItem([unit.struct.path])
+        self.unit = unit
 
 
 class MonitorWidget(QtWidgets.QSplitter):
     def __init__(self, graph: Graph):
         super().__init__()
         self.graph = graph
-        self.items = {}
-        self.root_items = []
+        self.items = []
         self.tree = QtWidgets.QTreeWidget()
         self.addWidget(self.tree)
-        self.addWidget(QtWidgets.QLabel("TEST"))
+        # self.addWidget(QtWidgets.QLabel("TEST"))
+
+        self.temp_ready = False
+        self.root_items = []
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -42,26 +44,23 @@ class MonitorWidget(QtWidgets.QSplitter):
         pass
 
     def on_timer(self):
-        pass
+        if self.temp_ready:
+            return
+        if len(self.graph.units) == 0:
+            return
 
-    def dummy(self):
-        for node in self.module.graph.nodes:
-            p = len(node.parents)
-            c = len(node.links)
-            print(f"({p}, {c}) {node.status.name}")
+        for unit in self.graph.units:
+            p = len(unit.parents)
+            c = len(unit.children)
+            print(f"({p}, {c}) {unit.struct.path}")
 
-            if node.status.name not in self.items:
-                self.items[node.status.name] = MonitorItem(node)
-            self.items[node.status.name].node = node
+        self.temp_ready = True
+        self.items = [MonitorItem(unit) for unit in self.graph.units]
 
+        # branch items
         root_items = []
-        for item in self.items.values():
-            if len(item.node.parents) != 1:
+        for item in self.items:
+            if len(item.unit.parents) != 1:
                 root_items.append(item)
-
-        if root_items != self.root_items:
-            for item in root_items:
-                self.tree.addTopLevelItem(item.item)
-
-        print(root_items == self.root_items)
-        self.root_items = root_items
+        for item in root_items:
+            self.tree.addTopLevelItem(item.item)
