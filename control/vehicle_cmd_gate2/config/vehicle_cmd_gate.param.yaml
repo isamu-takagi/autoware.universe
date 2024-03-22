@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    emregency_stop_acceleration: -2.4
+    stop_hold_acceleration: -1.5

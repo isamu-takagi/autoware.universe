@@ -1,0 +1,7 @@
+<launch>
+  <arg name="config_file" default="$(find-pkg-share vehicle_cmd_gate2)/config/vehicle_cmd_gate.param.yaml"/>
+  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
+  <node pkg="vehicle_cmd_gate2" exec="vehicle_cmd_gate">
+    <param from="$(var config_file)"/>
+  </node>
+</launch>
