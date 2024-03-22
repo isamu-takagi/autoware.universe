@@ -30,25 +30,24 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
 
   // Init plugins.
   if (declare_parameter<bool>("use_operation_mode_availability")) {
-    modes_ = std::make_unique<OperationModes>(*this, graph_.units_);
+    modes_ = std::make_unique<OperationModes>(*this, graph_);
   }
 
   // Init ros interface.
   {
     const auto qos_input = rclcpp::QoS(declare_parameter<int64_t>("input_qos_depth"));
+    const auto qos_unknown = rclcpp::QoS(1);  // TODO(Takagi, Isamu): parameter
     const auto qos_struct = rclcpp::QoS(1).transient_local();
     const auto qos_status = rclcpp::QoS(declare_parameter<int64_t>("graph_qos_depth"));
     const auto callback = std::bind(&AggregatorNode::on_diag, this, std::placeholders::_1);
     sub_input_ = create_subscription<DiagnosticArray>("/diagnostics", qos_input, callback);
+    pub_unknown_ = create_publisher<DiagnosticArray>("/diagnostics_graph/unknown", qos_unknown);
     pub_struct_ = create_publisher<DiagGraphStruct>("/diagnostics_graph/struct", qos_struct);
     pub_status_ = create_publisher<DiagGraphStatus>("/diagnostics_graph/status", qos_status);
 
     const auto rate = rclcpp::Rate(declare_parameter<double>("rate"));
     timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   }
-
-  // Init debug mode.
-  debug_ = declare_parameter<bool>("use_debug_mode");
 
   // Send structure topic once.
   const auto stamp = now();
@@ -73,8 +72,6 @@ void AggregatorNode::on_timer()
   const auto stamp = now();
   pub_status_->publish(graph_.create_status(stamp));
   pub_unknown_->publish(create_unknown_diags(stamp));
-
-  // if (debug_) graph_.debug();
   if (modes_) modes_->update(stamp);
 }
 

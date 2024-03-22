@@ -6,7 +6,6 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/common/graph/config.cpp
-  src/common/graph/debug.cpp
   src/common/graph/graph.cpp
   src/common/graph/units.cpp
   src/common/graph/factory.cpp

@@ -44,15 +44,11 @@ using tier4_system_msgs::msg::DiagNodeStatus;
 using tier4_system_msgs::msg::DiagNodeStruct;
 using DiagnosticLevel = DiagnosticStatus::_level_type;
 
-// Remove
-using tier4_system_msgs::msg::DiagnosticGraph;
-using tier4_system_msgs::msg::DiagnosticLink;
-using tier4_system_msgs::msg::DiagnosticNode;
-
 class UnitLink;
 class BaseUnit;
 class NodeUnit;
 class DiagUnit;
+class Graph;
 class LinkFactory;
 
 }  // namespace diagnostic_graph_aggregator

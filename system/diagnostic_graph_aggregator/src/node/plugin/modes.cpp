@@ -16,6 +16,7 @@
 
 #include "graph/config.hpp"
 #include "graph/error.hpp"
+#include "graph/graph.hpp"
 #include "graph/units.hpp"
 
 #include <string>
@@ -25,13 +26,13 @@
 namespace diagnostic_graph_aggregator
 {
 
-OperationModes::OperationModes(rclcpp::Node & node, const std::vector<BaseUnit *> & units)
+OperationModes::OperationModes(rclcpp::Node & node, const Graph & graph)
 {
   pub_ = node.create_publisher<Availability>("/system/operation_mode/availability", rclcpp::QoS(1));
 
   using PathDict = std::unordered_map<std::string, BaseUnit *>;
   PathDict paths;
-  for (const auto & unit : units) {
+  for (const auto & unit : graph.units_) {
     paths[unit->get_path()] = unit;
   }
 

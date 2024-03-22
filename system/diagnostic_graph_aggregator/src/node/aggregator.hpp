@@ -46,7 +46,6 @@ private:
   void on_timer();
   void on_diag(const DiagnosticArray & msg);
 
-  bool debug_;
   std::unordered_map<std::string, DiagnosticStatus> unknown_diags_;
 };
 

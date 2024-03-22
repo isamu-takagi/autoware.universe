@@ -45,6 +45,8 @@ std::vector<BaseUnit *> BaseUnit::get_child_units() const
 DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config)
 {
   struct_.path = config->path;
+  struct_.name = config->data.take_text("diag");
+  timeout_ = config->data.take<double>("timeout", 1.0);
 }
 
 void DiagUnit::on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status)
@@ -59,7 +61,6 @@ void DiagUnit::on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & stat
 MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit)
 {
   short_circuit_ = short_circuit;
-
   struct_.path = config->path;
   links_ = links.create(this, config->children);
 }
@@ -104,12 +105,6 @@ BaseTempUnit::NodeData BaseTempUnit::status() const
 BaseTempUnit::NodeData BaseTempUnit::report() const
 {
   return {level_, links_};
-}
-
-void DiagTempUnit::init(const UnitConfig::SharedPtr & config, const NodeDict &)
-{
-  name_ = config->data.take_text("diag");
-  timeout_ = config->data.take<double>("timeout", 1.0);
 }
 
 void DiagTempUnit::update(const rclcpp::Time & stamp)
