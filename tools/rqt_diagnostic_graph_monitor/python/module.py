@@ -23,7 +23,6 @@ from .utils import QoS
 
 class MonitorModule:
     def __init__(self, graph: Graph, node: Node):
-        self.graph = graph
         self.node = node
         self.sub_struct = node.create_subscription(
             DiagGraphStruct, "/diagnostics_graph/struct", graph.create, QoS(1).transient_local()

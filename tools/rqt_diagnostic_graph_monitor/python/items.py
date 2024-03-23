@@ -16,11 +16,12 @@
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
+from .graph import BaseUnit
 from .graph import UnitLink
 
 
 class MonitorIcons:
-    def __init__(self, unit):
+    def __init__(self):
         self.disable = QtGui.QIcon.fromTheme("dialog-question")
         self.unknown = QtGui.QIcon.fromTheme("system-search")
         self.icon = QtGui.QIcon.fromTheme("emblem-default")
@@ -30,6 +31,10 @@ class MonitorIcons:
 
 
 class MonitorItem:
-    def __init__(self, link: UnitLink):
-        self.item = QtWidgets.QTreeWidgetItem(["test"])
+    icons = MonitorIcons()
+
+    def __init__(self, link: UnitLink, unit: BaseUnit):
+        self.item = QtWidgets.QTreeWidgetItem([unit.path])
         self.link = link
+        self.unit = unit
+        self.item.setIcon(0, self.icons.icon)

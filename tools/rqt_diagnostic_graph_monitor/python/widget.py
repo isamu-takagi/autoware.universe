@@ -24,15 +24,14 @@ class MonitorWidget(QtWidgets.QSplitter):
         super().__init__()
         self.graph = graph
         self.items = []
-        self.root_tree = QtWidgets.QTreeWidget()
-        self.node_tree = QtWidgets.QTreeWidget()
-        self.root_tree.setHeaderLabels(["Top-level nodes"])
-        self.node_tree.setHeaderLabels(["Intermediate nodes"])
-        self.addWidget(self.root_tree)
-        self.addWidget(self.node_tree)
+        self.root_widget = QtWidgets.QTreeWidget()
+        self.tree_widget = QtWidgets.QTreeWidget()
+        self.root_widget.setHeaderLabels(["Top-level"])
+        self.tree_widget.setHeaderLabels(["Subtrees"])
+        self.addWidget(self.root_widget)
+        self.addWidget(self.tree_widget)
 
         self.temp_ready = False
-        self.root_items = []
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -47,20 +46,24 @@ class MonitorWidget(QtWidgets.QSplitter):
         if len(self.graph.units) == 0:
             return
         self.temp_ready = True
-        # add all link
-        # add not 1
 
-        item = MonitorItem(None)
-        self.node_tree.addTopLevelItem(item.item)
+        root_units = filter(lambda unit: len(unit.parents) == 0, self.graph.units)
+        tree_units = filter(lambda unit: len(unit.parents) >= 2, self.graph.units)
+        root_items = [MonitorItem(None, unit) for unit in root_units]
+        tree_items = [MonitorItem(None, unit) for unit in tree_units]
+        link_items = [MonitorItem(link, link.child) for link in self.graph.links]
 
-        """
-        for link in self.graph.links:
-            MonitorItem(link)
+        # Note: overwrite link items with root/tree items if there is more than one.
+        parents = {}
+        for items in [link_items, tree_items, root_items]:
+            parents.update({item.unit: item.item for item in items})
 
-        # branch items
-        for item in self.items:
-            if len(item.unit.parents) == 0:
-                self.root_tree.addTopLevelItem(item.item)
-            if len(item.unit.parents) >= 2:
-                self.node_tree.addTopLevelItem(item.item)
-        """
+        # Connect tree widget items.
+        root_widget_item = self.root_widget.invisibleRootItem()
+        tree_widget_item = self.tree_widget.invisibleRootItem()
+        for item in root_items:
+            root_widget_item.addChild(item.item)
+        for item in tree_items:
+            tree_widget_item.addChild(item.item)
+        for item in link_items:
+            parents[item.link.parent].addChild(item.item)

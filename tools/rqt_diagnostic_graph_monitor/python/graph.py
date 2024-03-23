@@ -14,80 +14,99 @@
 
 from threading import Lock
 
-from tier4_system_msgs.msg import DiagGraphStatus
-from tier4_system_msgs.msg import DiagGraphStruct
-from tier4_system_msgs.msg import DiagLeafStatus
-from tier4_system_msgs.msg import DiagLeafStruct
-from tier4_system_msgs.msg import DiagLinkStatus
-from tier4_system_msgs.msg import DiagLinkStruct
-from tier4_system_msgs.msg import DiagNodeStatus
-from tier4_system_msgs.msg import DiagNodeStruct
-
 
 class BaseUnit:
-    pass
+    def __init__(self):
+        self._parents = []
+        self._children = []
+        self._path = None
+
+    @property
+    def parents(self):
+        return self._parents
+
+    @property
+    def children(self):
+        return self._children
+
+    @property
+    def path(self):
+        return self._path
 
 
-class NodeUnit:
-    def __init__(self, struct: DiagNodeStruct):
-        self.struct = struct
-        self.status = None
-        self.parents = []
-        self.children = []
+class NodeUnit(BaseUnit):
+    def __init__(self, struct):
+        super().__init__()
+        self._path = struct.path
 
-    def update(self, status: DiagNodeStatus):
-        self.status = status
+    def update(self, status):
+        self._status = status
 
 
-class DiagUnit:
-    def __init__(self, struct: DiagLeafStruct):
-        self.struct = struct
-        self.status = None
-        self.parents = []
-        self.children = []  # TODO: remove
+class DiagUnit(BaseUnit):
+    def __init__(self, struct):
+        super().__init__()
+        self._path = struct.path
+        self._name = struct.name
 
-    def update(self, status: DiagLeafStatus):
-        self.status = status
-
-
-class BaseLink:
-    pass
-
-
-class RootLink:
-    pass
+    def update(self, status):
+        self._status = status
 
 
 class UnitLink:
-    def __init__(self, struct: DiagLinkStruct, nodes: list[NodeUnit], diags: list[DiagUnit]):
-        self.status = None
-        self.parent = nodes[struct.parent]
-        self.parent.children.append(self)
-        self.child = diags[struct.child] if struct.is_leaf else nodes[struct.child]
-        self.child.parents.append(self)
+    def __init__(self, child: BaseUnit):
+        self._parent = None
+        self._child = child
 
-    def update(self, status: DiagLinkStatus):
+    def update(self, status):
         self.status = status
+
+    @property
+    def parent(self):
+        return self._parent
+
+    @property
+    def child(self):
+        return self._child
 
 
 class Graph:
     def __init__(self):
-        self.mutex = Lock()
-        self.nodes = []
-        self.diags = []
-        self.links = []
-        self.units = []
+        self._mutex = Lock()
+        self._nodes = []
+        self._diags = []
+        self._units = []
+        self._links = []
 
-    def create(self, msg: DiagGraphStruct):
-        self.nodes = [NodeUnit(struct) for struct in msg.nodes]
-        self.diags = [DiagUnit(struct) for struct in msg.diags]
-        self.links = [UnitLink(struct, self.nodes, self.diags) for struct in msg.links]
-        self.units = self.nodes + self.diags
+    def create(self, msg):
+        self._nodes = [NodeUnit(struct) for struct in msg.nodes]
+        self._diags = [DiagUnit(struct) for struct in msg.diags]
+        self._units = self._nodes + self._diags
+        for struct in msg.links:
+            units = self._diags if struct.is_leaf else self._nodes
+            child = units[struct.child]
+            self._links.append(UnitLink(child))
 
-    def update(self, msg: DiagGraphStatus):
-        for node, status in zip(self.nodes, msg.nodes):
+        for node, struct in zip(self._nodes, msg.nodes):
+            node._children = [self._links[index] for index in struct.links]
+            for link in node._children:
+                link._parent = node
+        for link in self._links:
+            unit = link.child
+            unit._parents.append(link)
+
+    def update(self, msg):
+        for node, status in zip(self._nodes, msg.nodes):
             node.update(status)
-        for diag, status in zip(self.diags, msg.diags):
+        for diag, status in zip(self._diags, msg.diags):
             diag.update(status)
-        for link, status in zip(self.links, msg.links):
+        for link, status in zip(self._links, msg.links):
             link.update(status)
+
+    @property
+    def units(self):
+        return self._units
+
+    @property
+    def links(self):
+        return self._links
