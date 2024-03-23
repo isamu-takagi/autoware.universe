@@ -73,6 +73,7 @@ void Graph::create(const std::string & file)
   LinkFactory link_factory;
   std::unordered_map<UnitConfig::SharedPtr, BaseUnit *> unit_mapping;
 
+  // Create units and links.
   for (const auto & config : load_root_config(file).nodes) {
     unit_mapping[config] = unit_factory.create(config, link_factory);
   }
@@ -80,11 +81,21 @@ void Graph::create(const std::string & file)
     link_factory.connect(unit, config);
   }
 
+  // Move units and links.
   nodes_ = unit_factory.release_nodes();
   diags_ = unit_factory.release_diags();
   links_ = link_factory.release_links();
   units_ = topological_sort(*this);
   for (const auto & diag : diags_) names_[diag->get_name()] = diag.get();
+
+  // Init array index.
+  for (size_t i = 0; i < nodes_.size(); ++i) nodes_[i]->set_index(i);
+  for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
+  for (size_t i = 0; i < links_.size(); ++i) links_[i]->set_index(i);
+
+  // Init static data that needs index.
+  for (auto & node : nodes_) node->initialize_struct();
+  for (auto & link : links_) link->initialize_struct();
 }
 
 bool Graph::update(const rclcpp::Time & stamp, const DiagnosticStatus & status)

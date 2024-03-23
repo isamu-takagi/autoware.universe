@@ -103,13 +103,11 @@ BaseUnit * UnitFactory::create(UnitConfig::SharedPtr config, LinkFactory & links
 
 std::vector<std::unique_ptr<NodeUnit>> UnitFactory::release_nodes()
 {
-  for (size_t i = 0; i < nodes_.size(); ++i) nodes_[i]->set_index(i);
   return std::move(nodes_);
 }
 
 std::vector<std::unique_ptr<DiagUnit>> UnitFactory::release_diags()
 {
-  for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
   return std::move(diags_);
 }
 

@@ -26,30 +26,9 @@
 namespace diagnostic_graph_aggregator
 {
 
-class UnitLink
+class VectorElement
 {
 public:
-  DiagLinkStruct get_struct() const;
-  DiagLinkStatus get_status() const;
-  BaseUnit * get_parent() const { return parent_; }
-  BaseUnit * get_child() const { return child_; }
-
-private:
-  friend LinkFactory;
-  BaseUnit * parent_;  // parent
-  BaseUnit * child_;   // child
-};
-
-class BaseUnit
-{
-public:
-  virtual DiagnosticLevel get_level() const = 0;
-  virtual std::string get_path() const = 0;
-  virtual std::string get_type() const = 0;
-  virtual std::vector<UnitLink *> get_child_links() const = 0;
-  virtual std::vector<BaseUnit *> get_child_units() const;
-  virtual bool is_leaf() const = 0;
-
   size_t get_index() const { return index_; }
   void set_index(size_t index) { index_ = index; }
 
@@ -57,40 +36,95 @@ private:
   size_t index_;
 };
 
+class UnitLink : private VectorElement
+{
+public:
+  DiagLinkStruct get_struct() const { return struct_; }
+  DiagLinkStatus get_status() const { return status_; }
+  BaseUnit * get_parent() const { return parent_; }
+  BaseUnit * get_child() const { return child_; }
+  using VectorElement::get_index;
+  using VectorElement::set_index;
+
+  // This function must be called after setting the index.
+  void initialize_struct();
+
+private:
+  friend LinkFactory;
+  DiagLinkStruct struct_;
+  DiagLinkStatus status_;
+  BaseUnit * parent_;  // parent
+  BaseUnit * child_;   // child
+};
+
+class BaseUnit : private VectorElement
+{
+public:
+  virtual ~BaseUnit() = default;
+  virtual DiagnosticLevel get_level() const = 0;
+  virtual std::string get_path() const = 0;
+  virtual std::string get_type() const = 0;
+  virtual std::vector<UnitLink *> get_child_links() const = 0;
+  virtual std::vector<BaseUnit *> get_child_units() const;
+  virtual bool is_leaf() const = 0;
+  using VectorElement::get_index;
+  using VectorElement::set_index;
+
+protected:
+  // notify parents
+
+private:
+  // parent linkts
+};
+
 class NodeUnit : public BaseUnit
 {
 public:
+  explicit NodeUnit(const UnitConfig::SharedPtr & config);
   DiagNodeStruct get_struct() const { return struct_; }
   DiagNodeStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_path() const override { return struct_.path; }
-  std::string get_type() const override { return "node"; }  // DEBUG
   bool is_leaf() const override { return false; }
 
+  // This function must be called after setting the index.
+  void initialize_struct();
+
 protected:
+  // TODO(Takagi, Isamu): notify
+  void update_status(DiagnosticLevel level) { status_.level = level; }
+
+private:
   DiagNodeStruct struct_;
   DiagNodeStatus status_;
 };
 
-class DiagUnit : public BaseUnit
+class LeafUnit : public BaseUnit
 {
 public:
-  explicit DiagUnit(const UnitConfig::SharedPtr & config);
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_name() const { return struct_.name; }
   std::string get_path() const override { return struct_.path; }
+  bool is_leaf() const override { return true; }
+
+protected:
+  DiagLeafStruct struct_;
+  DiagLeafStatus status_;
+};
+
+class DiagUnit : public LeafUnit
+{
+public:
+  explicit DiagUnit(const UnitConfig::SharedPtr & config);
   std::string get_type() const override { return "diag"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
-  bool is_leaf() const override { return true; }
   void on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status);
 
 private:
   rclcpp::Time last_updated_time_;
   double timeout_;
-  DiagLeafStruct struct_;
-  DiagLeafStatus status_;
 };
 
 class MaxUnit : public NodeUnit
@@ -123,45 +157,6 @@ public:
   std::string get_type() const override { return "const"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
 };
-
-/*
-class BaseTempUnit
-{
-public:
-  struct NodeDict
-  {
-    std::unordered_map<UnitConfig::SharedPtr, BaseTempUnit *> configs;
-    std::unordered_map<std::string, BaseTempUnit *> paths;
-  };
-  struct NodeData
-  {
-    DiagnosticLevel level;
-    std::vector<std::pair<const BaseTempUnit *, bool>> links;
-  };
-
-  explicit BaseTempUnit(const std::string & path);
-  virtual ~BaseTempUnit() = default;
-  virtual void init(const UnitConfig::SharedPtr & config, const NodeDict & dict) = 0;
-  virtual void update(const rclcpp::Time & stamp) = 0;
-
-  NodeData status() const;
-  NodeData report() const;
-  DiagnosticLevel level() const { return level_; }
-
-  size_t index() const { return index_; }
-  void set_index(const size_t index) { index_ = index; }
-
-protected:
-  DiagnosticLevel level_;
-  std::string path_;
-  std::vector<BaseTempUnit *> children_;
-  std::vector<std::pair<const BaseTempUnit *, bool>> links_;
-
-private:
-  size_t index_;
-};
-
-*/
 
 }  // namespace diagnostic_graph_aggregator
 

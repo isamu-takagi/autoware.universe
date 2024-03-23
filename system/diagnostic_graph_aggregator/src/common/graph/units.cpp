@@ -20,19 +20,10 @@
 namespace diagnostic_graph_aggregator
 {
 
-DiagLinkStruct UnitLink::get_struct() const
+void UnitLink::initialize_struct()
 {
-  DiagLinkStruct msg;
-  msg.parent = parent_->get_index();
-  msg.child = child_->get_index();
-  msg.is_leaf = child_->is_leaf();
-  return msg;
-}
-
-DiagLinkStatus UnitLink::get_status() const
-{
-  DiagLinkStatus msg;
-  return msg;
+  struct_.child = child_->get_index();
+  struct_.is_leaf = child_->is_leaf();
 }
 
 std::vector<BaseUnit *> BaseUnit::get_child_units() const
@@ -40,6 +31,20 @@ std::vector<BaseUnit *> BaseUnit::get_child_units() const
   std::vector<BaseUnit *> result;
   for (const auto & link : get_child_links()) result.push_back(link->get_child());
   return result;
+}
+
+NodeUnit::NodeUnit(const UnitConfig::SharedPtr & config)
+{
+  struct_.path = config->path;
+}
+
+void NodeUnit::initialize_struct()
+{
+  std::vector<uint32_t> indices;
+  for (const auto & link : get_child_links()) indices.push_back(link->get_index());
+
+  struct_.type = get_type();
+  struct_.links = indices;
 }
 
 DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config)
@@ -59,22 +64,20 @@ void DiagUnit::on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & stat
 }
 
 MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit)
+: NodeUnit(config)
 {
   short_circuit_ = short_circuit;
-  struct_.path = config->path;
   links_ = links.create(this, config->children);
 }
 
-MinUnit::MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links)
+MinUnit::MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links) : NodeUnit(config)
 {
-  struct_.path = config->path;
   links_ = links.create(this, config->children);
 }
 
-ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level)
+ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level) : NodeUnit(config)
 {
-  struct_.path = config->path;
-  status_.level = level;
+  update_status(level);
 }
 
 /*
