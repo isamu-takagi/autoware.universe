@@ -24,8 +24,8 @@ class MonitorIcons:
     def __init__(self):
         self.disable = QtGui.QIcon.fromTheme("dialog-question")
         self.unknown = QtGui.QIcon.fromTheme("system-search")
-        self.icon = QtGui.QIcon.fromTheme("emblem-default")
-        self.warn = QtGui.QIcon.fromTheme("emblem-important")  # or dialog-warning
+        self.ok = QtGui.QIcon.fromTheme("emblem-default")
+        self.warn = QtGui.QIcon.fromTheme("emblem-important")
         self.error = QtGui.QIcon.fromTheme("dialog-error")
         self.stale = QtGui.QIcon.fromTheme("appointment-missed")
 
@@ -37,4 +37,4 @@ class MonitorItem:
         self.item = QtWidgets.QTreeWidgetItem([unit.path])
         self.link = link
         self.unit = unit
-        self.item.setIcon(0, self.icons.icon)
+        self.item.setIcon(0, self.icons.ok)

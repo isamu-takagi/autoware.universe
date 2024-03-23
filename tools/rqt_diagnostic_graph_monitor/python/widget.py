@@ -22,7 +22,6 @@ from .items import MonitorItem
 class MonitorWidget(QtWidgets.QSplitter):
     def __init__(self, graph: Graph):
         super().__init__()
-        self.graph = graph
         self.items = []
         self.root_widget = QtWidgets.QTreeWidget()
         self.tree_widget = QtWidgets.QTreeWidget()
@@ -31,7 +30,8 @@ class MonitorWidget(QtWidgets.QSplitter):
         self.addWidget(self.root_widget)
         self.addWidget(self.tree_widget)
 
-        self.temp_ready = False
+        self.graph = graph
+        self.graph.append_callback(self.on_graph)
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -41,17 +41,15 @@ class MonitorWidget(QtWidgets.QSplitter):
         pass
 
     def on_timer(self):
-        if self.temp_ready:
-            return
-        if len(self.graph.units) == 0:
-            return
-        self.temp_ready = True
+        pass
 
+    def on_graph(self):
         root_units = filter(lambda unit: len(unit.parents) == 0, self.graph.units)
         tree_units = filter(lambda unit: len(unit.parents) >= 2, self.graph.units)
         root_items = [MonitorItem(None, unit) for unit in root_units]
         tree_items = [MonitorItem(None, unit) for unit in tree_units]
         link_items = [MonitorItem(link, link.child) for link in self.graph.links]
+        self.items = root_items + tree_items + link_items
 
         # Note: overwrite link items with root/tree items if there is more than one.
         parents = {}

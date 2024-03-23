@@ -23,13 +23,13 @@ class MonitorPlugin(Plugin):
     def __init__(self, context):
         super().__init__(context)
         graph = Graph()
-        self._module = MonitorModule(graph, context.node)
-        self._widget = MonitorWidget(graph)
-        context.add_widget(self._widget)
+        self.widget = MonitorWidget(graph)
+        self.module = MonitorModule(graph, context.node)
+        context.add_widget(self.widget)
 
     def shutdown_plugin(self):
-        self._module.shutdown()
-        self._widget.shutdown()
+        self.module.shutdown()
+        self.widget.shutdown()
 
     def save_settings(self, plugin_settings, instance_settings):
         pass

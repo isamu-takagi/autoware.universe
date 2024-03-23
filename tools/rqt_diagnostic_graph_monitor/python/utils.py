@@ -16,10 +16,14 @@ from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSProfile
 
 
-class QoS(QoSProfile):
-    def __init__(self, depth):
-        super().__init__(depth=depth)
+def default_qos(depth):
+    return QoSProfile(depth=depth)
 
-    def transient_local(self):
-        self.durability = QoSDurabilityPolicy.TRANSIENT_LOCAL
-        return self
+
+def durable_qos(depth):
+    return QoSProfile(depth=depth, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
+
+
+def foreach(iterable, function):
+    for item in iterable:
+        function(item)

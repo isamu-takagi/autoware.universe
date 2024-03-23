@@ -18,17 +18,27 @@ from tier4_system_msgs.msg import DiagGraphStatus
 from tier4_system_msgs.msg import DiagGraphStruct
 
 from .graph import Graph
-from .utils import QoS
+from .utils import default_qos
+from .utils import durable_qos
 
 
 class MonitorModule:
     def __init__(self, graph: Graph, node: Node):
         self.node = node
-        self.sub_struct = node.create_subscription(
-            DiagGraphStruct, "/diagnostics_graph/struct", graph.create, QoS(1).transient_local()
+        self.sub_struct = None
+        self.sub_status = None
+        self.graph = graph
+        self.graph.append_callback(self.subscribe_status)
+        self.subscribe_struct()
+
+    def subscribe_struct(self):
+        self.sub_struct = self.node.create_subscription(
+            DiagGraphStruct, "/diagnostics_graph/struct", self.graph.create, durable_qos(1)
         )
-        self.sub_status = node.create_subscription(
-            DiagGraphStatus, "/diagnostics_graph/status", graph.update, QoS(1)
+
+    def subscribe_status(self):
+        self.sub_status = self.node.create_subscription(
+            DiagGraphStatus, "/diagnostics_graph/status", self.graph.update, default_qos(1)
         )
 
     def shutdown(self):

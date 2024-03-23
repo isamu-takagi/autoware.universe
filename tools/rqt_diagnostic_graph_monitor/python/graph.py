@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from threading import Lock
+from .utils import foreach
 
 
 class BaseUnit:
@@ -72,13 +72,14 @@ class UnitLink:
 
 class Graph:
     def __init__(self):
-        self._mutex = Lock()
+        self._callbacks = []
         self._nodes = []
         self._diags = []
         self._units = []
         self._links = []
 
     def create(self, msg):
+        # Create graph units and links.
         self._nodes = [NodeUnit(struct) for struct in msg.nodes]
         self._diags = [DiagUnit(struct) for struct in msg.diags]
         self._units = self._nodes + self._diags
@@ -87,6 +88,7 @@ class Graph:
             child = units[struct.child]
             self._links.append(UnitLink(child))
 
+        # Update references.
         for node, struct in zip(self._nodes, msg.nodes):
             node._children = [self._links[index] for index in struct.links]
             for link in node._children:
@@ -95,6 +97,9 @@ class Graph:
             unit = link.child
             unit._parents.append(link)
 
+        # Notify graph created.
+        foreach(self._callbacks, lambda callback: callback())
+
     def update(self, msg):
         for node, status in zip(self._nodes, msg.nodes):
             node.update(status)
@@ -102,6 +107,9 @@ class Graph:
             diag.update(status)
         for link, status in zip(self._links, msg.links):
             link.update(status)
+
+    def append_callback(self, callback):
+        self._callbacks.append(callback)
 
     @property
     def units(self):
