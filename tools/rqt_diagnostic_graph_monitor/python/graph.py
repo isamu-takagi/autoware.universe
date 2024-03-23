@@ -24,6 +24,10 @@ from tier4_system_msgs.msg import DiagNodeStatus
 from tier4_system_msgs.msg import DiagNodeStruct
 
 
+class BaseUnit:
+    pass
+
+
 class NodeUnit:
     def __init__(self, struct: DiagNodeStruct):
         self.struct = struct
@@ -44,6 +48,14 @@ class DiagUnit:
 
     def update(self, status: DiagLeafStatus):
         self.status = status
+
+
+class BaseLink:
+    pass
+
+
+class RootLink:
+    pass
 
 
 class UnitLink:

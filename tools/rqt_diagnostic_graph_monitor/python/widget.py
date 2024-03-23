@@ -16,12 +16,7 @@ from python_qt_binding import QtCore
 from python_qt_binding import QtWidgets
 
 from .graph import Graph
-
-
-class MonitorItem:
-    def __init__(self, unit):
-        self.item = QtWidgets.QTreeWidgetItem([unit.struct.path])
-        self.unit = unit
+from .items import MonitorItem
 
 
 class MonitorWidget(QtWidgets.QSplitter):
@@ -29,9 +24,12 @@ class MonitorWidget(QtWidgets.QSplitter):
         super().__init__()
         self.graph = graph
         self.items = []
-        self.tree = QtWidgets.QTreeWidget()
-        self.addWidget(self.tree)
-        # self.addWidget(QtWidgets.QLabel("TEST"))
+        self.root_tree = QtWidgets.QTreeWidget()
+        self.node_tree = QtWidgets.QTreeWidget()
+        self.root_tree.setHeaderLabels(["Top-level nodes"])
+        self.node_tree.setHeaderLabels(["Intermediate nodes"])
+        self.addWidget(self.root_tree)
+        self.addWidget(self.node_tree)
 
         self.temp_ready = False
         self.root_items = []
@@ -48,19 +46,21 @@ class MonitorWidget(QtWidgets.QSplitter):
             return
         if len(self.graph.units) == 0:
             return
-
-        for unit in self.graph.units:
-            p = len(unit.parents)
-            c = len(unit.children)
-            print(f"({p}, {c}) {unit.struct.path}")
-
         self.temp_ready = True
-        self.items = [MonitorItem(unit) for unit in self.graph.units]
+        # add all link
+        # add not 1
+
+        item = MonitorItem(None)
+        self.node_tree.addTopLevelItem(item.item)
+
+        """
+        for link in self.graph.links:
+            MonitorItem(link)
 
         # branch items
-        root_items = []
         for item in self.items:
-            if len(item.unit.parents) != 1:
-                root_items.append(item)
-        for item in root_items:
-            self.tree.addTopLevelItem(item.item)
+            if len(item.unit.parents) == 0:
+                self.root_tree.addTopLevelItem(item.item)
+            if len(item.unit.parents) >= 2:
+                self.node_tree.addTopLevelItem(item.item)
+        """
