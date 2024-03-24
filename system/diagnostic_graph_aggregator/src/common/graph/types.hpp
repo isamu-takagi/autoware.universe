@@ -50,6 +50,7 @@ class NodeUnit;
 class DiagUnit;
 class Graph;
 class LinkFactory;
+class UnitFactory;
 
 }  // namespace diagnostic_graph_aggregator
 

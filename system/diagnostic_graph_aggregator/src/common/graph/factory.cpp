@@ -22,28 +22,34 @@
 namespace diagnostic_graph_aggregator
 {
 
-UnitLink * LinkFactory::create(BaseUnit * parent, UnitConfig::SharedPtr config)
+UnitLink * LinkFactory::create(NodeUnit * parent, UnitConfig::SharedPtr config)
 {
   const auto iter = links_.emplace(config, std::make_unique<UnitLink>());
   const auto link = iter->second.get();
-  link->parent_ = parent;
+  link->set_parent(parent);
   return link;
 }
 
 std::vector<UnitLink *> LinkFactory::create(
-  BaseUnit * parent, const std::vector<UnitConfig::SharedPtr> & configs)
+  NodeUnit * parent, const UnitConfig::SharedPtrList & configs)
 {
   std::vector<UnitLink *> result;
-  for (const auto & config : configs) result.push_back(create(parent, config));
+  for (const auto & config : configs) {
+    result.push_back(create(parent, config));
+  }
   return result;
 }
 
-void LinkFactory::connect(BaseUnit * child, UnitConfig::SharedPtr config)
+std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfig::SharedPtr config)
 {
   const auto range = links_.equal_range(config);
+  std::vector<UnitLink *> result;
   for (auto iter = range.first; iter != range.second; ++iter) {
-    iter->second->child_ = child;
+    const auto link = iter->second.get();
+    link->set_child(child);
+    result.push_back(link);
   }
+  return result;
 }
 
 std::vector<std::unique_ptr<UnitLink>> LinkFactory::release_links()
