@@ -27,22 +27,26 @@
 namespace diagnostic_graph_aggregator
 {
 
-struct Graph
+class Graph
 {
+public:
   void create(const std::string & file);
   bool update(const rclcpp::Time & stamp, const DiagnosticStatus & status);
+  const auto & nodes() const { return nodes_; }
+  const auto & diags() const { return diags_; }
+  const auto & units() const { return units_; }
   DiagGraphStruct create_struct(const rclcpp::Time & stamp);
   DiagGraphStatus create_status(const rclcpp::Time & stamp);
 
+  Graph();   // For unique_ptr members.
+  ~Graph();  // For unique_ptr members.
+
+private:
   std::vector<std::unique_ptr<NodeUnit>> nodes_;
   std::vector<std::unique_ptr<DiagUnit>> diags_;
   std::vector<std::unique_ptr<UnitLink>> links_;
   std::vector<BaseUnit *> units_;
   std::unordered_map<std::string, DiagUnit *> names_;
-
-  // For unique_ptr.
-  Graph();
-  ~Graph();
 };
 
 }  // namespace diagnostic_graph_aggregator

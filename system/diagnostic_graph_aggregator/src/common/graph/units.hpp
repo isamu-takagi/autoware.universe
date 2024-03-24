@@ -20,6 +20,7 @@
 
 #include <rclcpp/time.hpp>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -68,13 +69,17 @@ public:
   virtual std::vector<UnitLink *> get_child_links() const = 0;
   virtual std::vector<BaseUnit *> get_child_units() const;
   virtual bool is_leaf() const = 0;
+  void set_parent_links(const std::vector<UnitLink *> & parents) { parents_ = parents; }
   using VectorElement::get_index;
   using VectorElement::set_index;
 
-  void set_parent_links(const std::vector<UnitLink *> & parents) { parents_ = parents; }
-  std::vector<UnitLink *> get_parent_links() const { return parents_; }
+protected:
+  bool update();
 
 private:
+  virtual void update_status() = 0;  // Type dependent part of the update function.
+
+  DiagnosticLevel prev_level_;
   std::vector<UnitLink *> parents_;
 };
 
@@ -92,10 +97,6 @@ public:
   void initialize_struct();
 
 protected:
-  // TODO(Takagi, Isamu): notify
-  void update_status(DiagnosticLevel level) { status_.level = level; }
-
-private:
   DiagNodeStruct struct_;
   DiagNodeStatus status_;
 };
@@ -121,11 +122,13 @@ public:
   explicit DiagUnit(const UnitConfig::SharedPtr & config);
   std::string get_type() const override { return "diag"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
-  void on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status);
+  bool on_time(const rclcpp::Time & stamp);
+  bool on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status);
 
 private:
-  rclcpp::Time last_updated_time_;
+  void update_status() override;
   double timeout_;
+  std::optional<rclcpp::Time> last_updated_time_;
 };
 
 class MaxUnit : public NodeUnit
@@ -136,6 +139,7 @@ public:
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
 private:
+  void update_status() override;
   bool short_circuit_;
   std::vector<UnitLink *> links_;
 };
@@ -148,6 +152,7 @@ public:
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
 private:
+  void update_status() override;
   std::vector<UnitLink *> links_;
 };
 
@@ -157,6 +162,9 @@ public:
   ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level);
   std::string get_type() const override { return "const"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
+
+private:
+  void update_status() override;
 };
 
 }  // namespace diagnostic_graph_aggregator

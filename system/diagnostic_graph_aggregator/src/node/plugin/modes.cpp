@@ -32,7 +32,7 @@ OperationModes::OperationModes(rclcpp::Node & node, const Graph & graph)
 
   using PathDict = std::unordered_map<std::string, BaseUnit *>;
   PathDict paths;
-  for (const auto & unit : graph.units_) {
+  for (const auto & unit : graph.units()) {
     paths[unit->get_path()] = unit;
   }
 
