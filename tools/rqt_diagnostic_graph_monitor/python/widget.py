@@ -17,6 +17,7 @@ from python_qt_binding import QtWidgets
 
 from .graph import Graph
 from .items import MonitorItem
+from .utils import foreach
 
 
 class MonitorWidget(QtWidgets.QSplitter):
@@ -35,13 +36,13 @@ class MonitorWidget(QtWidgets.QSplitter):
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
-        self._timer.start(1000)
+        self._timer.start(500)
 
     def shutdown(self):
         pass
 
     def on_timer(self):
-        pass
+        foreach(self.items, lambda item: item.update())
 
     def on_graph(self):
         root_units = filter(lambda unit: len(unit.parents) == 0, self.graph.units)

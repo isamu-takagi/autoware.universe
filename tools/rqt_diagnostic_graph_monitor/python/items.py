@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+from diagnostic_msgs.msg import DiagnosticStatus
 from python_qt_binding import QtGui
 from python_qt_binding import QtWidgets
 
@@ -29,6 +30,15 @@ class MonitorIcons:
         self.error = QtGui.QIcon.fromTheme("dialog-error")
         self.stale = QtGui.QIcon.fromTheme("appointment-missed")
 
+        self._levels = {}
+        self._levels[DiagnosticStatus.OK] = self.ok
+        self._levels[DiagnosticStatus.WARN] = self.warn
+        self._levels[DiagnosticStatus.ERROR] = self.error
+        self._levels[DiagnosticStatus.STALE] = self.stale
+
+    def get(self, level):
+        return self._levels.get(level, self.unknown)
+
 
 class MonitorItem:
     icons = MonitorIcons()
@@ -37,4 +47,7 @@ class MonitorItem:
         self.item = QtWidgets.QTreeWidgetItem([unit.path])
         self.link = link
         self.unit = unit
-        self.item.setIcon(0, self.icons.ok)
+        self.item.setIcon(0, self.icons.stale)
+
+    def update(self):
+        self.item.setIcon(0, self.icons.get(self.unit.level))

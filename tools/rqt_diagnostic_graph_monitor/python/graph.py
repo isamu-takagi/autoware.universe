@@ -12,14 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from diagnostic_msgs.msg import DiagnosticStatus
+
 from .utils import foreach
 
 
-class BaseUnit:
+class DummyStatus:
     def __init__(self):
+        self.level = DiagnosticStatus.STALE
+
+
+class BaseUnit:
+    def __init__(self, status=DummyStatus()):
         self._parents = []
         self._children = []
         self._path = None
+        self._status = status
 
     @property
     def parents(self):
@@ -42,6 +50,10 @@ class NodeUnit(BaseUnit):
     def update(self, status):
         self._status = status
 
+    @property
+    def level(self):
+        return self._status.level
+
 
 class DiagUnit(BaseUnit):
     def __init__(self, struct):
@@ -51,6 +63,10 @@ class DiagUnit(BaseUnit):
 
     def update(self, status):
         self._status = status
+
+    @property
+    def level(self):
+        return self._status.level
 
 
 class UnitLink:
