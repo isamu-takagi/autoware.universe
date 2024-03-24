@@ -28,11 +28,10 @@ namespace diagnostic_graph_aggregator
 class LinkFactory
 {
 public:
-  UnitLink * create(BaseUnit * parent, UnitConfig::SharedPtr config);
-  void connect(BaseUnit * child, UnitConfig::SharedPtr config);
+  UnitLink * create(NodeUnit * parent, UnitConfig::SharedPtr config);
   std::vector<std::unique_ptr<UnitLink>> release_links();
-  std::vector<UnitLink *> create(
-    BaseUnit * parent, const std::vector<UnitConfig::SharedPtr> & configs);
+  std::vector<UnitLink *> create(NodeUnit * parent, const UnitConfig::SharedPtrList & configs);
+  std::vector<UnitLink *> connect(BaseUnit * child, UnitConfig::SharedPtr config);
 
 private:
   std::unordered_multimap<UnitConfig::SharedPtr, std::unique_ptr<UnitLink>> links_;

@@ -78,7 +78,7 @@ void Graph::create(const std::string & file)
     unit_mapping[config] = unit_factory.create(config, link_factory);
   }
   for (const auto & [config, unit] : unit_mapping) {
-    link_factory.connect(unit, config);
+    unit->set_parent_links(link_factory.connect(unit, config));
   }
 
   // Move units and links.

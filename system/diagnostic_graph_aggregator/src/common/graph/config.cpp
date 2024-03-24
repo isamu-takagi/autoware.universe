@@ -135,8 +135,8 @@ void resolve_link_nodes(RootConfig & root)
     paths[node->path] = node;
   }
 
-  std::vector<UnitConfig::SharedPtr> nodes;
-  std::vector<UnitConfig::SharedPtr> links;
+  UnitConfig::SharedPtrList nodes;
+  UnitConfig::SharedPtrList links;
   for (const auto & node : root.nodes) {
     if (node->type == "link") {
       links.push_back(node);
@@ -185,8 +185,8 @@ void resolve_remove_edits(RootConfig & root)
     }
   }
 
-  const auto filter = [removes](const std::vector<UnitConfig::SharedPtr> & nodes) {
-    std::vector<UnitConfig::SharedPtr> result;
+  const auto filter = [removes](const UnitConfig::SharedPtrList & nodes) {
+    UnitConfig::SharedPtrList result;
     for (const auto & node : nodes) {
       if (!removes.count(node)) {
         result.push_back(node);
@@ -309,10 +309,10 @@ FileConfig::SharedPtr load_file_config(PathConfig & config)
 
 RootConfig load_root_config(const PathConfig::SharedPtr root)
 {
-  std::vector<PathConfig::SharedPtr> paths;
+  PathConfig::SharedPtrList paths;
   paths.push_back(root);
 
-  std::vector<FileConfig::SharedPtr> files;
+  FileConfig::SharedPtrList files;
   for (size_t i = 0; i < paths.size(); ++i) {
     const auto path = paths[i];
     const auto file = load_file_config(*path);
@@ -320,8 +320,8 @@ RootConfig load_root_config(const PathConfig::SharedPtr root)
     extend(paths, file->paths);
   }
 
-  std::vector<UnitConfig::SharedPtr> nodes;
-  std::vector<EditConfig::SharedPtr> edits;
+  UnitConfig::SharedPtrList nodes;
+  EditConfig::SharedPtrList edits;
   for (const auto & file : files) {
     extend(nodes, file->nodes);
     extend(edits, file->edits);

@@ -41,8 +41,10 @@ class UnitLink : private VectorElement
 public:
   DiagLinkStruct get_struct() const { return struct_; }
   DiagLinkStatus get_status() const { return status_; }
-  BaseUnit * get_parent() const { return parent_; }
+  NodeUnit * get_parent() const { return parent_; }
   BaseUnit * get_child() const { return child_; }
+  void set_parent(NodeUnit * parent) { parent_ = parent; }
+  void set_child(BaseUnit * child) { child_ = child; }
   using VectorElement::get_index;
   using VectorElement::set_index;
 
@@ -50,11 +52,10 @@ public:
   void initialize_struct();
 
 private:
-  friend LinkFactory;
+  NodeUnit * parent_;
+  BaseUnit * child_;
   DiagLinkStruct struct_;
   DiagLinkStatus status_;
-  BaseUnit * parent_;  // parent
-  BaseUnit * child_;   // child
 };
 
 class BaseUnit : private VectorElement
@@ -70,11 +71,11 @@ public:
   using VectorElement::get_index;
   using VectorElement::set_index;
 
-protected:
-  // notify parents
+  void set_parent_links(const std::vector<UnitLink *> & parents) { parents_ = parents; }
+  std::vector<UnitLink *> get_parent_links() const { return parents_; }
 
 private:
-  // parent linkts
+  std::vector<UnitLink *> parents_;
 };
 
 class NodeUnit : public BaseUnit

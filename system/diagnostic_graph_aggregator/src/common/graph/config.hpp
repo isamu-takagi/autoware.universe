@@ -59,6 +59,7 @@ struct BaseConfig
 struct PathConfig : public BaseConfig
 {
   using SharedPtr = std::shared_ptr<PathConfig>;
+  using SharedPtrList = std::vector<SharedPtr>;
   using BaseConfig::BaseConfig;
   std::string original;
   std::string resolved;
@@ -67,15 +68,17 @@ struct PathConfig : public BaseConfig
 struct UnitConfig : public BaseConfig
 {
   using SharedPtr = std::shared_ptr<UnitConfig>;
+  using SharedPtrList = std::vector<SharedPtr>;
   using BaseConfig::BaseConfig;
   std::string type;
   std::string path;
-  std::vector<UnitConfig::SharedPtr> children;
+  UnitConfig::SharedPtrList children;
 };
 
 struct EditConfig : public BaseConfig
 {
   using SharedPtr = std::shared_ptr<EditConfig>;
+  using SharedPtrList = std::vector<SharedPtr>;
   using BaseConfig::BaseConfig;
   std::string type;
   std::string path;
@@ -84,17 +87,18 @@ struct EditConfig : public BaseConfig
 struct FileConfig : public BaseConfig
 {
   using SharedPtr = std::shared_ptr<FileConfig>;
+  using SharedPtrList = std::vector<SharedPtr>;
   using BaseConfig::BaseConfig;
-  std::vector<PathConfig::SharedPtr> paths;
-  std::vector<UnitConfig::SharedPtr> nodes;
-  std::vector<EditConfig::SharedPtr> edits;
+  PathConfig::SharedPtrList paths;
+  UnitConfig::SharedPtrList nodes;
+  EditConfig::SharedPtrList edits;
 };
 
 struct RootConfig
 {
-  std::vector<FileConfig::SharedPtr> files;
-  std::vector<UnitConfig::SharedPtr> nodes;
-  std::vector<EditConfig::SharedPtr> edits;
+  FileConfig::SharedPtrList files;
+  UnitConfig::SharedPtrList nodes;
+  EditConfig::SharedPtrList edits;
 };
 
 template <class T>
