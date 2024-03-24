@@ -44,7 +44,8 @@ class MonitorItem:
     icons = MonitorIcons()
 
     def __init__(self, link: UnitLink, unit: BaseUnit):
-        self.item = QtWidgets.QTreeWidgetItem([unit.path])
+        item_text = f"{unit.path} ({unit.kind})" if unit.path else f"({unit.kind})"
+        self.item = QtWidgets.QTreeWidgetItem([item_text])
         self.link = link
         self.unit = unit
         self.item.setIcon(0, self.icons.stale)

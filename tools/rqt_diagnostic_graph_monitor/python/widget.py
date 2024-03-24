@@ -37,7 +37,7 @@ class MonitorWidget(QtWidgets.QSplitter):
         self._timer.start(500)
 
     def shutdown(self):
-        pass
+        self.clear_graph()
 
     def on_timer(self):
         foreach(self.items, lambda item: item.update())
@@ -54,8 +54,8 @@ class MonitorWidget(QtWidgets.QSplitter):
 
     def build_graph(self, graph: Graph):
         self.graph = graph
-        root_units = filter(lambda unit: len(unit.parents) == 0, self.graph.units)
-        tree_units = filter(lambda unit: len(unit.parents) >= 2, self.graph.units)
+        root_units = filter(self.is_root_unit, self.graph.units)
+        tree_units = filter(self.is_tree_unit, self.graph.units)
         root_items = [MonitorItem(None, unit) for unit in root_units]
         tree_items = [MonitorItem(None, unit) for unit in tree_units]
         link_items = [MonitorItem(link, link.child) for link in self.graph.links]
@@ -75,3 +75,11 @@ class MonitorWidget(QtWidgets.QSplitter):
             tree_widget_item.addChild(item.item)
         for item in link_items:
             parents[item.link.parent].addChild(item.item)
+
+    @staticmethod
+    def is_root_unit(unit):
+        return len(unit.parents) == 0
+
+    @staticmethod
+    def is_tree_unit(unit):
+        return len(unit.parents) >= 2 and len(unit.children) != 0

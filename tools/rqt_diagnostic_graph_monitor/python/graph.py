@@ -26,6 +26,7 @@ class BaseUnit:
         self._parents = []
         self._children = []
         self._path = None
+        self._type = None
         self._status = status
 
     @property
@@ -40,11 +41,16 @@ class BaseUnit:
     def path(self):
         return self._path
 
+    @property
+    def kind(self):
+        return self._type
+
 
 class NodeUnit(BaseUnit):
     def __init__(self, struct):
         super().__init__()
         self._path = struct.path
+        self._type = struct.type
 
     def update(self, status):
         self._status = status
@@ -59,6 +65,7 @@ class DiagUnit(BaseUnit):
         super().__init__()
         self._path = struct.path
         self._name = struct.name
+        self._type = "diag"
 
     def update(self, status):
         self._status = status
@@ -69,9 +76,11 @@ class DiagUnit(BaseUnit):
 
 
 class UnitLink:
-    def __init__(self, child: BaseUnit):
-        self._parent = None
+    def __init__(self, parent: BaseUnit, child: BaseUnit):
+        self._parent = parent
         self._child = child
+        parent._children.append(self)
+        child._parents.append(self)
 
     def update(self, status):
         self.status = status
@@ -95,17 +104,8 @@ class Graph:
         self._links = []
         for struct in msg.links:
             units = self._diags if struct.is_leaf else self._nodes
-            child = units[struct.child]
-            self._links.append(UnitLink(child))
-
-        # Update references.
-        for node, struct in zip(self._nodes, msg.nodes):
-            node._children = [self._links[index] for index in struct.links]
-            for link in node._children:
-                link._parent = node
-        for link in self._links:
-            unit = link.child
-            unit._parents.append(link)
+            nodes = self._nodes
+            self._links.append(UnitLink(nodes[struct.parent], units[struct.child]))
 
     def update(self, msg):
         if Time.from_msg(msg.stamp) < self._stamp:
