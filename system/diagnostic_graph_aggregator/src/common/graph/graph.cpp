@@ -33,8 +33,8 @@ std::vector<BaseUnit *> topological_sort(const Graph & graph)
   std::deque<BaseUnit *> buffer;
 
   // Create a list of raw pointer units.
-  for (const auto & unit : graph.nodes_) units.push_back(unit.get());
-  for (const auto & unit : graph.diags_) units.push_back(unit.get());
+  for (const auto & unit : graph.nodes()) units.push_back(unit.get());
+  for (const auto & unit : graph.diags()) units.push_back(unit.get());
 
   // Count degrees of each unit.
   for (const auto & unit : units) {
@@ -126,7 +126,7 @@ DiagGraphStatus Graph::create_status(const rclcpp::Time & stamp)
   return msg;
 }
 
-// For unique_ptr.
+// For unique_ptr members.
 Graph::Graph() = default;
 Graph::~Graph() = default;
 

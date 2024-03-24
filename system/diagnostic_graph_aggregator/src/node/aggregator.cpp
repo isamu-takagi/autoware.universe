@@ -56,7 +56,7 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
 
 AggregatorNode::~AggregatorNode()
 {
-  // for unique_ptr
+  // For unique_ptr members.
 }
 
 DiagnosticArray AggregatorNode::create_unknown_diags(const rclcpp::Time & stamp)
@@ -69,7 +69,11 @@ DiagnosticArray AggregatorNode::create_unknown_diags(const rclcpp::Time & stamp)
 
 void AggregatorNode::on_timer()
 {
+  // Check timeout of diag units.
   const auto stamp = now();
+  for (const auto & diag : graph.diags()) diag->on_time(stamp);
+
+  // Publish status.
   pub_status_->publish(graph_.create_status(stamp));
   pub_unknown_->publish(create_unknown_diags(stamp));
   if (modes_) modes_->update(stamp);
@@ -77,6 +81,7 @@ void AggregatorNode::on_timer()
 
 void AggregatorNode::on_diag(const DiagnosticArray & msg)
 {
+  // Update status. Store it as unknown if it does not exist in the graph.
   const auto & stamp = msg.header.stamp;
   for (const auto & status : msg.status) {
     if (!graph_.update(stamp, status)) {
