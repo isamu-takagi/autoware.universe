@@ -27,12 +27,14 @@ nodes:
     list:
       - { type: link, link: /autoware/vehicle }
       - { type: link, link: /autoware/system }
+      - { type: link, link: /autoware/control/local }
 
   - path: /autoware/modes/remote
     type: and
     list:
       - { type: link, link: /autoware/vehicle }
       - { type: link, link: /autoware/system }
+      - { type: link, link: /autoware/control/remote }
 
   - path: /autoware/modes/emergency_stop
     type: and
@@ -61,3 +63,8 @@ nodes:
       - { type: link, link: /autoware/control }
       - { type: link, link: /autoware/vehicle }
       - { type: link, link: /autoware/system }
+
+  - path: /autoware/debug/tools
+    type: and
+    list:
+      - { type: link, link: /autoware/system/service_log_checker }
