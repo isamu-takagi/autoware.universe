@@ -24,9 +24,9 @@ namespace diagnostic_graph_aggregator
 
 UnitLink * LinkFactory::create(NodeUnit * parent, UnitConfig::SharedPtr config)
 {
-  const auto iter = links_.emplace(config, std::make_unique<UnitLink>());
-  const auto link = iter->second.get();
+  const auto link = links_.emplace_back(std::make_unique<UnitLink>()).get();
   link->set_parent(parent);
+  mapping_.emplace(config, link);
   return link;
 }
 
@@ -42,10 +42,10 @@ std::vector<UnitLink *> LinkFactory::create(
 
 std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfig::SharedPtr config)
 {
-  const auto range = links_.equal_range(config);
+  const auto range = mapping_.equal_range(config);
   std::vector<UnitLink *> result;
   for (auto iter = range.first; iter != range.second; ++iter) {
-    const auto link = iter->second.get();
+    const auto link = iter->second;
     link->set_child(child);
     result.push_back(link);
   }
@@ -54,9 +54,7 @@ std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfig::Share
 
 std::vector<std::unique_ptr<UnitLink>> LinkFactory::release_links()
 {
-  std::vector<std::unique_ptr<UnitLink>> result;
-  for (auto & [config, link] : links_) result.push_back(std::move(link));
-  return result;
+  return std::move(links_);
 }
 
 std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config)

@@ -24,13 +24,14 @@ namespace diagnostic_graph_aggregator
 
 void UnitLink::initialize_struct()
 {
+  struct_.parent = parent_->get_index();
   struct_.child = child_->get_index();
   struct_.is_leaf = child_->is_leaf();
 }
 
 void UnitLink::initialize_status()
 {
-  // Note: This function is currently provided for interface consistency.
+  status_.used = true;
 }
 
 std::vector<BaseUnit *> BaseUnit::get_child_units() const
@@ -72,21 +73,23 @@ bool BaseUnit::update()
 NodeUnit::NodeUnit(const UnitConfig::SharedPtr & config)
 {
   struct_.path = config->path;
+  status_.level = DiagnosticStatus::STALE;
 }
 
 void NodeUnit::initialize_struct()
 {
-  std::vector<uint32_t> indices;
-  for (const auto & link : get_child_links()) indices.push_back(link->get_index());
-
   struct_.type = get_type();
-  struct_.links = indices;
 }
 
-DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config)
+LeafUnit::LeafUnit(const UnitConfig::SharedPtr & config)
 {
   struct_.path = config->path;
   struct_.name = config->data.take_text("diag");
+  status_.level = DiagnosticStatus::STALE;
+}
+
+DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config) : LeafUnit(config)
+{
   timeout_ = config->data.take<double>("timeout", 1.0);
 }
 

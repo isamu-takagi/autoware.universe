@@ -34,7 +34,8 @@ public:
   std::vector<UnitLink *> connect(BaseUnit * child, UnitConfig::SharedPtr config);
 
 private:
-  std::unordered_multimap<UnitConfig::SharedPtr, std::unique_ptr<UnitLink>> links_;
+  std::vector<std::unique_ptr<UnitLink>> links_;  // Note: keep creation order.
+  std::unordered_multimap<UnitConfig::SharedPtr, UnitLink *> mapping_;
 };
 
 class UnitFactory

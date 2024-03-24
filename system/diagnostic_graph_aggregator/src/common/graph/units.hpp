@@ -51,6 +51,9 @@ public:
   using VectorElement::get_index;
   using VectorElement::set_index;
 
+  auto get_used() const { return status_.used; }
+  void set_used(bool used) { status_.used = used; }
+
 private:
   NodeUnit * parent_;
   BaseUnit * child_;
@@ -80,7 +83,7 @@ protected:
 private:
   virtual void update_status() = 0;  // Type dependent part of the update function.
 
-  DiagnosticLevel prev_level_;
+  std::optional<DiagnosticLevel> prev_level_;
   std::vector<UnitLink *> parents_;
 };
 
@@ -103,6 +106,7 @@ protected:
 class LeafUnit : public BaseUnit
 {
 public:
+  explicit LeafUnit(const UnitConfig::SharedPtr & config);
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
