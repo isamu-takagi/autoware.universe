@@ -31,6 +31,7 @@ class Graph
 {
 public:
   void create(const std::string & file);
+  void update(const rclcpp::Time & stamp);
   bool update(const rclcpp::Time & stamp, const DiagnosticStatus & status);
   const auto & nodes() const { return nodes_; }
   const auto & diags() const { return diags_; }

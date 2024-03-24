@@ -46,11 +46,10 @@ public:
   BaseUnit * get_child() const { return child_; }
   void set_parent(NodeUnit * parent) { parent_ = parent; }
   void set_child(BaseUnit * child) { child_ = child; }
+  void initialize_struct();  // This function must be called after setting the index.
+  void initialize_status();  // This function must be called after setting the struct.
   using VectorElement::get_index;
   using VectorElement::set_index;
-
-  // This function must be called after setting the index.
-  void initialize_struct();
 
 private:
   NodeUnit * parent_;
@@ -69,6 +68,8 @@ public:
   virtual std::vector<UnitLink *> get_child_links() const = 0;
   virtual std::vector<BaseUnit *> get_child_units() const;
   virtual bool is_leaf() const = 0;
+  virtual void initialize_struct();  // This function must be called after setting the index.
+  virtual void initialize_status();  // This function must be called after setting the struct.
   void set_parent_links(const std::vector<UnitLink *> & parents) { parents_ = parents; }
   using VectorElement::get_index;
   using VectorElement::set_index;
@@ -92,9 +93,7 @@ public:
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_path() const override { return struct_.path; }
   bool is_leaf() const override { return false; }
-
-  // This function must be called after setting the index.
-  void initialize_struct();
+  void initialize_struct() override;  // This function must be called after setting the index.
 
 protected:
   DiagNodeStruct struct_;
