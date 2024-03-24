@@ -93,9 +93,18 @@ void Graph::create(const std::string & file)
   for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
   for (size_t i = 0; i < links_.size(); ++i) links_[i]->set_index(i);
 
-  // Init static data that needs index.
-  for (auto & node : nodes_) node->initialize_struct();
+  // Init struct that needs array index.
+  for (auto & unit : units_) unit->initialize_struct();
   for (auto & link : links_) link->initialize_struct();
+
+  // Init status that needs struct.
+  for (auto & unit : units_) unit->initialize_status();
+  for (auto & link : links_) link->initialize_status();
+}
+
+void Graph::update(const rclcpp::Time & stamp)
+{
+  for (const auto & diag : diags_) diag->on_time(stamp);
 }
 
 bool Graph::update(const rclcpp::Time & stamp, const DiagnosticStatus & status)

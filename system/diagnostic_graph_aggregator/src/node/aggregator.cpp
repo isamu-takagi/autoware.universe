@@ -71,7 +71,7 @@ void AggregatorNode::on_timer()
 {
   // Check timeout of diag units.
   const auto stamp = now();
-  for (const auto & diag : graph.diags()) diag->on_time(stamp);
+  graph_.update(stamp);
 
   // Publish status.
   pub_status_->publish(graph_.create_status(stamp));

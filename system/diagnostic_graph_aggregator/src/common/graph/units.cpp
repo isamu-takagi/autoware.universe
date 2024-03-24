@@ -28,11 +28,26 @@ void UnitLink::initialize_struct()
   struct_.is_leaf = child_->is_leaf();
 }
 
+void UnitLink::initialize_status()
+{
+  // Note: This function is currently provided for interface consistency.
+}
+
 std::vector<BaseUnit *> BaseUnit::get_child_units() const
 {
   std::vector<BaseUnit *> result;
   for (const auto & link : get_child_links()) result.push_back(link->get_child());
   return result;
+}
+
+void BaseUnit::initialize_struct()
+{
+  // Do nothing by default.
+}
+
+void BaseUnit::initialize_status()
+{
+  if (get_child_links().size() == 0) update();
 }
 
 bool BaseUnit::update()
