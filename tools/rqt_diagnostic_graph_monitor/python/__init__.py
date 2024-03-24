@@ -14,7 +14,6 @@
 
 from rqt_gui_py.plugin import Plugin
 
-from .graph import Graph
 from .module import MonitorModule
 from .widget import MonitorWidget
 
@@ -22,9 +21,9 @@ from .widget import MonitorWidget
 class MonitorPlugin(Plugin):
     def __init__(self, context):
         super().__init__(context)
-        graph = Graph()
-        self.widget = MonitorWidget(graph)
-        self.module = MonitorModule(graph, context.node)
+        self.widget = MonitorWidget()
+        self.module = MonitorModule(context.node)
+        self.module.append_struct_callback(self.widget.on_graph)
         context.add_widget(self.widget)
 
     def shutdown_plugin(self):

@@ -21,8 +21,9 @@ from .utils import foreach
 
 
 class MonitorWidget(QtWidgets.QSplitter):
-    def __init__(self, graph: Graph):
+    def __init__(self):
         super().__init__()
+        self.graph = None
         self.items = []
         self.root_widget = QtWidgets.QTreeWidget()
         self.tree_widget = QtWidgets.QTreeWidget()
@@ -30,9 +31,6 @@ class MonitorWidget(QtWidgets.QSplitter):
         self.tree_widget.setHeaderLabels(["Subtrees"])
         self.addWidget(self.root_widget)
         self.addWidget(self.tree_widget)
-
-        self.graph = graph
-        self.graph.append_callback(self.on_graph)
 
         self._timer = QtCore.QTimer()
         self._timer.timeout.connect(self.on_timer)
@@ -44,7 +42,18 @@ class MonitorWidget(QtWidgets.QSplitter):
     def on_timer(self):
         foreach(self.items, lambda item: item.update())
 
-    def on_graph(self):
+    def on_graph(self, graph: Graph):
+        self.clear_graph()
+        self.build_graph(graph)
+
+    def clear_graph(self):
+        self.graph = None
+        self.items = []
+        self.root_widget.clear()
+        self.tree_widget.clear()
+
+    def build_graph(self, graph: Graph):
+        self.graph = graph
         root_units = filter(lambda unit: len(unit.parents) == 0, self.graph.units)
         tree_units = filter(lambda unit: len(unit.parents) >= 2, self.graph.units)
         root_items = [MonitorItem(None, unit) for unit in root_units]

@@ -13,8 +13,7 @@
 # limitations under the License.
 
 from diagnostic_msgs.msg import DiagnosticStatus
-
-from .utils import foreach
+from rclpy.time import Time
 
 
 class DummyStatus:
@@ -87,18 +86,13 @@ class UnitLink:
 
 
 class Graph:
-    def __init__(self):
-        self._callbacks = []
-        self._nodes = []
-        self._diags = []
-        self._units = []
-        self._links = []
-
-    def create(self, msg):
+    def __init__(self, msg):
         # Create graph units and links.
+        self._stamp = Time.from_msg(msg.stamp)
         self._nodes = [NodeUnit(struct) for struct in msg.nodes]
         self._diags = [DiagUnit(struct) for struct in msg.diags]
         self._units = self._nodes + self._diags
+        self._links = []
         for struct in msg.links:
             units = self._diags if struct.is_leaf else self._nodes
             child = units[struct.child]
@@ -113,19 +107,15 @@ class Graph:
             unit = link.child
             unit._parents.append(link)
 
-        # Notify graph created.
-        foreach(self._callbacks, lambda callback: callback())
-
     def update(self, msg):
+        if Time.from_msg(msg.stamp) < self._stamp:
+            return
         for node, status in zip(self._nodes, msg.nodes):
             node.update(status)
         for diag, status in zip(self._diags, msg.diags):
             diag.update(status)
         for link, status in zip(self._links, msg.links):
             link.update(status)
-
-    def append_callback(self, callback):
-        self._callbacks.append(callback)
 
     @property
     def units(self):

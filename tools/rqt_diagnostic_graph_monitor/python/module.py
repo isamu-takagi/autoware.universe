@@ -20,25 +20,40 @@ from tier4_system_msgs.msg import DiagGraphStruct
 from .graph import Graph
 from .utils import default_qos
 from .utils import durable_qos
+from .utils import foreach
 
 
 class MonitorModule:
-    def __init__(self, graph: Graph, node: Node):
+    def __init__(self, node: Node):
+        self.graph = None
+        self.struct_callbacks = []
+        self.status_callbacks = []
         self.node = node
-        self.sub_struct = None
-        self.sub_status = None
-        self.graph = graph
-        self.graph.append_callback(self.subscribe_status)
-        self.subscribe_struct()
+        self.sub_struct = self.subscribe_struct()
+        self.sub_status = self.subscribe_status()
+
+    def append_struct_callback(self, callback):
+        self.struct_callbacks.append(callback)
+
+    def append_status_callback(self, callback):
+        self.status_callbacks.append(callback)
+
+    def on_struct(self, msg):
+        self.graph = Graph(msg)
+        foreach(self.struct_callbacks, lambda callback: callback(self.graph))
+
+    def on_status(self, msg):
+        self.graph.update(msg)
+        foreach(self.status_callbacks, lambda callback: callback(self.graph))
 
     def subscribe_struct(self):
-        self.sub_struct = self.node.create_subscription(
-            DiagGraphStruct, "/diagnostics_graph/struct", self.graph.create, durable_qos(1)
+        return self.node.create_subscription(
+            DiagGraphStruct, "/diagnostics_graph/struct", self.on_struct, durable_qos(1)
         )
 
     def subscribe_status(self):
-        self.sub_status = self.node.create_subscription(
-            DiagGraphStatus, "/diagnostics_graph/status", self.graph.update, default_qos(1)
+        return self.node.create_subscription(
+            DiagGraphStatus, "/diagnostics_graph/status", self.on_status, default_qos(1)
         )
 
     def shutdown(self):
