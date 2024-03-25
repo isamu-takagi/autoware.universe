@@ -24,13 +24,14 @@ namespace diagnostic_graph_aggregator
 
 void UnitLink::initialize_struct()
 {
+  struct_.parent = parent_->get_index();
   struct_.child = child_->get_index();
   struct_.is_leaf = child_->is_leaf();
 }
 
 void UnitLink::initialize_status()
 {
-  // Note: This function is currently provided for interface consistency.
+  status_.used = true;
 }
 
 std::vector<BaseUnit *> BaseUnit::get_child_units() const
@@ -72,21 +73,23 @@ bool BaseUnit::update()
 NodeUnit::NodeUnit(const UnitConfig::SharedPtr & config)
 {
   struct_.path = config->path;
+  status_.level = DiagnosticStatus::STALE;
 }
 
 void NodeUnit::initialize_struct()
 {
-  std::vector<uint32_t> indices;
-  for (const auto & link : get_child_links()) indices.push_back(link->get_index());
-
   struct_.type = get_type();
-  struct_.links = indices;
 }
 
-DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config)
+LeafUnit::LeafUnit(const UnitConfig::SharedPtr & config)
 {
   struct_.path = config->path;
   struct_.name = config->data.take_text("diag");
+  status_.level = DiagnosticStatus::STALE;
+}
+
+DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config) : LeafUnit(config)
+{
   timeout_ = config->data.take<double>("timeout", 1.0);
 }
 
@@ -119,17 +122,25 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
   return update();
 }
 
-MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit)
-: NodeUnit(config)
+MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links) : NodeUnit(config)
 {
-  short_circuit_ = short_circuit;
   links_ = links.create(this, config->children);
 }
 
 void MaxUnit::update_status()
 {
   DiagnosticLevel level = DiagnosticStatus::OK;
-  for (const auto & link : links_) {
+  for (const auto & link : get_child_links()) {
+    level = std::max(level, link->get_child()->get_level());
+  }
+  status_.level = std::min(level, DiagnosticStatus::ERROR);
+}
+
+void ShortCircuitMaxUnit::update_status()
+{
+  // TODO(Takagi, Isamu): update link flags.
+  DiagnosticLevel level = DiagnosticStatus::OK;
+  for (const auto & link : get_child_links()) {
     level = std::max(level, link->get_child()->get_level());
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
@@ -157,6 +168,24 @@ ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level
 void ConstUnit::update_status()
 {
   // Do nothing. This unit always returns the same level.
+}
+
+OkUnit::OkUnit(const UnitConfig::SharedPtr & config) : ConstUnit(config, DiagnosticStatus::OK)
+{
+}
+
+WarnUnit::WarnUnit(const UnitConfig::SharedPtr & config) : ConstUnit(config, DiagnosticStatus::WARN)
+{
+}
+
+ErrorUnit::ErrorUnit(const UnitConfig::SharedPtr & config)
+: ConstUnit(config, DiagnosticStatus::ERROR)
+{
+}
+
+StaleUnit::StaleUnit(const UnitConfig::SharedPtr & config)
+: ConstUnit(config, DiagnosticStatus::STALE)
+{
 }
 
 }  // namespace diagnostic_graph_aggregator

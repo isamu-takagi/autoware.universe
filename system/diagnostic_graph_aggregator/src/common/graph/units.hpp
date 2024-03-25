@@ -51,6 +51,9 @@ public:
   using VectorElement::get_index;
   using VectorElement::set_index;
 
+  auto get_used() const { return status_.used; }
+  void set_used(bool used) { status_.used = used; }
+
 private:
   NodeUnit * parent_;
   BaseUnit * child_;
@@ -80,7 +83,7 @@ protected:
 private:
   virtual void update_status() = 0;  // Type dependent part of the update function.
 
-  DiagnosticLevel prev_level_;
+  std::optional<DiagnosticLevel> prev_level_;
   std::vector<UnitLink *> parents_;
 };
 
@@ -103,6 +106,7 @@ protected:
 class LeafUnit : public BaseUnit
 {
 public:
+  explicit LeafUnit(const UnitConfig::SharedPtr & config);
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
@@ -133,14 +137,23 @@ private:
 class MaxUnit : public NodeUnit
 {
 public:
-  MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit);
-  std::string get_type() const override { return short_circuit_ ? "short-circuit-and" : "and"; }
+  MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  std::string get_type() const override { return "and"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
 private:
   void update_status() override;
-  bool short_circuit_;
   std::vector<UnitLink *> links_;
+};
+
+class ShortCircuitMaxUnit : public MaxUnit
+{
+public:
+  using MaxUnit::MaxUnit;
+  std::string get_type() const override { return "short-circuit-and"; }
+
+private:
+  void update_status() override;
 };
 
 class MinUnit : public NodeUnit
@@ -159,11 +172,38 @@ class ConstUnit : public NodeUnit
 {
 public:
   ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level);
-  std::string get_type() const override { return "const"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
 
 private:
   void update_status() override;
+};
+
+class OkUnit : public ConstUnit
+{
+public:
+  explicit OkUnit(const UnitConfig::SharedPtr & config);
+  std::string get_type() const override { return "ok"; }
+};
+
+class WarnUnit : public ConstUnit
+{
+public:
+  explicit WarnUnit(const UnitConfig::SharedPtr & config);
+  std::string get_type() const override { return "warn"; }
+};
+
+class ErrorUnit : public ConstUnit
+{
+public:
+  explicit ErrorUnit(const UnitConfig::SharedPtr & config);
+  std::string get_type() const override { return "error"; }
+};
+
+class StaleUnit : public ConstUnit
+{
+public:
+  explicit StaleUnit(const UnitConfig::SharedPtr & config);
+  std::string get_type() const override { return "stale"; }
 };
 
 }  // namespace diagnostic_graph_aggregator

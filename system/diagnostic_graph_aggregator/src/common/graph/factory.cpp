@@ -24,9 +24,9 @@ namespace diagnostic_graph_aggregator
 
 UnitLink * LinkFactory::create(NodeUnit * parent, UnitConfig::SharedPtr config)
 {
-  const auto iter = links_.emplace(config, std::make_unique<UnitLink>());
-  const auto link = iter->second.get();
+  const auto link = links_.emplace_back(std::make_unique<UnitLink>()).get();
   link->set_parent(parent);
+  mapping_.emplace(config, link);
   return link;
 }
 
@@ -42,10 +42,10 @@ std::vector<UnitLink *> LinkFactory::create(
 
 std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfig::SharedPtr config)
 {
-  const auto range = links_.equal_range(config);
+  const auto range = mapping_.equal_range(config);
   std::vector<UnitLink *> result;
   for (auto iter = range.first; iter != range.second; ++iter) {
-    const auto link = iter->second.get();
+    const auto link = iter->second;
     link->set_child(child);
     result.push_back(link);
   }
@@ -54,9 +54,7 @@ std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfig::Share
 
 std::vector<std::unique_ptr<UnitLink>> LinkFactory::release_links()
 {
-  std::vector<std::unique_ptr<UnitLink>> result;
-  for (auto & [config, link] : links_) result.push_back(std::move(link));
-  return result;
+  return std::move(links_);
 }
 
 std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config)
@@ -67,10 +65,10 @@ std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config)
 std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory & links)
 {
   if (config->type == "and") {
-    return std::make_unique<MaxUnit>(config, links, false);
+    return std::make_unique<MaxUnit>(config, links);
   }
   if (config->type == "short-circuit-and") {
-    return std::make_unique<MaxUnit>(config, links, true);
+    return std::make_unique<ShortCircuitMaxUnit>(config, links);
   }
   if (config->type == "or") {
     return std::make_unique<MinUnit>(config, links);
@@ -84,16 +82,16 @@ std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory 
   }
   */
   if (config->type == "ok") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::OK);
+    return std::make_unique<OkUnit>(config);
   }
   if (config->type == "warn") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::WARN);
+    return std::make_unique<WarnUnit>(config);
   }
   if (config->type == "error") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::ERROR);
+    return std::make_unique<ErrorUnit>(config);
   }
   if (config->type == "stale") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::STALE);
+    return std::make_unique<StaleUnit>(config);
   }
   throw error<UnknownType>("unknown node type", config->type, config->data);
 }
