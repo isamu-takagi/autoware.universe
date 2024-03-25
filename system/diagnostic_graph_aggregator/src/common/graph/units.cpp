@@ -122,17 +122,25 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
   return update();
 }
 
-MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links, bool short_circuit)
-: NodeUnit(config)
+MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links) : NodeUnit(config)
 {
-  short_circuit_ = short_circuit;
   links_ = links.create(this, config->children);
 }
 
 void MaxUnit::update_status()
 {
   DiagnosticLevel level = DiagnosticStatus::OK;
-  for (const auto & link : links_) {
+  for (const auto & link : get_child_links()) {
+    level = std::max(level, link->get_child()->get_level());
+  }
+  status_.level = std::min(level, DiagnosticStatus::ERROR);
+}
+
+void ShortCircuitMaxUnit::update_status()
+{
+  // TODO(Takagi, Isamu): update link flags.
+  DiagnosticLevel level = DiagnosticStatus::OK;
+  for (const auto & link : get_child_links()) {
     level = std::max(level, link->get_child()->get_level());
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
@@ -160,6 +168,24 @@ ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level
 void ConstUnit::update_status()
 {
   // Do nothing. This unit always returns the same level.
+}
+
+OkUnit::OkUnit(const UnitConfig::SharedPtr & config) : ConstUnit(config, DiagnosticStatus::OK)
+{
+}
+
+WarnUnit::WarnUnit(const UnitConfig::SharedPtr & config) : ConstUnit(config, DiagnosticStatus::WARN)
+{
+}
+
+ErrorUnit::ErrorUnit(const UnitConfig::SharedPtr & config)
+: ConstUnit(config, DiagnosticStatus::ERROR)
+{
+}
+
+StaleUnit::StaleUnit(const UnitConfig::SharedPtr & config)
+: ConstUnit(config, DiagnosticStatus::STALE)
+{
 }
 
 }  // namespace diagnostic_graph_aggregator

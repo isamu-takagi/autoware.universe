@@ -115,7 +115,7 @@ bool Graph::update(const rclcpp::Time & stamp, const DiagnosticStatus & status)
   return true;
 }
 
-DiagGraphStruct Graph::create_struct(const rclcpp::Time & stamp)
+DiagGraphStruct Graph::create_struct(const rclcpp::Time & stamp) const
 {
   DiagGraphStruct msg;
   msg.stamp = stamp;
@@ -125,7 +125,7 @@ DiagGraphStruct Graph::create_struct(const rclcpp::Time & stamp)
   return msg;
 }
 
-DiagGraphStatus Graph::create_status(const rclcpp::Time & stamp)
+DiagGraphStatus Graph::create_status(const rclcpp::Time & stamp) const
 {
   DiagGraphStatus msg;
   msg.stamp = stamp;

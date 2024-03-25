@@ -65,10 +65,10 @@ std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config)
 std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory & links)
 {
   if (config->type == "and") {
-    return std::make_unique<MaxUnit>(config, links, false);
+    return std::make_unique<MaxUnit>(config, links);
   }
   if (config->type == "short-circuit-and") {
-    return std::make_unique<MaxUnit>(config, links, true);
+    return std::make_unique<ShortCircuitMaxUnit>(config, links);
   }
   if (config->type == "or") {
     return std::make_unique<MinUnit>(config, links);
@@ -82,16 +82,16 @@ std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory 
   }
   */
   if (config->type == "ok") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::OK);
+    return std::make_unique<OkUnit>(config);
   }
   if (config->type == "warn") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::WARN);
+    return std::make_unique<WarnUnit>(config);
   }
   if (config->type == "error") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::ERROR);
+    return std::make_unique<ErrorUnit>(config);
   }
   if (config->type == "stale") {
-    return std::make_unique<ConstUnit>(config, DiagnosticStatus::STALE);
+    return std::make_unique<StaleUnit>(config);
   }
   throw error<UnknownType>("unknown node type", config->type, config->data);
 }
