@@ -25,8 +25,9 @@ namespace diagnostic_graph_aggregator
 class Linker
 {
 public:
-  virtual std::vector<UnitLink *> get_parent_links() = 0;
-  virtual std::vector<UnitLink *> get_child_links() = 0;
+  virtual std::vector<UnitLink *> take_parents(BaseUnit * unit) = 0;
+  virtual std::vector<UnitLink *> take_child_list(BaseUnit * unit) = 0;
+  virtual UnitLink * take_child_item(BaseUnit * unit) = 0;
 };
 
 }  // namespace diagnostic_graph_aggregator

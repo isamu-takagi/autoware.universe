@@ -5,18 +5,17 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/common/graph/config.cpp
   src/common/graph/error.cpp
+  src/common/graph/data.cpp
+  src/common/graph/config.cpp
+  src/common/graph/loader.cpp
   src/common/graph/graph.cpp
   src/common/graph/units.cpp
-  src/common/graph/factory.cpp
-  src/common/graph/config.cpp
-  src/common/graph/data.cpp
 )
 
 ament_auto_add_executable(aggregator
   src/node/aggregator.cpp
-  src/node/plugin/modes.cpp
+  src/node/availability.cpp
 )
 target_include_directories(aggregator PRIVATE src/common)
 

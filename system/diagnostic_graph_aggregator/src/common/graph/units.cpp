@@ -16,7 +16,7 @@
 
 #include "config.hpp"
 #include "error.hpp"
-#include "factory.hpp"
+#include "loader.hpp"
 
 #include <algorithm>
 
@@ -48,14 +48,14 @@ std::vector<BaseUnit *> BaseUnit::get_child_units() const
   return result;
 }
 
-void BaseUnit::initialize_struct(Linker &)
+void BaseUnit::initialize_children(Linker &)
 {
   // Do nothing by default.
 }
 
-void BaseUnit::initialize_status()
+void BaseUnit::initialize_parents(Linker & linker)
 {
-  if (get_child_links().size() == 0) update();
+  parents_ = linker.take_parents(this);
 }
 
 bool BaseUnit::update()
@@ -83,9 +83,14 @@ NodeUnit::NodeUnit(const UnitConfigItem & config)
   status_.level = DiagnosticStatus::STALE;
 }
 
-void NodeUnit::initialize_struct(Linker &)
+void NodeUnit::initialize_struct()
 {
   struct_.type = get_type();
+}
+
+void NodeUnit::initialize_status()
+{
+  if (get_child_links().size() == 0) update();
 }
 
 LeafUnit::LeafUnit(const UnitConfigItem & config)
@@ -93,6 +98,16 @@ LeafUnit::LeafUnit(const UnitConfigItem & config)
   struct_.path = config->path;
   struct_.name = config->data.required("diag").text();
   status_.level = DiagnosticStatus::STALE;
+}
+
+void LeafUnit::initialize_struct()
+{
+  // Do nothing by default.
+}
+
+void LeafUnit::initialize_status()
+{
+  if (get_child_links().size() == 0) update();
 }
 
 DiagUnit::DiagUnit(const UnitConfigItem & config) : LeafUnit(config)
@@ -131,13 +146,17 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
 
 MaxUnit::MaxUnit(const UnitConfigItem & config) : NodeUnit(config)
 {
-  // links_ = links.create(this, config->list);
+}
+
+void MaxUnit::initialize_children(Linker & linker)
+{
+  links_ = linker.take_child_list(this);
 }
 
 void MaxUnit::update_status()
 {
   DiagnosticLevel level = DiagnosticStatus::OK;
-  for (const auto & link : get_child_links()) {
+  for (const auto & link : links_) {
     level = std::max(level, link->get_child()->get_level());
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
@@ -147,7 +166,7 @@ void ShortCircuitMaxUnit::update_status()
 {
   // TODO(Takagi, Isamu): update link flags.
   DiagnosticLevel level = DiagnosticStatus::OK;
-  for (const auto & link : get_child_links()) {
+  for (const auto & link : links_) {
     level = std::max(level, link->get_child()->get_level());
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
@@ -155,14 +174,21 @@ void ShortCircuitMaxUnit::update_status()
 
 MinUnit::MinUnit(const UnitConfigItem & config) : NodeUnit(config)
 {
-  // links_ = links.create(this, config->list);
+}
+
+void MinUnit::initialize_children(Linker & linker)
+{
+  links_ = linker.take_child_list(this);
 }
 
 void MinUnit::update_status()
 {
-  DiagnosticLevel level = DiagnosticStatus::STALE;
-  for (const auto & link : links_) {
-    level = std::min(level, link->get_child()->get_level());
+  DiagnosticLevel level = DiagnosticStatus::OK;
+  if (!links_.empty()) {
+    level = DiagnosticStatus::STALE;
+    for (const auto & link : links_) {
+      level = std::min(level, link->get_child()->get_level());
+    }
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }

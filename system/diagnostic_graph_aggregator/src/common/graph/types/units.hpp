@@ -51,11 +51,6 @@ class BaseUnit;
 class NodeUnit;
 class DiagUnit;
 class Graph;
-class LinkFactory;
-class UnitFactory;
-
-using UnitLinkItem = UnitLink *;
-using UnitLinkList = std::vector<UnitLinkItem>;
 
 }  // namespace diagnostic_graph_aggregator
 

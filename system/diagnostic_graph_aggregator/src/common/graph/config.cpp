@@ -24,9 +24,6 @@
 #include <unordered_map>
 #include <utility>
 
-// DEBUG
-#include <iostream>
-
 namespace diagnostic_graph_aggregator
 {
 

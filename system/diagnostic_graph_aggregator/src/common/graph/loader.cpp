@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "factory.hpp"
+#include "loader.hpp"
 
 #include "config.hpp"
 #include "error.hpp"
@@ -27,20 +27,31 @@ namespace diagnostic_graph_aggregator
 class LinkerImpl : public Linker
 {
 public:
-  std::vector<UnitLink *> get_parent_links() override;
-  std::vector<UnitLink *> get_child_links() override;
+  std::vector<UnitLink *> take_parents(BaseUnit * unit) override;
+  std::vector<UnitLink *> take_child_list(BaseUnit * unit) override;
+  UnitLink * take_child_item(BaseUnit * unit) override;
+
   std::unordered_map<BaseUnit *, std::vector<UnitLink *>> parent_links_;
   std::unordered_map<BaseUnit *, std::vector<UnitLink *>> child_links_;
 };
 
-std::vector<UnitLink *> LinkerImpl::get_parent_links()
+std::vector<UnitLink *> LinkerImpl::take_parents(BaseUnit * unit)
 {
-  return {};
+  return parent_links_[unit];
 }
 
-std::vector<UnitLink *> LinkerImpl::get_child_links()
+std::vector<UnitLink *> LinkerImpl::take_child_list(BaseUnit * unit)
 {
-  return {};
+  return child_links_[unit];
+}
+
+UnitLink * LinkerImpl::take_child_item(BaseUnit * unit)
+{
+  const auto links = take_child_list(unit);
+  if (links.size() != 1) {
+    throw std::logic_error(unit->get_type() + " unit should have only one child");
+  }
+  return links.at(0);
 }
 
 GraphLoader::GraphLoader(const std::string & file)
@@ -61,14 +72,20 @@ GraphLoader::GraphLoader(const std::string & file)
     linker.child_links_[link->get_parent()].push_back(link);
   }
 
+  // Init parent and child links.
+  for (auto & node : nodes_) node->initialize_parents(linker);
+  for (auto & diag : diags_) diag->initialize_parents(linker);
+  for (auto & node : nodes_) node->initialize_children(linker);
+  for (auto & diag : diags_) diag->initialize_children(linker);
+
   // Init array index.
   for (size_t i = 0; i < nodes_.size(); ++i) nodes_[i]->set_index(i);
   for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
   for (size_t i = 0; i < links_.size(); ++i) links_[i]->set_index(i);
 
   // Init struct that needs array index.
-  for (auto & node : nodes_) node->initialize_struct(linker);
-  for (auto & diag : diags_) diag->initialize_struct(linker);
+  for (auto & node : nodes_) node->initialize_struct();
+  for (auto & diag : diags_) diag->initialize_struct();
   for (auto & link : links_) link->initialize_struct();
 
   // Init status that needs struct.

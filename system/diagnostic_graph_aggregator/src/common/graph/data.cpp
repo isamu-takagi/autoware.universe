@@ -14,9 +14,6 @@
 
 #include "data.hpp"
 
-// DEBUG
-#include <iostream>
-
 namespace diagnostic_graph_aggregator
 {
 
@@ -85,12 +82,6 @@ double TreeData::real(double fail)
 {
   // TODO(Takagi, Isamu): conversion fail
   return yaml_.as<double>(fail);
-}
-
-void TreeData::dump() const
-{
-  std::cout << "file: " << path_.file() << std::endl;
-  std::cout << "path: " << path_.node() << std::endl;
 }
 
 }  // namespace diagnostic_graph_aggregator
