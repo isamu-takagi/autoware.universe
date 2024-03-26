@@ -18,6 +18,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
+#include <deque>
 #include <filesystem>
 #include <queue>
 #include <regex>
@@ -193,8 +194,6 @@ void apply_links(FileConfig & config)
     }
   }
 
-  // TODO(Takagi, Isamu): check graph loop
-
   // Remove link type units from the graph.
   config.units = std::move(node_units);
 }
@@ -233,12 +232,51 @@ void apply_edits(FileConfig & config)
   config.links = std::move(filtered_links);
 }
 
-FileConfig TreeLoader::flatten()
+void topological_sort(FileConfig & config)
+{
+  std::unordered_map<UnitConfig *, int> degrees;
+  std::deque<UnitConfig *> units;
+  std::deque<UnitConfig *> result;
+  std::deque<UnitConfig *> buffer;
+
+  // Create a list of raw pointer units.
+  for (const auto & unit : config.units) units.push_back(unit.get());
+
+  // Count degrees of each unit.
+  for (const auto & unit : units) {
+    for (const auto & link : unit->list) ++degrees[link->child];
+  }
+
+  // Find initial units that are zero degrees.
+  for (const auto & unit : units) {
+    if (degrees[unit] == 0) buffer.push_back(unit);
+  }
+
+  // Sort by topological order.
+  while (!buffer.empty()) {
+    const auto unit = buffer.front();
+    buffer.pop_front();
+    for (const auto & link : unit->list) {
+      if (--degrees[link->child] == 0) {
+        buffer.push_back(link->child);
+      }
+    }
+    result.push_back(unit);
+  }
+
+  // Detect circulation because the result does not include the nodes on the loop.
+  if (result.size() != units.size()) {
+    throw GraphStructure("detect graph circulation");
+  }
+}
+
+FileConfig TreeLoader::construct()
 {
   FileConfig config;
   for (auto & file : files_) file.release(config);
   apply_links(config);
   apply_edits(config);
+  topological_sort(config);  // Check graph structure.
   return config;
 }
 

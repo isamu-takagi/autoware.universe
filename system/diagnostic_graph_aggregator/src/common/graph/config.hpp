@@ -56,8 +56,10 @@ struct UnitConfig
   TreeData data;
   std::string type;
   std::string path;
-  LinkConfig::Item item;
   LinkConfig::List list;
+
+  // Note: not supported yet, topological_sort only uses list.
+  // LinkConfig::Item item;
 };
 
 struct FileConfig
@@ -94,7 +96,7 @@ class TreeLoader
 public:
   static TreeLoader Load(const std::string & path);
   explicit TreeLoader(const PathConfig * root);
-  FileConfig flatten();
+  FileConfig construct();
 
 private:
   std::vector<FileLoader> files_;

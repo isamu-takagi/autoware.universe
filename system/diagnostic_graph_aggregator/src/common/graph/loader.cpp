@@ -58,7 +58,7 @@ UnitLink * LinkerImpl::take_child_item(BaseUnit * unit)
 GraphLoader::GraphLoader(const std::string & file)
 {
   TreeLoader tree = TreeLoader::Load(file);
-  FileConfig root = tree.flatten();
+  FileConfig root = tree.construct();
   std::unordered_map<UnitConfigItem, BaseUnit *> config_to_unit;
 
   // Create units. The links will be set later.

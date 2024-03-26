@@ -84,13 +84,13 @@ TreeData::List TreeData::children(const std::string & path)
 
 std::string TreeData::text(const std::string & fail)
 {
-  // TODO(Takagi, Isamu): conversion fail
+  // TODO(Takagi, Isamu): check conversion failure
   return yaml_.as<std::string>(fail);
 }
 
 double TreeData::real(double fail)
 {
-  // TODO(Takagi, Isamu): conversion fail
+  // TODO(Takagi, Isamu): check conversion failure
   return yaml_.as<double>(fail);
 }
 

@@ -19,53 +19,10 @@
 #include "loader.hpp"
 #include "units.hpp"
 
-#include <deque>
 #include <unordered_map>
 
 namespace diagnostic_graph_aggregator
 {
-
-std::vector<BaseUnit *> topological_sort(const Graph & graph)
-{
-  std::unordered_map<BaseUnit *, int> degrees;
-  std::deque<BaseUnit *> units;
-  std::deque<BaseUnit *> result;
-  std::deque<BaseUnit *> buffer;
-
-  // Create a list of raw pointer units.
-  for (const auto & unit : graph.nodes()) units.push_back(unit.get());
-  for (const auto & unit : graph.diags()) units.push_back(unit.get());
-
-  // Count degrees of each unit.
-  for (const auto & unit : units) {
-    for (const auto & child : unit->get_child_units()) ++degrees[child];
-  }
-
-  // Find initial units that are zero degrees.
-  for (const auto & unit : units) {
-    if (degrees[unit] == 0) buffer.push_back(unit);
-  }
-
-  // Sort by topological order.
-  while (!buffer.empty()) {
-    const auto unit = buffer.front();
-    buffer.pop_front();
-    for (const auto & child : unit->get_child_units()) {
-      if (--degrees[child] == 0) {
-        buffer.push_back(child);
-      }
-    }
-    result.push_back(unit);
-  }
-
-  // Detect circulation because the result does not include the nodes on the loop.
-  if (result.size() != units.size()) {
-    throw GraphStructure("detect graph circulation");
-  }
-
-  // Reverse the result to process from leaf node.
-  return std::vector<BaseUnit *>(result.rbegin(), result.rend());
-}
 
 void Graph::create(const std::string & file)
 {
@@ -73,8 +30,9 @@ void Graph::create(const std::string & file)
   nodes_ = graph.release_nodes();
   diags_ = graph.release_diags();
   links_ = graph.release_links();
-  units_ = topological_sort(*this);
   for (const auto & diag : diags_) names_[diag->get_name()] = diag.get();
+  for (const auto & node : nodes_) units_.push_back(node.get());
+  for (const auto & diag : diags_) units_.push_back(diag.get());
 }
 
 void Graph::update(const rclcpp::Time & stamp)
