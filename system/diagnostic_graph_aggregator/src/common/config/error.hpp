@@ -62,32 +62,37 @@ struct InvalidType : public Exception
   }
 };
 
-struct UnknownSubstitution : public Exception
+struct FileNotFound : public Exception
 {
-  explicit UnknownSubstitution(const std::string & substitution, const TreePath & path)
-  : Exception(format(substitution, path))
+  explicit FileNotFound(const TreePath & path, const std::string & file)
+  : Exception(format(path, file))
   {
   }
-  static std::string format(const std::string & substitution, const TreePath & path)
+  static std::string format(const TreePath & path, const std::string & file)
+  {
+    return "file not found: " + file + path.text();
+  }
+};
+
+struct UnknownSubstitution : public Exception
+{
+  explicit UnknownSubstitution(const TreePath & path, const std::string & substitution)
+  : Exception(format(path, substitution))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & substitution)
   {
     return "unknown substitution: " + substitution + path.text();
   }
 };
 
 /*
-struct FileNotFound : public Exception
+struct UnknownUnitType : public Exception
 {
-  using Exception::Exception;
-};
-
-struct UnknownType : public Exception
-{
-  using Exception::Exception;
 };
 
 struct InvalidValue : public Exception
 {
-  using Exception::Exception;
 };
 
 struct PathConflict : public Exception

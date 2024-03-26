@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <queue>
 #include <regex>
+#include <utility>
 
 // DEBUG
 #include <iostream>
@@ -41,7 +42,7 @@ std::string resolve_substitution(const std::string & substitution, const TreeDat
   if (words.size() == 1 && words[0] == "dirname") {
     return std::filesystem::path(data.path().file()).parent_path();
   }
-  throw UnknownSubstitution(substitution, data.path());
+  throw UnknownSubstitution(data.path(), substitution);
 }
 
 std::string resolve_file_path(const std::string & path, const TreeData & data)
@@ -57,44 +58,37 @@ std::string resolve_file_path(const std::string & path, const TreeData & data)
   return result;
 }
 
-FileConfig::FileConfig(const PathConfig * path)
+FileLoader::FileLoader(const PathConfig * path)
 {
-  std::cout << "==================== load_file ====================" << std::endl;
-  std::cout << path->original << std::endl;
-  std::cout << path->resolved << std::endl;
-
+  if (!std::filesystem::exists(path->resolved)) {
+    throw FileNotFound(path->data.path(), path->resolved);
+  }
   TreeData tree = TreeData::Load(path->resolved);
+
   const auto paths = tree.optional("files").children("files");
   const auto edits = tree.optional("edits").children("edits");
   const auto units = tree.optional("nodes").children("nodes");
-  for (const auto & data : paths) parse_path_config(data);
-  for (const auto & data : edits) parse_edit_config(data);
-  for (const auto & data : units) parse_unit_config(data);
-
-  std::cout << "----- files -----" << std::endl;
-  for (const auto & data : paths_) data->data.dump();
-
-  std::cout << "----- edits -----" << std::endl;
-  for (const auto & data : edits_) data->data.dump();
-
-  std::cout << "----- units -----" << std::endl;
-  for (const auto & data : units_) data->data.dump();
+  for (const auto & data : paths) create_path_config(data);
+  for (const auto & data : edits) create_edit_config(data);
+  for (const auto & data : units) create_unit_config(data);
 }
 
-void FileConfig::parse_path_config(const TreeData & data)
+PathConfig * FileLoader::create_path_config(const TreeData & data)
 {
   const auto path = paths_.emplace_back(std::make_unique<PathConfig>(data)).get();
   path->original = path->data.required("path").text();
   path->resolved = resolve_file_path(path->original, data);
+  return path;
 }
 
-void FileConfig::parse_edit_config(const TreeData & data)
+EditConfig * FileLoader::create_edit_config(const TreeData & data)
 {
   const auto edit = edits_.emplace_back(std::make_unique<EditConfig>(data)).get();
   edit->type = edit->data.required("type").text();
+  return edit;
 }
 
-void FileConfig::parse_unit_config(const TreeData & data)
+UnitConfig * FileLoader::create_unit_config(const TreeData & data)
 {
   const auto unit = units_.emplace_back(std::make_unique<UnitConfig>(data)).get();
   unit->type = unit->data.required("type").text();
@@ -102,11 +96,36 @@ void FileConfig::parse_unit_config(const TreeData & data)
 
   const auto list = unit->data.optional("list").children();
   for (const auto & data : list) {
-    parse_unit_config(data);
+    unit->list.push_back(create_link_config(data, unit));
   }
+  return unit;
 }
 
-RootConfig::RootConfig(const PathConfig * root)
+LinkConfig * FileLoader::create_link_config(const TreeData & data, UnitConfig * unit)
+{
+  const auto link = links_.emplace_back(std::make_unique<LinkConfig>()).get();
+  link->p = unit;
+  link->c = create_unit_config(data);
+  return link;
+}
+
+void FileLoader::release(FileConfig & config)
+{
+  for (auto & path : paths_) config.paths.push_back(std::move(path));
+  for (auto & edit : edits_) config.edits.push_back(std::move(edit));
+  for (auto & unit : units_) config.units.push_back(std::move(unit));
+  for (auto & link : links_) config.links.push_back(std::move(link));
+}
+
+TreeLoader TreeLoader::Load(const std::string & path)
+{
+  PathConfig root(TreeData::None());
+  root.original = path;
+  root.resolved = path;
+  return TreeLoader(&root);
+}
+
+TreeLoader::TreeLoader(const PathConfig * root)
 {
   std::queue<const PathConfig *> paths;
   paths.push(root);
@@ -121,12 +140,11 @@ RootConfig::RootConfig(const PathConfig * root)
   }
 }
 
-RootConfig RootConfig::Load(const std::string & path)
+FileConfig TreeLoader::flatten()
 {
-  PathConfig root(TreeData::None());
-  root.original = path;
-  root.resolved = path;
-  return RootConfig(&root);
+  FileConfig config;
+  for (auto & file : files_) file.release(config);
+  return config;
 }
 
 }  // namespace diagnostic_graph_aggregator

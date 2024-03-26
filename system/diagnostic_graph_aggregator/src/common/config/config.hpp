@@ -24,6 +24,11 @@
 namespace diagnostic_graph_aggregator
 {
 
+struct PathConfig;
+struct EditConfig;
+struct UnitConfig;
+struct LinkConfig;
+
 struct PathConfig
 {
   explicit PathConfig(const TreeData & data) : data(data) {}
@@ -39,42 +44,59 @@ struct EditConfig
   std::string type;
 };
 
+struct LinkConfig
+{
+  using Item = LinkConfig *;
+  using List = std::vector<LinkConfig::Item>;
+  UnitConfig * p;
+  UnitConfig * c;
+};
+
 struct UnitConfig
 {
   explicit UnitConfig(const TreeData & data) : data(data) {}
   TreeData data;
   std::string type;
   std::string path;
+  LinkConfig::Item item;
+  LinkConfig::List list;
 };
 
-struct LinkConfig
+struct FileConfig
 {
+  std::vector<std::unique_ptr<PathConfig>> paths;
+  std::vector<std::unique_ptr<EditConfig>> edits;
+  std::vector<std::unique_ptr<UnitConfig>> units;
+  std::vector<std::unique_ptr<LinkConfig>> links;
 };
 
-class FileConfig
+class FileLoader
 {
 public:
-  explicit FileConfig(const PathConfig * path);
+  explicit FileLoader(const PathConfig * path);
   const auto & paths() const { return paths_; }
+  void release(FileConfig & config);
 
 private:
-  void parse_path_config(const TreeData & data);
-  void parse_edit_config(const TreeData & data);
-  void parse_unit_config(const TreeData & data);
+  PathConfig * create_path_config(const TreeData & data);
+  EditConfig * create_edit_config(const TreeData & data);
+  UnitConfig * create_unit_config(const TreeData & data);
+  LinkConfig * create_link_config(const TreeData & data, UnitConfig * unit);
   std::vector<std::unique_ptr<PathConfig>> paths_;
   std::vector<std::unique_ptr<EditConfig>> edits_;
   std::vector<std::unique_ptr<UnitConfig>> units_;
   std::vector<std::unique_ptr<LinkConfig>> links_;
 };
 
-class RootConfig
+class TreeLoader
 {
 public:
-  static RootConfig Load(const std::string & path);
-  explicit RootConfig(const PathConfig * root);
+  static TreeLoader Load(const std::string & path);
+  explicit TreeLoader(const PathConfig * root);
+  FileConfig flatten();
 
 private:
-  std::vector<FileConfig> files_;
+  std::vector<FileLoader> files_;
 };
 
 }  // namespace diagnostic_graph_aggregator
