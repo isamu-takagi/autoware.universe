@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__CONFIG__DATA_HPP_
-#define COMMON__CONFIG__DATA_HPP_
+#ifndef COMMON__GRAPH__DATA_HPP_
+#define COMMON__GRAPH__DATA_HPP_
 
 #include "error.hpp"
 
@@ -51,4 +51,4 @@ private:
 
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // COMMON__CONFIG__DATA_HPP_
+#endif  // COMMON__GRAPH__DATA_HPP_

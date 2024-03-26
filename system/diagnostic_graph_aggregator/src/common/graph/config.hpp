@@ -15,118 +15,94 @@
 #ifndef COMMON__GRAPH__CONFIG_HPP_
 #define COMMON__GRAPH__CONFIG_HPP_
 
-#include <yaml-cpp/yaml.h>
+#include "data.hpp"
 
 #include <memory>
-#include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
+
+// DEBUG
+#include <iostream>
 
 namespace diagnostic_graph_aggregator
 {
 
-struct ConfigData
+struct PathConfig;
+struct EditConfig;
+struct UnitConfig;
+struct LinkConfig;
+
+struct PathConfig
 {
-  explicit ConfigData(const std::string & file);
-  ConfigData load(YAML::Node yaml);
-  ConfigData type(const std::string & name) const;
-  ConfigData node(const size_t index) const;
-
-  template <class T>
-  T take(const std::string & name, const T & fail)
-  {
-    const auto yaml = take_yaml(name);
-    return yaml ? yaml.value().as<T>() : fail;
-  }
-
-  std::optional<YAML::Node> take_yaml(const std::string & name);
-  std::string take_text(const std::string & name);
-  std::string take_text(const std::string & name, const std::string & fail);
-  std::vector<YAML::Node> take_list(const std::string & name);
-
-  std::string file;
-  std::string mark;
-  std::unordered_map<std::string, YAML::Node> object;
-};
-
-struct BaseConfig
-{
-  explicit BaseConfig(const ConfigData & data) : data(data) {}
-  ConfigData data;
-};
-
-struct PathConfig : public BaseConfig
-{
-  using SharedPtr = std::shared_ptr<PathConfig>;
-  using SharedPtrList = std::vector<SharedPtr>;
-  using BaseConfig::BaseConfig;
+  explicit PathConfig(const TreeData & data) : data(data) {}
+  TreeData data;
   std::string original;
   std::string resolved;
 };
 
-struct UnitConfig : public BaseConfig
+struct EditConfig
 {
-  using SharedPtr = std::shared_ptr<UnitConfig>;
-  using SharedPtrList = std::vector<SharedPtr>;
-  using BaseConfig::BaseConfig;
+  explicit EditConfig(const TreeData & data) : data(data) {}
+  TreeData data;
+  std::string type;
+};
+
+struct LinkConfig
+{
+  using Item = LinkConfig *;
+  using List = std::vector<LinkConfig::Item>;
+  UnitConfig * parent;
+  UnitConfig * child;
+};
+
+struct UnitConfig
+{
+  explicit UnitConfig(const TreeData & data) : data(data) {}
+  TreeData data;
   std::string type;
   std::string path;
-  UnitConfig::SharedPtrList children;
+  LinkConfig::Item item;
+  LinkConfig::List list;
+
+  ~UnitConfig() { std::cout << "remove unit: " << type << std::endl; }
 };
 
-struct EditConfig : public BaseConfig
+struct FileConfig
 {
-  using SharedPtr = std::shared_ptr<EditConfig>;
-  using SharedPtrList = std::vector<SharedPtr>;
-  using BaseConfig::BaseConfig;
-  std::string type;
-  std::string path;
+  std::vector<std::unique_ptr<PathConfig>> paths;
+  std::vector<std::unique_ptr<EditConfig>> edits;
+  std::vector<std::unique_ptr<UnitConfig>> units;
+  std::vector<std::unique_ptr<LinkConfig>> links;
 };
 
-struct FileConfig : public BaseConfig
+class FileLoader
 {
-  using SharedPtr = std::shared_ptr<FileConfig>;
-  using SharedPtrList = std::vector<SharedPtr>;
-  using BaseConfig::BaseConfig;
-  PathConfig::SharedPtrList paths;
-  UnitConfig::SharedPtrList nodes;
-  EditConfig::SharedPtrList edits;
+public:
+  explicit FileLoader(const PathConfig * path);
+  const auto & paths() const { return paths_; }
+  void release(FileConfig & config);
+
+private:
+  PathConfig * create_path_config(const TreeData & data);
+  EditConfig * create_edit_config(const TreeData & data);
+  UnitConfig * create_unit_config(const TreeData & data);
+  LinkConfig * create_link_config(const TreeData & data, UnitConfig * unit);
+  std::vector<std::unique_ptr<PathConfig>> paths_;
+  std::vector<std::unique_ptr<EditConfig>> edits_;
+  std::vector<std::unique_ptr<UnitConfig>> units_;
+  std::vector<std::unique_ptr<LinkConfig>> links_;
 };
 
-struct RootConfig
+class TreeLoader
 {
-  FileConfig::SharedPtrList files;
-  UnitConfig::SharedPtrList nodes;
-  EditConfig::SharedPtrList edits;
+public:
+  static TreeLoader Load(const std::string & path);
+  explicit TreeLoader(const PathConfig * root);
+  FileConfig flatten();
+
+private:
+  std::vector<FileLoader> files_;
 };
-
-template <class T>
-T error(const std::string & text, const ConfigData & data)
-{
-  const auto hint = data.mark.empty() ? data.file : data.mark + ":" + data.file;
-  return T(text + " (" + hint + ")");
-}
-
-template <class T>
-T error(const std::string & text)
-{
-  return T(text);
-}
-
-template <class T>
-T error(const std::string & text, const std::string & value, const ConfigData & data)
-{
-  return error<T>(text + ": " + value, data);
-}
-
-template <class T>
-T error(const std::string & text, const std::string & value)
-{
-  return error<T>(text + ": " + value);
-}
-
-RootConfig load_root_config(const std::string & path);
 
 }  // namespace diagnostic_graph_aggregator
 
