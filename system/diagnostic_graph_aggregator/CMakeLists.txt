@@ -36,16 +36,16 @@ target_include_directories(aggregator PRIVATE src/common)
 #)
 #target_include_directories(plantuml PRIVATE src/common)
 
-#if(BUILD_TESTING)
-#  get_filename_component(RESOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/test/files ABSOLUTE)
-#  ament_auto_add_gtest(gtest_${PROJECT_NAME}
-#    test/src/test1.cpp
-#    test/src/test2.cpp
-#    test/src/utils.cpp
-#  )
-#  target_compile_definitions(gtest_${PROJECT_NAME} PRIVATE TEST_RESOURCE_PATH="${RESOURCE_PATH}")
-#  target_include_directories(gtest_${PROJECT_NAME} PRIVATE src/common)
-#endif()
+if(BUILD_TESTING)
+  get_filename_component(RESOURCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/test/files ABSOLUTE)
+  ament_auto_add_gtest(gtest_${PROJECT_NAME}
+    test/src/test1.cpp
+    test/src/test2.cpp
+    test/src/utils.cpp
+  )
+  target_compile_definitions(gtest_${PROJECT_NAME} PRIVATE TEST_RESOURCE_PATH="${RESOURCE_PATH}")
+  target_include_directories(gtest_${PROJECT_NAME} PRIVATE src/common)
+endif()
 
 install(PROGRAMS
   script/dump.py

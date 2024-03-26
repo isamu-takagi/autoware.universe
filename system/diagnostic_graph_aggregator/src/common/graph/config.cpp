@@ -94,6 +94,10 @@ UnitConfig * FileLoader::create_unit_config(const TreeData & data)
   unit->type = unit->data.required("type").text();
   unit->path = unit->data.optional("path").text();
 
+  const auto item = unit->data.optional("item").child("c");
+  if (item.is_valid()) {
+    unit->list.push_back(create_link_config(item, unit));
+  }
   const auto list = unit->data.optional("list").children();
   for (const auto & data : list) {
     unit->list.push_back(create_link_config(data, unit));
@@ -169,16 +173,17 @@ void apply_links(FileConfig & config)
   std::unordered_map<UnitConfig *, UnitConfig *> unit_to_unit;
   for (const auto & unit : link_units) {
     const auto path = unit->data.required("link").text();
-    const auto pair = path_to_unit.find(path);
-    if (pair == path_to_unit.end()) {
+    if (path_to_unit.count(path) == 0) {
       throw PathNotFound(unit->data.path(), path);
     }
-    unit_to_unit[unit.get()] = pair->second;
+    unit_to_unit[unit.get()] = path_to_unit.at(path);
   }
 
   // Update links.
   for (const auto & link : config.links) {
-    link->child = unit_to_unit.at(link->child);
+    if (unit_to_unit.count(link->child) != 0) {
+      link->child = unit_to_unit.at(link->child);
+    }
   }
 
   // TODO(Takagi, Isamu): check graph loop

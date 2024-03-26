@@ -193,6 +193,33 @@ void MinUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
+RemapUnit::RemapUnit(const UnitConfigItem & config) : NodeUnit(config)
+{
+}
+
+void RemapUnit::initialize_children(Linker & linker)
+{
+  link_ = linker.take_child_item(this);
+}
+
+void RemapUnit::update_status()
+{
+  const auto level = link_->get_child()->get_level();
+  status_.level = (level == level_from_) ? level_to_ : level;
+}
+
+WarnToOkUnit::WarnToOkUnit(const UnitConfigItem & config) : RemapUnit(config)
+{
+  level_from_ = DiagnosticStatus::WARN;
+  level_to_ = DiagnosticStatus::OK;
+}
+
+WarnToErrorUnit::WarnToErrorUnit(const UnitConfigItem & config) : RemapUnit(config)
+{
+  level_from_ = DiagnosticStatus::WARN;
+  level_to_ = DiagnosticStatus::ERROR;
+}
+
 ConstUnit::ConstUnit(const UnitConfigItem & config, DiagnosticLevel level) : NodeUnit(config)
 {
   status_.level = level;

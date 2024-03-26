@@ -56,6 +56,16 @@ TreeData::Item TreeData::optional(const std::string & name)
   return TreeData(data, path);
 }
 
+bool TreeData::is_valid() const
+{
+  return yaml_.Type() != YAML::NodeType::Undefined;
+}
+
+TreeData::Item TreeData::child(const std::string & path)
+{
+  return TreeData(yaml_, path_.child(path));
+}
+
 TreeData::List TreeData::children(const std::string & path)
 {
   if (yaml_.Type() == YAML::NodeType::Undefined) {

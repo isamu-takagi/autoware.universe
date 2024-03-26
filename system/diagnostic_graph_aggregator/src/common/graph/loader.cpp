@@ -59,12 +59,13 @@ GraphLoader::GraphLoader(const std::string & file)
   TreeLoader tree = TreeLoader::Load(file);
   FileConfig root = tree.flatten();
 
-  // Create units and links.
+  // Create units. The links will be set later.
   for (const auto & config : root.units) {
     const auto unit = create_unit(config.get());
     config_to_unit_[config.get()] = unit;
   }
 
+  // Create links. Use a mapping from config to unit.
   LinkerImpl linker;
   for (const auto & config : root.links) {
     const auto link = create_link(config.get());
@@ -72,7 +73,7 @@ GraphLoader::GraphLoader(const std::string & file)
     linker.child_links_[link->get_parent()].push_back(link);
   }
 
-  // Init parent and child links.
+  // Set parent and child links to units.
   for (auto & node : nodes_) node->initialize_parents(linker);
   for (auto & diag : diags_) diag->initialize_parents(linker);
   for (auto & node : nodes_) node->initialize_children(linker);
@@ -141,14 +142,12 @@ std::unique_ptr<NodeUnit> GraphLoader::create_node(UnitConfigItem config)
   if (config->type == "or") {
     return std::make_unique<MinUnit>(config);
   }
-  /*
   if (config->type == "warn-to-ok") {
-    return std::make_unique<RemapUnit>(config->path, DiagnosticStatus::OK);
+    return std::make_unique<WarnToOkUnit>(config);
   }
   if (config->type == "warn-to-error") {
-    return std::make_unique<RemapUnit>(config->path, DiagnosticStatus::ERROR);
+    return std::make_unique<WarnToErrorUnit>(config);
   }
-  */
   if (config->type == "ok") {
     return std::make_unique<OkUnit>(config);
   }

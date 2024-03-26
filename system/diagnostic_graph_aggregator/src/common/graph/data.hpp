@@ -39,8 +39,10 @@ public:
   const auto & path() const { return path_; }
   Item required(const std::string & name);
   Item optional(const std::string & name);
-  List children(const std::string & path = "");
+  bool is_valid() const;
 
+  Item child(const std::string & path);
+  List children(const std::string & path = "");
   std::string text(const std::string & fail = "");
   double real(double fail);
 

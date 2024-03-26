@@ -175,6 +175,36 @@ private:
   void update_status() override;
 };
 
+class RemapUnit : public NodeUnit
+{
+public:
+  explicit RemapUnit(const UnitConfigItem & config);
+  void initialize_children(Linker & linker) override;
+  std::vector<UnitLink *> get_child_links() const override { return {link_}; }
+
+protected:
+  UnitLink * link_;
+  DiagnosticLevel level_from_;
+  DiagnosticLevel level_to_;
+
+private:
+  void update_status() override;
+};
+
+class WarnToOkUnit : public RemapUnit
+{
+public:
+  explicit WarnToOkUnit(const UnitConfigItem & config);
+  std::string get_type() const override { return "warn-to-ok"; }
+};
+
+class WarnToErrorUnit : public RemapUnit
+{
+public:
+  explicit WarnToErrorUnit(const UnitConfigItem & config);
+  std::string get_type() const override { return "warn-to-error"; }
+};
+
 class ConstUnit : public NodeUnit
 {
 public:
