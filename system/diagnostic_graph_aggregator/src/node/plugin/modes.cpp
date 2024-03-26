@@ -41,7 +41,7 @@ OperationModes::OperationModes(rclcpp::Node & node, const Graph & graph)
     if (iter != paths.end()) {
       return iter->second;
     }
-    throw error<PathNotFound>("summary node is not found", name);
+    throw ModeNotFound(name);
   };
 
   // clang-format off

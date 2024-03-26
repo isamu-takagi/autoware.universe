@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__GRAPH__TYPES_HPP_
-#define COMMON__GRAPH__TYPES_HPP_
+#ifndef COMMON__GRAPH__TYPES__UNITS_HPP_
+#define COMMON__GRAPH__TYPES__UNITS_HPP_
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -28,6 +28,8 @@
 #include <tier4_system_msgs/msg/diagnostic_graph.hpp>
 #include <tier4_system_msgs/msg/diagnostic_link.hpp>
 #include <tier4_system_msgs/msg/diagnostic_node.hpp>
+
+#include <vector>
 
 namespace diagnostic_graph_aggregator
 {
@@ -52,6 +54,9 @@ class Graph;
 class LinkFactory;
 class UnitFactory;
 
+using UnitLinkItem = UnitLink *;
+using UnitLinkList = std::vector<UnitLinkItem>;
+
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // COMMON__GRAPH__TYPES_HPP_
+#endif  // COMMON__GRAPH__TYPES__UNITS_HPP_

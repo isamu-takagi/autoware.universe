@@ -15,8 +15,9 @@
 #ifndef COMMON__GRAPH__UNITS_HPP_
 #define COMMON__GRAPH__UNITS_HPP_
 
-#include "config.hpp"
-#include "types.hpp"
+#include "types/config.hpp"
+#include "types/loader.hpp"
+#include "types/units.hpp"
 
 #include <rclcpp/time.hpp>
 
@@ -40,12 +41,11 @@ private:
 class UnitLink : private VectorElement
 {
 public:
+  UnitLink(BaseUnit * parent, BaseUnit * child);
   DiagLinkStruct get_struct() const { return struct_; }
   DiagLinkStatus get_status() const { return status_; }
-  NodeUnit * get_parent() const { return parent_; }
+  BaseUnit * get_parent() const { return parent_; }
   BaseUnit * get_child() const { return child_; }
-  void set_parent(NodeUnit * parent) { parent_ = parent; }
-  void set_child(BaseUnit * child) { child_ = child; }
   void initialize_struct();  // This function must be called after setting the index.
   void initialize_status();  // This function must be called after setting the struct.
   using VectorElement::get_index;
@@ -55,7 +55,7 @@ public:
   void set_used(bool used) { status_.used = used; }
 
 private:
-  NodeUnit * parent_;
+  BaseUnit * parent_;
   BaseUnit * child_;
   DiagLinkStruct struct_;
   DiagLinkStatus status_;
@@ -71,7 +71,8 @@ public:
   virtual std::vector<UnitLink *> get_child_links() const = 0;
   virtual std::vector<BaseUnit *> get_child_units() const;
   virtual bool is_leaf() const = 0;
-  virtual void initialize_struct();  // This function must be called after setting the index.
+  virtual void initialize_struct(
+    Linker & linker);                // This function must be called after setting the index.
   virtual void initialize_status();  // This function must be called after setting the struct.
   void set_parent_links(const std::vector<UnitLink *> & parents) { parents_ = parents; }
   using VectorElement::get_index;
@@ -90,13 +91,14 @@ private:
 class NodeUnit : public BaseUnit
 {
 public:
-  explicit NodeUnit(const UnitConfig::SharedPtr & config);
+  explicit NodeUnit(const UnitConfigItem & config);
   DiagNodeStruct get_struct() const { return struct_; }
   DiagNodeStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_path() const override { return struct_.path; }
   bool is_leaf() const override { return false; }
-  void initialize_struct() override;  // This function must be called after setting the index.
+  void initialize_struct(
+    Linker & linker) override;  // This function must be called after setting the index.
 
 protected:
   DiagNodeStruct struct_;
@@ -106,7 +108,7 @@ protected:
 class LeafUnit : public BaseUnit
 {
 public:
-  explicit LeafUnit(const UnitConfig::SharedPtr & config);
+  explicit LeafUnit(const UnitConfigItem & config);
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
@@ -122,7 +124,7 @@ protected:
 class DiagUnit : public LeafUnit
 {
 public:
-  explicit DiagUnit(const UnitConfig::SharedPtr & config);
+  explicit DiagUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "diag"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
   bool on_time(const rclcpp::Time & stamp);
@@ -137,7 +139,7 @@ private:
 class MaxUnit : public NodeUnit
 {
 public:
-  MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  explicit MaxUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "and"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
@@ -159,7 +161,7 @@ private:
 class MinUnit : public NodeUnit
 {
 public:
-  MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links);
+  explicit MinUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "or"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
@@ -171,7 +173,7 @@ private:
 class ConstUnit : public NodeUnit
 {
 public:
-  ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level);
+  ConstUnit(const UnitConfigItem & config, DiagnosticLevel level);
   std::vector<UnitLink *> get_child_links() const override { return {}; }
 
 private:
@@ -181,28 +183,28 @@ private:
 class OkUnit : public ConstUnit
 {
 public:
-  explicit OkUnit(const UnitConfig::SharedPtr & config);
+  explicit OkUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "ok"; }
 };
 
 class WarnUnit : public ConstUnit
 {
 public:
-  explicit WarnUnit(const UnitConfig::SharedPtr & config);
+  explicit WarnUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "warn"; }
 };
 
 class ErrorUnit : public ConstUnit
 {
 public:
-  explicit ErrorUnit(const UnitConfig::SharedPtr & config);
+  explicit ErrorUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "error"; }
 };
 
 class StaleUnit : public ConstUnit
 {
 public:
-  explicit StaleUnit(const UnitConfig::SharedPtr & config);
+  explicit StaleUnit(const UnitConfigItem & config);
   std::string get_type() const override { return "stale"; }
 };
 

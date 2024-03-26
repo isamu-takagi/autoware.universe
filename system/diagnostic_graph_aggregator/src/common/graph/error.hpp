@@ -16,54 +16,122 @@
 #define COMMON__GRAPH__ERROR_HPP_
 
 #include <stdexcept>
+#include <string>
 
 namespace diagnostic_graph_aggregator
 {
+
+struct TreePath
+{
+  explicit TreePath(const std::string & file);
+  TreePath field(const std::string & name);
+  TreePath child(const std::string & path);
+  TreePath child(const std::string & path, const size_t index);
+  TreePath child(const size_t index);
+  std::string text() const;
+  std::string file() const { return file_; }
+  std::string node() const { return node_; }
+  std::string name() const { return name_; }
+
+private:
+  std::string file_;
+  std::string node_;
+  std::string name_;
+};
 
 struct Exception : public std::runtime_error
 {
   using runtime_error::runtime_error;
 };
 
-class FileNotFound : public Exception
+struct FileNotFound : public Exception
+{
+  explicit FileNotFound(const TreePath & path, const std::string & file)
+  : Exception(format(path, file))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & file)
+  {
+    return "file is not found: " + file + path.text();
+  }
+};
+
+struct FieldNotFound : public Exception
+{
+  explicit FieldNotFound(const TreePath & path) : Exception(format(path)) {}
+  static std::string format(const TreePath & path)
+  {
+    return "required field is not found: " + path.name() + path.text();
+  }
+};
+
+struct InvalidType : public Exception
+{
+  explicit InvalidType(const TreePath & path) : Exception(format(path)) {}
+  static std::string format(const TreePath & path)
+  {
+    return "field is not a list type: " + path.name() + path.text();
+  }
+};
+
+struct ModeNotFound : public Exception
+{
+  explicit ModeNotFound(const std::string & path) : Exception(format(path)) {}
+  static std::string format(const std::string & path) { return "mode path is not found: " + path; }
+};
+
+struct PathConflict : public Exception
+{
+  explicit PathConflict(const std::string & path) : Exception(format(path)) {}
+  static std::string format(const std::string & path) { return "node path is not unique: " + path; }
+};
+
+struct PathNotFound : public Exception
+{
+  explicit PathNotFound(const TreePath & path, const std::string & link)
+  : Exception(format(path, link))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & link)
+  {
+    return "path is not found: " + link + path.text();
+  }
+};
+
+struct UnknownSubstitution : public Exception
+{
+  explicit UnknownSubstitution(const TreePath & path, const std::string & substitution)
+  : Exception(format(path, substitution))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & substitution)
+  {
+    return "unknown substitution: " + substitution + path.text();
+  }
+};
+
+struct UnknownUnitType : public Exception
+{
+  explicit UnknownUnitType(const TreePath & path, const std::string & type)
+  : Exception(format(path, type))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & type)
+  {
+    return "unknown unit type: " + type + path.text();
+  }
+};
+
+struct GraphStructure : public Exception
 {
   using Exception::Exception;
 };
 
-class UnknownType : public Exception
+/*
+struct InvalidValue : public Exception
 {
-  using Exception::Exception;
 };
-
-class InvalidType : public Exception
-{
-  using Exception::Exception;
-};
-
-class InvalidValue : public Exception
-{
-  using Exception::Exception;
-};
-
-class FieldNotFound : public Exception
-{
-  using Exception::Exception;
-};
-
-class PathConflict : public Exception
-{
-  using Exception::Exception;
-};
-
-class PathNotFound : public Exception
-{
-  using Exception::Exception;
-};
-
-class GraphStructure : public Exception
-{
-  using Exception::Exception;
-};
+*/
 
 }  // namespace diagnostic_graph_aggregator
 
