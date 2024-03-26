@@ -23,4 +23,11 @@ constexpr char const * diag = "diag";
 
 }  // namespace diagnostic_graph_aggregator::unit_name
 
+namespace diagnostic_graph_aggregator::edit_name
+{
+
+constexpr char const * remove = "remove";
+
+}  // namespace diagnostic_graph_aggregator::edit_name
+
 #endif  // COMMON__GRAPH__TYPES__NAMES_HPP_

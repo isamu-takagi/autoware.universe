@@ -19,6 +19,7 @@
 #include "types/names.hpp"
 #include "units.hpp"
 
+#include <unordered_map>
 #include <utility>
 
 namespace diagnostic_graph_aggregator
@@ -58,19 +59,21 @@ GraphLoader::GraphLoader(const std::string & file)
 {
   TreeLoader tree = TreeLoader::Load(file);
   FileConfig root = tree.flatten();
+  std::unordered_map<UnitConfigItem, BaseUnit *> config_to_unit;
 
   // Create units. The links will be set later.
   for (const auto & config : root.units) {
-    const auto unit = create_unit(config.get());
-    config_to_unit_[config.get()] = unit;
+    config_to_unit[config.get()] = create_unit(config.get());
   }
 
   // Create links. Use a mapping from config to unit.
   LinkerImpl linker;
   for (const auto & config : root.links) {
-    const auto link = create_link(config.get());
-    linker.parent_links_[link->get_child()].push_back(link);
-    linker.child_links_[link->get_parent()].push_back(link);
+    const auto parent = config_to_unit.at(config->parent);
+    const auto child = config_to_unit.at(config->child);
+    const auto link = create_link(parent, child);
+    linker.parent_links_[child].push_back(link);
+    linker.child_links_[parent].push_back(link);
   }
 
   // Set parent and child links to units.
@@ -119,10 +122,8 @@ BaseUnit * GraphLoader::create_unit(UnitConfigItem config)
   }
 }
 
-UnitLink * GraphLoader::create_link(LinkConfigItem config)
+UnitLink * GraphLoader::create_link(BaseUnit * parent, BaseUnit * child)
 {
-  const auto parent = config_to_unit_.at(config->parent);
-  const auto child = config_to_unit_.at(config->child);
   return links_.emplace_back(std::make_unique<UnitLink>(parent, child)).get();
 }
 

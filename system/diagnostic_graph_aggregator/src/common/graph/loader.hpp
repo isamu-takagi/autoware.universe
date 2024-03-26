@@ -20,7 +20,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
@@ -35,8 +34,8 @@ public:
   std::vector<std::unique_ptr<UnitLink>> release_links();
 
 private:
+  UnitLink * create_link(BaseUnit * parent, BaseUnit * child);
   BaseUnit * create_unit(UnitConfigItem config);
-  UnitLink * create_link(LinkConfigItem config);
   std::unique_ptr<DiagUnit> create_diag(UnitConfigItem config);
   std::unique_ptr<NodeUnit> create_node(UnitConfigItem config);
 
@@ -44,7 +43,6 @@ private:
   std::vector<std::unique_ptr<NodeUnit>> nodes_;
   std::vector<std::unique_ptr<DiagUnit>> diags_;
   std::vector<std::unique_ptr<UnitLink>> links_;
-  std::unordered_map<UnitConfigItem, BaseUnit *> config_to_unit_;
 };
 
 }  // namespace diagnostic_graph_aggregator
