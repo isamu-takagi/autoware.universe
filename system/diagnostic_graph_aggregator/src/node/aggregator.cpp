@@ -30,7 +30,7 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
 
   // Init plugins.
   if (declare_parameter<bool>("use_operation_mode_availability")) {
-    modes_ = std::make_unique<OperationModes>(*this, graph_);
+    modes_ = std::make_unique<ModesAvailability>(*this, graph_);
   }
 
   // Init ros interface.
@@ -88,6 +88,9 @@ void AggregatorNode::on_diag(const DiagnosticArray & msg)
       unknown_diags_[status.name] = status;
     }
   }
+
+  // TODO(Takagi, Isamu): Publish immediately when graph status changes.
+  // pub_status_->publish();
 }
 
 }  // namespace diagnostic_graph_aggregator

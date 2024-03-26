@@ -16,7 +16,7 @@
 
 #include "config.hpp"
 #include "error.hpp"
-#include "factory.hpp"
+#include "loader.hpp"
 #include "units.hpp"
 
 #include <deque>

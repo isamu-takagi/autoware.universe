@@ -35,13 +35,13 @@ TEST(ConfigFile, FileNotFound)
 TEST(ConfigFile, UnknownSubstitution)
 {
   Graph graph;
-  EXPECT_THROW(graph.create(resource("test1/unknown-substitution.yaml")), UnknownType);
+  EXPECT_THROW(graph.create(resource("test1/unknown-substitution.yaml")), UnknownSubstitution);
 }
 
 TEST(ConfigFile, UnknownNodeType)
 {
   Graph graph;
-  EXPECT_THROW(graph.create(resource("test1/unknown-node-type.yaml")), UnknownType);
+  EXPECT_THROW(graph.create(resource("test1/unknown-unit-type.yaml")), UnknownUnitType);
 }
 
 TEST(ConfigFile, InvalidDictType)

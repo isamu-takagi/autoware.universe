@@ -37,11 +37,12 @@ public:
   TreeData(const YAML::Node & yaml, const TreePath & path);
 
   const auto & path() const { return path_; }
-  void dump() const;
   Item required(const std::string & name);
   Item optional(const std::string & name);
-  List children(const std::string & path = "");
+  bool is_valid() const;
 
+  Item child(const std::string & path);
+  List children(const std::string & path = "");
   std::string text(const std::string & fail = "");
   double real(double fail);
 

@@ -14,9 +14,6 @@
 
 #include "data.hpp"
 
-// DEBUG
-#include <iostream>
-
 namespace diagnostic_graph_aggregator
 {
 
@@ -59,6 +56,16 @@ TreeData::Item TreeData::optional(const std::string & name)
   return TreeData(data, path);
 }
 
+bool TreeData::is_valid() const
+{
+  return yaml_.Type() != YAML::NodeType::Undefined;
+}
+
+TreeData::Item TreeData::child(const std::string & path)
+{
+  return TreeData(yaml_, path_.child(path));
+}
+
 TreeData::List TreeData::children(const std::string & path)
 {
   if (yaml_.Type() == YAML::NodeType::Undefined) {
@@ -85,12 +92,6 @@ double TreeData::real(double fail)
 {
   // TODO(Takagi, Isamu): conversion fail
   return yaml_.as<double>(fail);
-}
-
-void TreeData::dump() const
-{
-  std::cout << "file: " << path_.file() << std::endl;
-  std::cout << "path: " << path_.node() << std::endl;
 }
 
 }  // namespace diagnostic_graph_aggregator

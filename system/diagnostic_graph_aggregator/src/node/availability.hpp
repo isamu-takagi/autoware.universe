@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE__PLUGIN__MODES_HPP_
-#define NODE__PLUGIN__MODES_HPP_
+#ifndef NODE__AVAILABILITY_HPP_
+#define NODE__AVAILABILITY_HPP_
 
 #include "graph/types/units.hpp"
 
@@ -24,10 +24,10 @@
 namespace diagnostic_graph_aggregator
 {
 
-class OperationModes
+class ModesAvailability
 {
 public:
-  OperationModes(rclcpp::Node & node, const Graph & graph);
+  ModesAvailability(rclcpp::Node & node, const Graph & graph);
   void update(const rclcpp::Time & stamp) const;
 
 private:
@@ -46,4 +46,4 @@ private:
 
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // NODE__PLUGIN__MODES_HPP_
+#endif  // NODE__AVAILABILITY_HPP_

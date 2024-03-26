@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__GRAPH__FACTORY_HPP_
-#define COMMON__GRAPH__FACTORY_HPP_
+#ifndef COMMON__GRAPH__LOADER_HPP_
+#define COMMON__GRAPH__LOADER_HPP_
 
 #include "types/config.hpp"
 #include "types/units.hpp"
@@ -49,4 +49,4 @@ private:
 
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // COMMON__GRAPH__FACTORY_HPP_
+#endif  // COMMON__GRAPH__LOADER_HPP_

@@ -71,10 +71,8 @@ public:
   virtual std::vector<UnitLink *> get_child_links() const = 0;
   virtual std::vector<BaseUnit *> get_child_units() const;
   virtual bool is_leaf() const = 0;
-  virtual void initialize_struct(
-    Linker & linker);                // This function must be called after setting the index.
-  virtual void initialize_status();  // This function must be called after setting the struct.
-  void set_parent_links(const std::vector<UnitLink *> & parents) { parents_ = parents; }
+  virtual void initialize_children(Linker & linker);
+  void initialize_parents(Linker & linker);
   using VectorElement::get_index;
   using VectorElement::set_index;
 
@@ -83,9 +81,8 @@ protected:
 
 private:
   virtual void update_status() = 0;  // Type dependent part of the update function.
-
-  std::optional<DiagnosticLevel> prev_level_;
   std::vector<UnitLink *> parents_;
+  std::optional<DiagnosticLevel> prev_level_;
 };
 
 class NodeUnit : public BaseUnit
@@ -97,8 +94,8 @@ public:
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_path() const override { return struct_.path; }
   bool is_leaf() const override { return false; }
-  void initialize_struct(
-    Linker & linker) override;  // This function must be called after setting the index.
+  void initialize_struct();  // This function must be called after setting the index.
+  void initialize_status();  // This function must be called after setting the struct.
 
 protected:
   DiagNodeStruct struct_;
@@ -115,6 +112,8 @@ public:
   std::string get_name() const { return struct_.name; }
   std::string get_path() const override { return struct_.path; }
   bool is_leaf() const override { return true; }
+  void initialize_struct();  // This function must be called after setting the index.
+  void initialize_status();  // This function must be called after setting the struct.
 
 protected:
   DiagLeafStruct struct_;
@@ -140,12 +139,15 @@ class MaxUnit : public NodeUnit
 {
 public:
   explicit MaxUnit(const UnitConfigItem & config);
+  void initialize_children(Linker & linker) override;
   std::string get_type() const override { return "and"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
+protected:
+  std::vector<UnitLink *> links_;
+
 private:
   void update_status() override;
-  std::vector<UnitLink *> links_;
 };
 
 class ShortCircuitMaxUnit : public MaxUnit
@@ -162,12 +164,45 @@ class MinUnit : public NodeUnit
 {
 public:
   explicit MinUnit(const UnitConfigItem & config);
+  void initialize_children(Linker & linker) override;
   std::string get_type() const override { return "or"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
+protected:
+  std::vector<UnitLink *> links_;
+
 private:
   void update_status() override;
-  std::vector<UnitLink *> links_;
+};
+
+class RemapUnit : public NodeUnit
+{
+public:
+  explicit RemapUnit(const UnitConfigItem & config);
+  void initialize_children(Linker & linker) override;
+  std::vector<UnitLink *> get_child_links() const override { return {link_}; }
+
+protected:
+  UnitLink * link_;
+  DiagnosticLevel level_from_;
+  DiagnosticLevel level_to_;
+
+private:
+  void update_status() override;
+};
+
+class WarnToOkUnit : public RemapUnit
+{
+public:
+  explicit WarnToOkUnit(const UnitConfigItem & config);
+  std::string get_type() const override { return "warn-to-ok"; }
+};
+
+class WarnToErrorUnit : public RemapUnit
+{
+public:
+  explicit WarnToErrorUnit(const UnitConfigItem & config);
+  std::string get_type() const override { return "warn-to-error"; }
 };
 
 class ConstUnit : public NodeUnit

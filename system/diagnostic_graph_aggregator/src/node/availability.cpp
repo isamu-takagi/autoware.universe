@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "modes.hpp"
+#include "availability.hpp"
 
 #include "graph/config.hpp"
 #include "graph/error.hpp"
@@ -26,7 +26,7 @@
 namespace diagnostic_graph_aggregator
 {
 
-OperationModes::OperationModes(rclcpp::Node & node, const Graph & graph)
+ModesAvailability::ModesAvailability(rclcpp::Node & node, const Graph & graph)
 {
   pub_ = node.create_publisher<Availability>("/system/operation_mode/availability", rclcpp::QoS(1));
 
@@ -55,7 +55,7 @@ OperationModes::OperationModes(rclcpp::Node & node, const Graph & graph)
   // clang-format on
 }
 
-void OperationModes::update(const rclcpp::Time & stamp) const
+void ModesAvailability::update(const rclcpp::Time & stamp) const
 {
   const auto is_ok = [](const BaseUnit * unit) {
     return unit->get_level() == DiagnosticStatus::OK;
