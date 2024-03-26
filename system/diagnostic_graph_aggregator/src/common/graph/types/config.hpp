@@ -26,9 +26,7 @@ struct UnitConfig;
 struct LinkConfig;
 
 using UnitConfigItem = UnitConfig *;
-using LinkConfigItem = LinkConfig *;
 using UnitConfigList = std::vector<UnitConfigItem>;
-using LinkConfigList = std::vector<LinkConfigItem>;
 
 }  // namespace diagnostic_graph_aggregator
 
