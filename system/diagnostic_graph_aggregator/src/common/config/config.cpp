@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <queue>
 #include <regex>
+#include <unordered_map>
 #include <utility>
 
 // DEBUG
@@ -26,6 +27,11 @@
 
 namespace diagnostic_graph_aggregator
 {
+
+namespace unit_type
+{
+constexpr char const * link = "link";
+}
 
 std::string resolve_substitution(const std::string & substitution, const TreeData & data)
 {
@@ -63,8 +69,8 @@ FileLoader::FileLoader(const PathConfig * path)
   if (!std::filesystem::exists(path->resolved)) {
     throw FileNotFound(path->data.path(), path->resolved);
   }
-  TreeData tree = TreeData::Load(path->resolved);
 
+  TreeData tree = TreeData::Load(path->resolved);
   const auto paths = tree.optional("files").children("files");
   const auto edits = tree.optional("edits").children("edits");
   const auto units = tree.optional("nodes").children("nodes");
@@ -104,8 +110,8 @@ UnitConfig * FileLoader::create_unit_config(const TreeData & data)
 LinkConfig * FileLoader::create_link_config(const TreeData & data, UnitConfig * unit)
 {
   const auto link = links_.emplace_back(std::make_unique<LinkConfig>()).get();
-  link->p = unit;
-  link->c = create_unit_config(data);
+  link->parent = unit;
+  link->child = create_unit_config(data);
   return link;
 }
 
@@ -140,10 +146,96 @@ TreeLoader::TreeLoader(const PathConfig * root)
   }
 }
 
+void apply_links(FileConfig & config)
+{
+  // Separate units into link types and others.
+  std::vector<std::unique_ptr<UnitConfig>> link_units;
+  std::vector<std::unique_ptr<UnitConfig>> node_units;
+  for (auto & unit : config.units) {
+    if (unit->type == unit_type::link) {
+      link_units.push_back(std::move(unit));
+    } else {
+      node_units.push_back(std::move(unit));
+    }
+  }
+
+  // Create a mapping from path to unit.
+  std::unordered_map<std::string, UnitConfig *> path_to_unit;
+  for (const auto & unit : node_units) {
+    if (unit->path.empty()) {
+      continue;
+    }
+    if (path_to_unit.count(unit->path)) {
+      throw PathConflict(unit->path);
+    }
+    path_to_unit[unit->path] = unit.get();
+  }
+
+  // Create a mapping from unit to unit.
+  std::unordered_map<UnitConfig *, UnitConfig *> unit_to_unit;
+  for (const auto & unit : link_units) {
+    const auto path = unit->data.required("link").text();
+    const auto pair = path_to_unit.find(path);
+    if (pair == path_to_unit.end()) {
+      throw PathNotFound(unit->data.path(), path);
+    }
+    unit_to_unit[unit.get()] = pair->second;
+  }
+
+  // Update links.
+  for (const auto & link : config.links) {
+    link->child = unit_to_unit.at(link->child);
+  }
+
+  // TODO(Takagi, Isamu): check graph loop
+
+  // Remove link type units from the graph.
+  config.units = std::move(node_units);
+}
+
+void apply_edits(FileConfig & config)
+{
+  (void)config;
+  // TODO(Takagi, Isamu)
+  /*
+  std::unordered_map<std::string, UnitConfig::SharedPtr> paths;
+  for (const auto & node : root.nodes) {
+    paths[node->path] = node;
+  }
+
+  std::unordered_set<UnitConfig::SharedPtr> removes;
+  for (const auto & edit : root.edits) {
+    if (edit->type == "remove") {
+      if (!paths.count(edit->path)) {
+
+        throw PathNotFound(edit->data.path(), path);
+      }
+      removes.insert(paths.at(edit->path));
+    }
+  }
+
+  const auto filter = [removes](const UnitConfig::SharedPtrList & nodes) {
+    UnitConfig::SharedPtrList result;
+    for (const auto & node : nodes) {
+      if (!removes.count(node)) {
+        result.push_back(node);
+      }
+    }
+    return result;
+  };
+  for (const auto & node : root.nodes) {
+    node->children = filter(node->children);
+  }
+  root.nodes = filter(root.nodes);
+  */
+}
+
 FileConfig TreeLoader::flatten()
 {
   FileConfig config;
   for (auto & file : files_) file.release(config);
+  apply_links(config);
+  apply_edits(config);
   return config;
 }
 

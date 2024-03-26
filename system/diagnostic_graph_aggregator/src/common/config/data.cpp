@@ -52,7 +52,7 @@ TreeData::Item TreeData::optional(const std::string & name)
   // TODO(Takagi, Isamu): check map type.
   const auto path = path_.field(name);
   if (!yaml_[name]) {
-    return TreeData({}, path);
+    return TreeData(YAML::Node(YAML::NodeType::Undefined), path);
   }
   const auto data = yaml_[name];
   yaml_.remove(name);
@@ -61,7 +61,7 @@ TreeData::Item TreeData::optional(const std::string & name)
 
 TreeData::List TreeData::children(const std::string & path)
 {
-  if (yaml_.Type() == YAML::NodeType::Null) {
+  if (yaml_.Type() == YAML::NodeType::Undefined) {
     return {};
   }
   if (yaml_.Type() != YAML::NodeType::Sequence) {

@@ -44,6 +44,18 @@ struct Exception : public std::runtime_error
   using runtime_error::runtime_error;
 };
 
+struct FileNotFound : public Exception
+{
+  explicit FileNotFound(const TreePath & path, const std::string & file)
+  : Exception(format(path, file))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & file)
+  {
+    return "file is not found: " + file + path.text();
+  }
+};
+
 struct FieldNotFound : public Exception
 {
   explicit FieldNotFound(const TreePath & path) : Exception(format(path)) {}
@@ -62,15 +74,21 @@ struct InvalidType : public Exception
   }
 };
 
-struct FileNotFound : public Exception
+struct PathConflict : public Exception
 {
-  explicit FileNotFound(const TreePath & path, const std::string & file)
-  : Exception(format(path, file))
+  explicit PathConflict(const std::string & path) : Exception(format(path)) {}
+  static std::string format(const std::string & path) { return "node path is not unique: " + path; }
+};
+
+struct PathNotFound : public Exception
+{
+  explicit PathNotFound(const TreePath & path, const std::string & link)
+  : Exception(format(path, link))
   {
   }
-  static std::string format(const TreePath & path, const std::string & file)
+  static std::string format(const TreePath & path, const std::string & link)
   {
-    return "file not found: " + file + path.text();
+    return "path is not found: " + link + path.text();
   }
 };
 
@@ -93,16 +111,6 @@ struct UnknownUnitType : public Exception
 
 struct InvalidValue : public Exception
 {
-};
-
-struct PathConflict : public Exception
-{
-  using Exception::Exception;
-};
-
-struct PathNotFound : public Exception
-{
-  using Exception::Exception;
 };
 
 struct GraphStructure : public Exception

@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 
+// DEBUG
+#include <iostream>
+
 namespace diagnostic_graph_aggregator
 {
 
@@ -48,8 +51,8 @@ struct LinkConfig
 {
   using Item = LinkConfig *;
   using List = std::vector<LinkConfig::Item>;
-  UnitConfig * p;
-  UnitConfig * c;
+  UnitConfig * parent;
+  UnitConfig * child;
 };
 
 struct UnitConfig
@@ -60,6 +63,8 @@ struct UnitConfig
   std::string path;
   LinkConfig::Item item;
   LinkConfig::List list;
+
+  ~UnitConfig() { std::cout << "remove unit: " << type << std::endl; }
 };
 
 struct FileConfig
