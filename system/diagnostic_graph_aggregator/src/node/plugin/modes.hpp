@@ -15,13 +15,11 @@
 #ifndef NODE__PLUGIN__MODES_HPP_
 #define NODE__PLUGIN__MODES_HPP_
 
-#include "graph/types.hpp"
+#include "graph/types/units.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_system_msgs/msg/operation_mode_availability.hpp>
-
-#include <vector>
 
 namespace diagnostic_graph_aggregator
 {

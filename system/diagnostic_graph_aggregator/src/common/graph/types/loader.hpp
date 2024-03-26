@@ -12,24 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__GRAPH__TYPES__CONFIG_HPP_
-#define COMMON__GRAPH__TYPES__CONFIG_HPP_
+#ifndef COMMON__GRAPH__TYPES__LOADER_HPP_
+#define COMMON__GRAPH__TYPES__LOADER_HPP_
+
+#include "units.hpp"
 
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
 
-struct PathConfig;
-struct EditConfig;
-struct UnitConfig;
-struct LinkConfig;
-
-using UnitConfigItem = UnitConfig *;
-using LinkConfigItem = LinkConfig *;
-using UnitConfigList = std::vector<UnitConfigItem>;
-using LinkConfigList = std::vector<LinkConfigItem>;
+class Linker
+{
+public:
+  virtual std::vector<UnitLink *> get_parent_links() = 0;
+  virtual std::vector<UnitLink *> get_child_links() = 0;
+};
 
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // COMMON__GRAPH__TYPES__CONFIG_HPP_
+#endif  // COMMON__GRAPH__TYPES__LOADER_HPP_

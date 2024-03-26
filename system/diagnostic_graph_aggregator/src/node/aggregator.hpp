@@ -16,7 +16,6 @@
 #define NODE__AGGREGATOR_HPP_
 
 #include "graph/graph.hpp"
-#include "graph/types.hpp"
 #include "plugin/modes.hpp"
 
 #include <rclcpp/rclcpp.hpp>

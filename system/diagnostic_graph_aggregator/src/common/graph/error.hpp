@@ -74,6 +74,12 @@ struct InvalidType : public Exception
   }
 };
 
+struct ModeNotFound : public Exception
+{
+  explicit ModeNotFound(const std::string & path) : Exception(format(path)) {}
+  static std::string format(const std::string & path) { return "mode path is not found: " + path; }
+};
+
 struct PathConflict : public Exception
 {
   explicit PathConflict(const std::string & path) : Exception(format(path)) {}
@@ -125,7 +131,6 @@ struct GraphStructure : public Exception
 struct InvalidValue : public Exception
 {
 };
-
 */
 
 }  // namespace diagnostic_graph_aggregator

@@ -69,40 +69,12 @@ std::vector<BaseUnit *> topological_sort(const Graph & graph)
 
 void Graph::create(const std::string & file)
 {
-  UnitFactory unit_factory;
-  LinkFactory link_factory;
-  std::unordered_map<UnitConfigItem, BaseUnit *> unit_mapping;
-
-  TreeLoader tree = TreeLoader::Load(file);
-  FileConfig root = tree.flatten();
-
-  // Create units and links.
-  for (const auto & config : root.units) {
-    unit_mapping[config] = unit_factory.create(config, link_factory);
-  }
-  for (const auto & [config, unit] : unit_mapping) {
-    unit->set_parent_links(link_factory.connect(unit, config));
-  }
-
-  // Move units and links.
-  nodes_ = unit_factory.release_nodes();
-  diags_ = unit_factory.release_diags();
-  links_ = link_factory.release_links();
+  GraphLoader graph(file);
+  nodes_ = graph.release_nodes();
+  diags_ = graph.release_diags();
+  links_ = graph.release_links();
   units_ = topological_sort(*this);
   for (const auto & diag : diags_) names_[diag->get_name()] = diag.get();
-
-  // Init array index.
-  for (size_t i = 0; i < nodes_.size(); ++i) nodes_[i]->set_index(i);
-  for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
-  for (size_t i = 0; i < links_.size(); ++i) links_[i]->set_index(i);
-
-  // Init struct that needs array index.
-  for (auto & unit : units_) unit->initialize_struct();
-  for (auto & link : links_) link->initialize_struct();
-
-  // Init status that needs struct.
-  for (auto & unit : units_) unit->initialize_status();
-  for (auto & link : links_) link->initialize_status();
 }
 
 void Graph::update(const rclcpp::Time & stamp)

@@ -19,35 +19,32 @@
 #include "types/units.hpp"
 
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
 
-class LinkFactory
+class GraphLoader
 {
 public:
-  UnitLink * create(NodeUnit * parent, UnitConfigItem config);
-  std::vector<std::unique_ptr<UnitLink>> release_links();
-  std::vector<UnitLink *> create(NodeUnit * parent, const UnitConfigList & configs);
-  std::vector<UnitLink *> connect(BaseUnit * child, UnitConfigItem config);
-
-private:
-  std::vector<std::unique_ptr<UnitLink>> links_;  // Note: keep creation order.
-  std::unordered_multimap<UnitConfigItem, UnitLink *> mapping_;
-};
-
-class UnitFactory
-{
-public:
-  BaseUnit * create(UnitConfigItem config, LinkFactory & links);
+  explicit GraphLoader(const std::string & file);
   std::vector<std::unique_ptr<NodeUnit>> release_nodes();
   std::vector<std::unique_ptr<DiagUnit>> release_diags();
+  std::vector<std::unique_ptr<UnitLink>> release_links();
 
 private:
+  BaseUnit * create_unit(UnitConfigItem config);
+  UnitLink * create_link(LinkConfigItem config);
+  std::unique_ptr<DiagUnit> create_diag(UnitConfigItem config);
+  std::unique_ptr<NodeUnit> create_node(UnitConfigItem config);
+
+  // Note: keep correspondence between links and unit children order.
   std::vector<std::unique_ptr<NodeUnit>> nodes_;
   std::vector<std::unique_ptr<DiagUnit>> diags_;
+  std::vector<std::unique_ptr<UnitLink>> links_;
+  std::unordered_map<UnitConfigItem, BaseUnit *> config_to_unit_;
 };
 
 }  // namespace diagnostic_graph_aggregator

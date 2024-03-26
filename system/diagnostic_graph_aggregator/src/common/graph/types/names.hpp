@@ -12,24 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__GRAPH__TYPES__CONFIG_HPP_
-#define COMMON__GRAPH__TYPES__CONFIG_HPP_
+#ifndef COMMON__GRAPH__TYPES__NAMES_HPP_
+#define COMMON__GRAPH__TYPES__NAMES_HPP_
 
-#include <vector>
-
-namespace diagnostic_graph_aggregator
+namespace diagnostic_graph_aggregator::unit_name
 {
 
-struct PathConfig;
-struct EditConfig;
-struct UnitConfig;
-struct LinkConfig;
+constexpr char const * link = "link";
+constexpr char const * diag = "diag";
 
-using UnitConfigItem = UnitConfig *;
-using LinkConfigItem = LinkConfig *;
-using UnitConfigList = std::vector<UnitConfigItem>;
-using LinkConfigList = std::vector<LinkConfigItem>;
+}  // namespace diagnostic_graph_aggregator::unit_name
 
-}  // namespace diagnostic_graph_aggregator
-
-#endif  // COMMON__GRAPH__TYPES__CONFIG_HPP_
+#endif  // COMMON__GRAPH__TYPES__NAMES_HPP_

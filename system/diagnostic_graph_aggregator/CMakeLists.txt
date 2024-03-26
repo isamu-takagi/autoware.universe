@@ -14,11 +14,11 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/common/graph/data.cpp
 )
 
-#ament_auto_add_executable(aggregator
-#  src/node/aggregator.cpp
-#  src/node/plugin/modes.cpp
-#)
-#target_include_directories(aggregator PRIVATE src/common)
+ament_auto_add_executable(aggregator
+  src/node/aggregator.cpp
+  src/node/plugin/modes.cpp
+)
+target_include_directories(aggregator PRIVATE src/common)
 
 #ament_auto_add_executable(converter
 #  src/node/converter.cpp

@@ -14,6 +14,7 @@
 
 #include "units.hpp"
 
+#include "config.hpp"
 #include "error.hpp"
 #include "factory.hpp"
 
@@ -21,6 +22,12 @@
 
 namespace diagnostic_graph_aggregator
 {
+
+UnitLink::UnitLink(BaseUnit * parent, BaseUnit * child)
+{
+  parent_ = parent;
+  child_ = child;
+}
 
 void UnitLink::initialize_struct()
 {
@@ -41,7 +48,7 @@ std::vector<BaseUnit *> BaseUnit::get_child_units() const
   return result;
 }
 
-void BaseUnit::initialize_struct()
+void BaseUnit::initialize_struct(Linker &)
 {
   // Do nothing by default.
 }
@@ -76,7 +83,7 @@ NodeUnit::NodeUnit(const UnitConfigItem & config)
   status_.level = DiagnosticStatus::STALE;
 }
 
-void NodeUnit::initialize_struct()
+void NodeUnit::initialize_struct(Linker &)
 {
   struct_.type = get_type();
 }
@@ -122,9 +129,8 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
   return update();
 }
 
-MaxUnit::MaxUnit(const UnitConfigItem & config, LinkFactory & links) : NodeUnit(config)
+MaxUnit::MaxUnit(const UnitConfigItem & config) : NodeUnit(config)
 {
-  (void)links;
   // links_ = links.create(this, config->list);
 }
 
@@ -147,9 +153,8 @@ void ShortCircuitMaxUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-MinUnit::MinUnit(const UnitConfigItem & config, LinkFactory & links) : NodeUnit(config)
+MinUnit::MinUnit(const UnitConfigItem & config) : NodeUnit(config)
 {
-  (void)links;
   // links_ = links.create(this, config->list);
 }
 

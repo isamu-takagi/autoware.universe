@@ -67,6 +67,7 @@ struct UnitConfig
 
 struct FileConfig
 {
+  // Note: keep correspondence between links and unit children order.
   std::vector<std::unique_ptr<PathConfig>> paths;
   std::vector<std::unique_ptr<EditConfig>> edits;
   std::vector<std::unique_ptr<UnitConfig>> units;
@@ -85,6 +86,8 @@ private:
   EditConfig * create_edit_config(const TreeData & data);
   UnitConfig * create_unit_config(const TreeData & data);
   LinkConfig * create_link_config(const TreeData & data, UnitConfig * unit);
+
+  // Note: keep correspondence between links and unit children order.
   std::vector<std::unique_ptr<PathConfig>> paths_;
   std::vector<std::unique_ptr<EditConfig>> edits_;
   std::vector<std::unique_ptr<UnitConfig>> units_;

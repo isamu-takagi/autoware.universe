@@ -14,6 +14,8 @@
 
 #include "config.hpp"
 
+#include "types/names.hpp"
+
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <filesystem>
@@ -27,11 +29,6 @@
 
 namespace diagnostic_graph_aggregator
 {
-
-namespace unit_type
-{
-constexpr char const * link = "link";
-}
 
 std::string resolve_substitution(const std::string & substitution, const TreeData & data)
 {
@@ -152,7 +149,7 @@ void apply_links(FileConfig & config)
   std::vector<std::unique_ptr<UnitConfig>> link_units;
   std::vector<std::unique_ptr<UnitConfig>> node_units;
   for (auto & unit : config.units) {
-    if (unit->type == unit_type::link) {
+    if (unit->type == unit_name::link) {
       link_units.push_back(std::move(unit));
     } else {
       node_units.push_back(std::move(unit));

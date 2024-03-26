@@ -29,6 +29,8 @@
 #include <tier4_system_msgs/msg/diagnostic_link.hpp>
 #include <tier4_system_msgs/msg/diagnostic_node.hpp>
 
+#include <vector>
+
 namespace diagnostic_graph_aggregator
 {
 
@@ -51,6 +53,9 @@ class DiagUnit;
 class Graph;
 class LinkFactory;
 class UnitFactory;
+
+using UnitLinkItem = UnitLink *;
+using UnitLinkList = std::vector<UnitLinkItem>;
 
 }  // namespace diagnostic_graph_aggregator
 
