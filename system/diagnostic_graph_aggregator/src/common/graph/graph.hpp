@@ -15,7 +15,7 @@
 #ifndef COMMON__GRAPH__GRAPH_HPP_
 #define COMMON__GRAPH__GRAPH_HPP_
 
-#include "types.hpp"
+#include "types/units.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

@@ -70,7 +70,7 @@ bool BaseUnit::update()
   return result;
 }
 
-NodeUnit::NodeUnit(const UnitConfig::SharedPtr & config)
+NodeUnit::NodeUnit(const UnitConfigItem & config)
 {
   struct_.path = config->path;
   status_.level = DiagnosticStatus::STALE;
@@ -81,16 +81,16 @@ void NodeUnit::initialize_struct()
   struct_.type = get_type();
 }
 
-LeafUnit::LeafUnit(const UnitConfig::SharedPtr & config)
+LeafUnit::LeafUnit(const UnitConfigItem & config)
 {
   struct_.path = config->path;
-  struct_.name = config->data.take_text("diag");
+  struct_.name = config->data.required("diag").text();
   status_.level = DiagnosticStatus::STALE;
 }
 
-DiagUnit::DiagUnit(const UnitConfig::SharedPtr & config) : LeafUnit(config)
+DiagUnit::DiagUnit(const UnitConfigItem & config) : LeafUnit(config)
 {
-  timeout_ = config->data.take<double>("timeout", 1.0);
+  timeout_ = config->data.optional("timeout").real(1.0);
 }
 
 void DiagUnit::update_status()
@@ -122,9 +122,10 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
   return update();
 }
 
-MaxUnit::MaxUnit(const UnitConfig::SharedPtr & config, LinkFactory & links) : NodeUnit(config)
+MaxUnit::MaxUnit(const UnitConfigItem & config, LinkFactory & links) : NodeUnit(config)
 {
-  links_ = links.create(this, config->children);
+  (void)links;
+  // links_ = links.create(this, config->list);
 }
 
 void MaxUnit::update_status()
@@ -146,9 +147,10 @@ void ShortCircuitMaxUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-MinUnit::MinUnit(const UnitConfig::SharedPtr & config, LinkFactory & links) : NodeUnit(config)
+MinUnit::MinUnit(const UnitConfigItem & config, LinkFactory & links) : NodeUnit(config)
 {
-  links_ = links.create(this, config->children);
+  (void)links;
+  // links_ = links.create(this, config->list);
 }
 
 void MinUnit::update_status()
@@ -160,7 +162,7 @@ void MinUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-ConstUnit::ConstUnit(const UnitConfig::SharedPtr & config, DiagnosticLevel level) : NodeUnit(config)
+ConstUnit::ConstUnit(const UnitConfigItem & config, DiagnosticLevel level) : NodeUnit(config)
 {
   status_.level = level;
 }
@@ -170,21 +172,19 @@ void ConstUnit::update_status()
   // Do nothing. This unit always returns the same level.
 }
 
-OkUnit::OkUnit(const UnitConfig::SharedPtr & config) : ConstUnit(config, DiagnosticStatus::OK)
+OkUnit::OkUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::OK)
 {
 }
 
-WarnUnit::WarnUnit(const UnitConfig::SharedPtr & config) : ConstUnit(config, DiagnosticStatus::WARN)
+WarnUnit::WarnUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::WARN)
 {
 }
 
-ErrorUnit::ErrorUnit(const UnitConfig::SharedPtr & config)
-: ConstUnit(config, DiagnosticStatus::ERROR)
+ErrorUnit::ErrorUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::ERROR)
 {
 }
 
-StaleUnit::StaleUnit(const UnitConfig::SharedPtr & config)
-: ConstUnit(config, DiagnosticStatus::STALE)
+StaleUnit::StaleUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::STALE)
 {
 }
 

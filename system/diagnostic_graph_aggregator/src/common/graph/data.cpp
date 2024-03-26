@@ -77,7 +77,14 @@ TreeData::List TreeData::children(const std::string & path)
 
 std::string TreeData::text(const std::string & fail)
 {
+  // TODO(Takagi, Isamu): conversion fail
   return yaml_.as<std::string>(fail);
+}
+
+double TreeData::real(double fail)
+{
+  // TODO(Takagi, Isamu): conversion fail
+  return yaml_.as<double>(fail);
 }
 
 void TreeData::dump() const

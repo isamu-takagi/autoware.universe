@@ -104,19 +104,28 @@ struct UnknownSubstitution : public Exception
   }
 };
 
-/*
 struct UnknownUnitType : public Exception
 {
-};
-
-struct InvalidValue : public Exception
-{
+  explicit UnknownUnitType(const TreePath & path, const std::string & type)
+  : Exception(format(path, type))
+  {
+  }
+  static std::string format(const TreePath & path, const std::string & type)
+  {
+    return "unknown unit type: " + type + path.text();
+  }
 };
 
 struct GraphStructure : public Exception
 {
   using Exception::Exception;
 };
+
+/*
+struct InvalidValue : public Exception
+{
+};
+
 */
 
 }  // namespace diagnostic_graph_aggregator

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__GRAPH__TYPES_HPP_
-#define COMMON__GRAPH__TYPES_HPP_
+#ifndef COMMON__GRAPH__TYPES__UNITS_HPP_
+#define COMMON__GRAPH__TYPES__UNITS_HPP_
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
@@ -54,4 +54,4 @@ class UnitFactory;
 
 }  // namespace diagnostic_graph_aggregator
 
-#endif  // COMMON__GRAPH__TYPES_HPP_
+#endif  // COMMON__GRAPH__TYPES__UNITS_HPP_

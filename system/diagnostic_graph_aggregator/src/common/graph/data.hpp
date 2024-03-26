@@ -43,6 +43,7 @@ public:
   List children(const std::string & path = "");
 
   std::string text(const std::string & fail = "");
+  double real(double fail);
 
 private:
   YAML::Node yaml_;

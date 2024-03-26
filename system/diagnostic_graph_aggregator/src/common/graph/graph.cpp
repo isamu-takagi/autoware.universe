@@ -60,7 +60,7 @@ std::vector<BaseUnit *> topological_sort(const Graph & graph)
 
   // Detect circulation because the result does not include the nodes on the loop.
   if (result.size() != units.size()) {
-    throw error<GraphStructure>("detect graph circulation");
+    throw GraphStructure("detect graph circulation");
   }
 
   // Reverse the result to process from leaf node.
@@ -71,10 +71,13 @@ void Graph::create(const std::string & file)
 {
   UnitFactory unit_factory;
   LinkFactory link_factory;
-  std::unordered_map<UnitConfig::SharedPtr, BaseUnit *> unit_mapping;
+  std::unordered_map<UnitConfigItem, BaseUnit *> unit_mapping;
+
+  TreeLoader tree = TreeLoader::Load(file);
+  FileConfig root = tree.flatten();
 
   // Create units and links.
-  for (const auto & config : load_root_config(file).nodes) {
+  for (const auto & config : root.units) {
     unit_mapping[config] = unit_factory.create(config, link_factory);
   }
   for (const auto & [config, unit] : unit_mapping) {

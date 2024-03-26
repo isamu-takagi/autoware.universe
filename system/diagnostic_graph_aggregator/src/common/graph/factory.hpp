@@ -15,8 +15,8 @@
 #ifndef COMMON__GRAPH__FACTORY_HPP_
 #define COMMON__GRAPH__FACTORY_HPP_
 
-#include "config.hpp"
-#include "types.hpp"
+#include "types/config.hpp"
+#include "types/units.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -28,20 +28,20 @@ namespace diagnostic_graph_aggregator
 class LinkFactory
 {
 public:
-  UnitLink * create(NodeUnit * parent, UnitConfig::SharedPtr config);
+  UnitLink * create(NodeUnit * parent, UnitConfigItem config);
   std::vector<std::unique_ptr<UnitLink>> release_links();
-  std::vector<UnitLink *> create(NodeUnit * parent, const UnitConfig::SharedPtrList & configs);
-  std::vector<UnitLink *> connect(BaseUnit * child, UnitConfig::SharedPtr config);
+  std::vector<UnitLink *> create(NodeUnit * parent, const UnitConfigList & configs);
+  std::vector<UnitLink *> connect(BaseUnit * child, UnitConfigItem config);
 
 private:
   std::vector<std::unique_ptr<UnitLink>> links_;  // Note: keep creation order.
-  std::unordered_multimap<UnitConfig::SharedPtr, UnitLink *> mapping_;
+  std::unordered_multimap<UnitConfigItem, UnitLink *> mapping_;
 };
 
 class UnitFactory
 {
 public:
-  BaseUnit * create(UnitConfig::SharedPtr config, LinkFactory & links);
+  BaseUnit * create(UnitConfigItem config, LinkFactory & links);
   std::vector<std::unique_ptr<NodeUnit>> release_nodes();
   std::vector<std::unique_ptr<DiagUnit>> release_diags();
 

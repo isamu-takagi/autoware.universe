@@ -16,6 +16,7 @@
 #define COMMON__GRAPH__CONFIG_HPP_
 
 #include "data.hpp"
+#include "types/config.hpp"
 
 #include <memory>
 #include <string>
@@ -26,11 +27,6 @@
 
 namespace diagnostic_graph_aggregator
 {
-
-struct PathConfig;
-struct EditConfig;
-struct UnitConfig;
-struct LinkConfig;
 
 struct PathConfig
 {
@@ -57,6 +53,8 @@ struct LinkConfig
 
 struct UnitConfig
 {
+  using Item = UnitConfig *;
+  using List = std::vector<LinkConfig::Item>;
   explicit UnitConfig(const TreeData & data) : data(data) {}
   TreeData data;
   std::string type;

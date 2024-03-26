@@ -22,7 +22,7 @@
 namespace diagnostic_graph_aggregator
 {
 
-UnitLink * LinkFactory::create(NodeUnit * parent, UnitConfig::SharedPtr config)
+UnitLink * LinkFactory::create(NodeUnit * parent, UnitConfigItem config)
 {
   const auto link = links_.emplace_back(std::make_unique<UnitLink>()).get();
   link->set_parent(parent);
@@ -30,8 +30,7 @@ UnitLink * LinkFactory::create(NodeUnit * parent, UnitConfig::SharedPtr config)
   return link;
 }
 
-std::vector<UnitLink *> LinkFactory::create(
-  NodeUnit * parent, const UnitConfig::SharedPtrList & configs)
+std::vector<UnitLink *> LinkFactory::create(NodeUnit * parent, const UnitConfigList & configs)
 {
   std::vector<UnitLink *> result;
   for (const auto & config : configs) {
@@ -40,7 +39,7 @@ std::vector<UnitLink *> LinkFactory::create(
   return result;
 }
 
-std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfig::SharedPtr config)
+std::vector<UnitLink *> LinkFactory::connect(BaseUnit * child, UnitConfigItem config)
 {
   const auto range = mapping_.equal_range(config);
   std::vector<UnitLink *> result;
@@ -57,12 +56,12 @@ std::vector<std::unique_ptr<UnitLink>> LinkFactory::release_links()
   return std::move(links_);
 }
 
-std::unique_ptr<DiagUnit> create_diag(UnitConfig::SharedPtr config)
+std::unique_ptr<DiagUnit> create_diag(UnitConfigItem config)
 {
   return std::make_unique<DiagUnit>(config);
 }
 
-std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory & links)
+std::unique_ptr<NodeUnit> create_node(UnitConfigItem config, LinkFactory & links)
 {
   if (config->type == "and") {
     return std::make_unique<MaxUnit>(config, links);
@@ -93,10 +92,10 @@ std::unique_ptr<NodeUnit> create_node(UnitConfig::SharedPtr config, LinkFactory 
   if (config->type == "stale") {
     return std::make_unique<StaleUnit>(config);
   }
-  throw error<UnknownType>("unknown node type", config->type, config->data);
+  throw UnknownUnitType(config->data.path(), config->type);
 }
 
-BaseUnit * UnitFactory::create(UnitConfig::SharedPtr config, LinkFactory & links)
+BaseUnit * UnitFactory::create(UnitConfigItem config, LinkFactory & links)
 {
   if (config->type == "diag") {
     return diags_.emplace_back(create_diag(config)).get();
