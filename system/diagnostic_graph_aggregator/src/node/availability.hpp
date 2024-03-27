@@ -15,7 +15,7 @@
 #ifndef NODE__AVAILABILITY_HPP_
 #define NODE__AVAILABILITY_HPP_
 
-#include "graph/types/units.hpp"
+#include "graph/types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

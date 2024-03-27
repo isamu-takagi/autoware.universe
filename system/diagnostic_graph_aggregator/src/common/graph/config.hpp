@@ -16,7 +16,7 @@
 #define COMMON__GRAPH__CONFIG_HPP_
 
 #include "data.hpp"
-#include "types/config.hpp"
+#include "types.hpp"
 
 #include <memory>
 #include <string>

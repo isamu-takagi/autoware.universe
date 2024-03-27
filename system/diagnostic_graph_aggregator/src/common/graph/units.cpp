@@ -48,7 +48,7 @@ void UnitLink::initialize_status()
   // Do nothing.
 }
 
-BaseUnit::BaseUnit(const UnitConfig * config, const GraphLinks & links)
+BaseUnit::BaseUnit(UnitConfig * config, const GraphLinks & links)
 {
   index_ = config->index;
   links.parent_links.at(config);
@@ -80,7 +80,7 @@ bool BaseUnit::update()
   return result;
 }
 
-NodeUnit::NodeUnit(const UnitConfig * config, const GraphLinks & links) : BaseUnit(config, links)
+NodeUnit::NodeUnit(UnitConfig * config, const GraphLinks & links) : BaseUnit(config, links)
 {
   struct_.path = config->path;
   status_.level = DiagnosticStatus::STALE;
@@ -96,7 +96,7 @@ void NodeUnit::initialize_status()
   if (get_child_links().size() == 0) update();
 }
 
-LeafUnit::LeafUnit(const UnitConfig * config, const GraphLinks & links) : BaseUnit(config, links)
+LeafUnit::LeafUnit(UnitConfig * config, const GraphLinks & links) : BaseUnit(config, links)
 {
   struct_.path = config->path;
   struct_.name = config->data.required("diag").text();
@@ -113,7 +113,7 @@ void LeafUnit::initialize_status()
   if (get_child_links().size() == 0) update();
 }
 
-DiagUnit::DiagUnit(const UnitConfig * config, const GraphLinks & links) : LeafUnit(config, links)
+DiagUnit::DiagUnit(UnitConfig * config, const GraphLinks & links) : LeafUnit(config, links)
 {
   timeout_ = config->data.optional("timeout").real(1.0);
 }
@@ -147,7 +147,7 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
   return update();
 }
 
-MaxUnit::MaxUnit(const UnitConfig * config, const GraphLinks & links) : NodeUnit(config, links)
+MaxUnit::MaxUnit(UnitConfig * config, const GraphLinks & links) : NodeUnit(config, links)
 {
   links_ = children(links, config->list);
 }
@@ -171,7 +171,7 @@ void ShortCircuitMaxUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-MinUnit::MinUnit(const UnitConfig * config, const GraphLinks & links) : NodeUnit(config, links)
+MinUnit::MinUnit(UnitConfig * config, const GraphLinks & links) : NodeUnit(config, links)
 {
   links_ = children(links, config->list);
 }
@@ -188,7 +188,7 @@ void MinUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-RemapUnit::RemapUnit(const UnitConfig * config, const GraphLinks & links) : NodeUnit(config, links)
+RemapUnit::RemapUnit(UnitConfig * config, const GraphLinks & links) : NodeUnit(config, links)
 {
   link_ = links.config_links.at(config->item);
 }
@@ -199,14 +199,13 @@ void RemapUnit::update_status()
   status_.level = (level == level_from_) ? level_to_ : level;
 }
 
-WarnToOkUnit::WarnToOkUnit(const UnitConfig * config, const GraphLinks & links)
-: RemapUnit(config, links)
+WarnToOkUnit::WarnToOkUnit(UnitConfig * config, const GraphLinks & links) : RemapUnit(config, links)
 {
   level_from_ = DiagnosticStatus::WARN;
   level_to_ = DiagnosticStatus::OK;
 }
 
-WarnToErrorUnit::WarnToErrorUnit(const UnitConfig * config, const GraphLinks & links)
+WarnToErrorUnit::WarnToErrorUnit(UnitConfig * config, const GraphLinks & links)
 : RemapUnit(config, links)
 {
   level_from_ = DiagnosticStatus::WARN;
@@ -218,22 +217,22 @@ void ConstUnit::update_status()
   // Do nothing. This unit always returns the same level.
 }
 
-OkUnit::OkUnit(const UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
+OkUnit::OkUnit(UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
 {
   status_.level = DiagnosticStatus::OK;
 }
 
-WarnUnit::WarnUnit(const UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
+WarnUnit::WarnUnit(UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
 {
   status_.level = DiagnosticStatus::WARN;
 }
 
-ErrorUnit::ErrorUnit(const UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
+ErrorUnit::ErrorUnit(UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
 {
   status_.level = DiagnosticStatus::ERROR;
 }
 
-StaleUnit::StaleUnit(const UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
+StaleUnit::StaleUnit(UnitConfig * config, const GraphLinks & links) : ConstUnit(config, links)
 {
   status_.level = DiagnosticStatus::STALE;
 }

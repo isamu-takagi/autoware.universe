@@ -15,16 +15,21 @@
 #ifndef COMMON__GRAPH__LOADER_HPP_
 #define COMMON__GRAPH__LOADER_HPP_
 
-#include "types/config.hpp"
-#include "types/loader.hpp"
-#include "types/units.hpp"
+#include "types.hpp"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
+
+struct GraphLinks
+{
+  std::unordered_map<LinkConfig *, UnitLink *> config_links;
+  std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
+};
 
 class GraphLoader
 {

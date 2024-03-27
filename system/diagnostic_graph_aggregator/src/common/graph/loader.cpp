@@ -16,10 +16,10 @@
 
 #include "config.hpp"
 #include "error.hpp"
-#include "types/names.hpp"
+#include "names.hpp"
+#include "types.hpp"
 #include "units.hpp"
 
-#include <unordered_map>
 #include <utility>
 
 namespace diagnostic_graph_aggregator

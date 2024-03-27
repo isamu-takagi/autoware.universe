@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMON__GRAPH__TYPES__CONFIG_HPP_
-#define COMMON__GRAPH__TYPES__CONFIG_HPP_
+#ifndef COMMON__GRAPH__NAMES_HPP_
+#define COMMON__GRAPH__NAMES_HPP_
 
-#include <vector>
-
-namespace diagnostic_graph_aggregator
+namespace diagnostic_graph_aggregator::unit_name
 {
 
-struct PathConfig;
-struct EditConfig;
-struct UnitConfig;
-struct LinkConfig;
+constexpr char const * link = "link";
+constexpr char const * diag = "diag";
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace diagnostic_graph_aggregator::unit_name
 
-#endif  // COMMON__GRAPH__TYPES__CONFIG_HPP_
+namespace diagnostic_graph_aggregator::edit_name
+{
+
+constexpr char const * remove = "remove";
+
+}  // namespace diagnostic_graph_aggregator::edit_name
+
+#endif  // COMMON__GRAPH__NAMES_HPP_
