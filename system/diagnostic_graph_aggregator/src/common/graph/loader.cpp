@@ -101,7 +101,7 @@ std::unique_ptr<UnitLink> GraphLoader::create_link()
   return std::make_unique<UnitLink>();
 }
 
-std::unique_ptr<DiagUnit> GraphLoader::create_diag(UnitConfigItem config, const GraphLinks & links)
+std::unique_ptr<DiagUnit> GraphLoader::create_diag(UnitConfig * config, const GraphLinks & links)
 {
   if (config->type == unit_name::diag) {
     return std::make_unique<DiagUnit>(config, links);
@@ -109,7 +109,7 @@ std::unique_ptr<DiagUnit> GraphLoader::create_diag(UnitConfigItem config, const 
   throw UnknownUnitType(config->data.path(), config->type);
 }
 
-std::unique_ptr<NodeUnit> GraphLoader::create_node(UnitConfigItem config, const GraphLinks & links)
+std::unique_ptr<NodeUnit> GraphLoader::create_node(UnitConfig * config, const GraphLinks & links)
 {
   if (config->type == "and") {
     return std::make_unique<MaxUnit>(config, links);

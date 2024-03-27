@@ -25,9 +25,6 @@ struct EditConfig;
 struct UnitConfig;
 struct LinkConfig;
 
-using UnitConfigItem = UnitConfig *;
-using UnitConfigList = std::vector<UnitConfigItem>;
-
 }  // namespace diagnostic_graph_aggregator
 
 #endif  // COMMON__GRAPH__TYPES__CONFIG_HPP_

@@ -36,8 +36,8 @@ public:
 
 private:
   std::unique_ptr<UnitLink> create_link();
-  std::unique_ptr<DiagUnit> create_diag(UnitConfigItem config, const GraphLinks & links);
-  std::unique_ptr<NodeUnit> create_node(UnitConfigItem config, const GraphLinks & links);
+  std::unique_ptr<DiagUnit> create_diag(UnitConfig * config, const GraphLinks & links);
+  std::unique_ptr<NodeUnit> create_node(UnitConfig * config, const GraphLinks & links);
 
   // Note: keep correspondence between links and unit children order.
   std::vector<std::unique_ptr<NodeUnit>> nodes_;
