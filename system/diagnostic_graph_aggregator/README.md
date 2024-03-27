@@ -34,11 +34,12 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 
 ## Interfaces
 
-| Interface Type | Interface Name                        | Data Type                                         | Description        |
-| -------------- | ------------------------------------- | ------------------------------------------------- | ------------------ |
-| subscription   | `/diagnostics`                        | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics input. |
-| publisher      | `/diagnostics_graph`                  | `tier4_system_msgs/msg/DiagnosticGraph`           | Diagnostics graph. |
-| publisher      | `/system/operation_mode/availability` | `tier4_system_msgs/msg/OperationModeAvailability` | mode availability. |
+| Interface Type | Interface Name                        | Data Type                                         | Description                       |
+| -------------- | ------------------------------------- | ------------------------------------------------- | --------------------------------- |
+| subscription   | `/diagnostics`                        | `diagnostic_msgs/msg/DiagnosticArray`             | Diagnostics input.                |
+| publisher      | `/diagnostics_graph/struct`           | `tier4_system_msgs/msg/DiagGraphStruct`           | Diagnostics graph (static part).  |
+| publisher      | `/diagnostics_graph/status`           | `tier4_system_msgs/msg/DiagGraphStatus`           | Diagnostics graph (dynamic part). |
+| publisher      | `/system/operation_mode/availability` | `tier4_system_msgs/msg/OperationModeAvailability` | Operation mode availability.      |
 
 ## Parameters
 
