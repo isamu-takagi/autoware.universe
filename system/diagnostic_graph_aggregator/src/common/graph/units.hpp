@@ -28,28 +28,15 @@
 namespace diagnostic_graph_aggregator
 {
 
-class VectorElement
+class UnitLink
 {
 public:
-  size_t get_index() const { return index_; }
-  void set_index(size_t index) { index_ = index; }
-
-private:
-  size_t index_;
-};
-
-class UnitLink : private VectorElement
-{
-public:
-  UnitLink(BaseUnit * parent, BaseUnit * child);
   DiagLinkStruct get_struct() const { return struct_; }
   DiagLinkStatus get_status() const { return status_; }
   BaseUnit * get_parent() const { return parent_; }
   BaseUnit * get_child() const { return child_; }
   void initialize_struct();  // This function must be called after setting the index.
   void initialize_status();  // This function must be called after setting the struct.
-  using VectorElement::get_index;
-  using VectorElement::set_index;
 
   auto get_used() const { return status_.used; }
   void set_used(bool used) { status_.used = used; }
@@ -61,9 +48,10 @@ private:
   DiagLinkStatus status_;
 };
 
-class BaseUnit : private VectorElement
+class BaseUnit
 {
 public:
+  BaseUnit(const UnitConfigItem & config, const GraphLinks & link);
   virtual ~BaseUnit() = default;
   virtual DiagnosticLevel get_level() const = 0;
   virtual std::string get_path() const = 0;
@@ -71,16 +59,14 @@ public:
   virtual std::vector<UnitLink *> get_child_links() const = 0;
   virtual std::vector<BaseUnit *> get_child_units() const;
   virtual bool is_leaf() const = 0;
-  virtual void initialize_children(Linker & linker);
-  void initialize_parents(Linker & linker);
-  using VectorElement::get_index;
-  using VectorElement::set_index;
+  size_t get_index() const { return index_; }
 
 protected:
   bool update();
 
 private:
   virtual void update_status() = 0;  // Type dependent part of the update function.
+  size_t index_;
   std::vector<UnitLink *> parents_;
   std::optional<DiagnosticLevel> prev_level_;
 };
@@ -88,7 +74,7 @@ private:
 class NodeUnit : public BaseUnit
 {
 public:
-  explicit NodeUnit(const UnitConfigItem & config);
+  explicit NodeUnit(const UnitConfigItem & config, const GraphLinks & links);
   DiagNodeStruct get_struct() const { return struct_; }
   DiagNodeStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
@@ -105,7 +91,7 @@ protected:
 class LeafUnit : public BaseUnit
 {
 public:
-  explicit LeafUnit(const UnitConfigItem & config);
+  explicit LeafUnit(const UnitConfigItem & config, const GraphLinks & links);
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
@@ -123,7 +109,7 @@ protected:
 class DiagUnit : public LeafUnit
 {
 public:
-  explicit DiagUnit(const UnitConfigItem & config);
+  explicit DiagUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "diag"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
   bool on_time(const rclcpp::Time & stamp);
@@ -138,8 +124,7 @@ private:
 class MaxUnit : public NodeUnit
 {
 public:
-  explicit MaxUnit(const UnitConfigItem & config);
-  void initialize_children(Linker & linker) override;
+  explicit MaxUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "and"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
@@ -163,8 +148,7 @@ private:
 class MinUnit : public NodeUnit
 {
 public:
-  explicit MinUnit(const UnitConfigItem & config);
-  void initialize_children(Linker & linker) override;
+  explicit MinUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "or"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
@@ -178,8 +162,7 @@ private:
 class RemapUnit : public NodeUnit
 {
 public:
-  explicit RemapUnit(const UnitConfigItem & config);
-  void initialize_children(Linker & linker) override;
+  explicit RemapUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::vector<UnitLink *> get_child_links() const override { return {link_}; }
 
 protected:
@@ -194,21 +177,21 @@ private:
 class WarnToOkUnit : public RemapUnit
 {
 public:
-  explicit WarnToOkUnit(const UnitConfigItem & config);
+  explicit WarnToOkUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "warn-to-ok"; }
 };
 
 class WarnToErrorUnit : public RemapUnit
 {
 public:
-  explicit WarnToErrorUnit(const UnitConfigItem & config);
+  explicit WarnToErrorUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "warn-to-error"; }
 };
 
 class ConstUnit : public NodeUnit
 {
 public:
-  ConstUnit(const UnitConfigItem & config, DiagnosticLevel level);
+  using NodeUnit::NodeUnit;
   std::vector<UnitLink *> get_child_links() const override { return {}; }
 
 private:
@@ -218,28 +201,28 @@ private:
 class OkUnit : public ConstUnit
 {
 public:
-  explicit OkUnit(const UnitConfigItem & config);
+  explicit OkUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "ok"; }
 };
 
 class WarnUnit : public ConstUnit
 {
 public:
-  explicit WarnUnit(const UnitConfigItem & config);
+  explicit WarnUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "warn"; }
 };
 
 class ErrorUnit : public ConstUnit
 {
 public:
-  explicit ErrorUnit(const UnitConfigItem & config);
+  explicit ErrorUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "error"; }
 };
 
 class StaleUnit : public ConstUnit
 {
 public:
-  explicit StaleUnit(const UnitConfigItem & config);
+  explicit StaleUnit(const UnitConfigItem & config, const GraphLinks & links);
   std::string get_type() const override { return "stale"; }
 };
 

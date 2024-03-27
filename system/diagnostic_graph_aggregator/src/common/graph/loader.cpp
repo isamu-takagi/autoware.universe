@@ -25,77 +25,49 @@
 namespace diagnostic_graph_aggregator
 {
 
-class LinkerImpl : public Linker
-{
-public:
-  std::vector<UnitLink *> take_parents(BaseUnit * unit) override;
-  std::vector<UnitLink *> take_child_list(BaseUnit * unit) override;
-  UnitLink * take_child_item(BaseUnit * unit) override;
-
-  std::unordered_map<BaseUnit *, std::vector<UnitLink *>> parent_links_;
-  std::unordered_map<BaseUnit *, std::vector<UnitLink *>> child_links_;
-};
-
-std::vector<UnitLink *> LinkerImpl::take_parents(BaseUnit * unit)
-{
-  return parent_links_[unit];
-}
-
-std::vector<UnitLink *> LinkerImpl::take_child_list(BaseUnit * unit)
-{
-  return child_links_[unit];
-}
-
-UnitLink * LinkerImpl::take_child_item(BaseUnit * unit)
-{
-  const auto links = take_child_list(unit);
-  if (links.size() != 1) {
-    throw std::logic_error(unit->get_type() + " unit should have only one child");
-  }
-  return links.at(0);
-}
-
 GraphLoader::GraphLoader(const std::string & file)
 {
   TreeLoader tree = TreeLoader::Load(file);
   FileConfig root = tree.construct();
-  std::unordered_map<UnitConfigItem, BaseUnit *> config_to_unit;
-
-  // Create units. The links will be set later.
+  std::vector<UnitConfig *> diags;
+  std::vector<UnitConfig *> nodes;
   for (const auto & config : root.units) {
-    config_to_unit[config.get()] = create_unit(config.get());
+    (config->type == unit_name::diag ? diags : nodes).push_back(config.get());
   }
 
-  // Create links. Use a mapping from config to unit.
-  LinkerImpl linker;
+  // Init array index to be able get it from unit itself.
+  for (size_t i = 0; i < diags.size(); ++i) diags[i]->index = i;
+  for (size_t i = 0; i < nodes.size(); ++i) nodes[i]->index = i;
+
+  // Create links.
+  std::unordered_map<LinkConfig *, UnitLink *> config_links;
+  std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
+  for (const auto & config : root.units) {
+    parent_links[config.get()] = {};
+  }
   for (const auto & config : root.links) {
-    const auto parent = config_to_unit.at(config->parent);
-    const auto child = config_to_unit.at(config->child);
-    const auto link = create_link(parent, child);
-    linker.parent_links_[child].push_back(link);
-    linker.child_links_[parent].push_back(link);
+    const auto link = links_.emplace_back(create_link()).get();
+    config_links[config.get()] = link;
+    parent_links[config->child].push_back(link);
   }
 
-  // Set parent and child links to units.
-  for (auto & node : nodes_) node->initialize_parents(linker);
-  for (auto & diag : diags_) diag->initialize_parents(linker);
-  for (auto & node : nodes_) node->initialize_children(linker);
-  for (auto & diag : diags_) diag->initialize_children(linker);
-
-  // Init array index.
-  for (size_t i = 0; i < nodes_.size(); ++i) nodes_[i]->set_index(i);
-  for (size_t i = 0; i < diags_.size(); ++i) diags_[i]->set_index(i);
-  for (size_t i = 0; i < links_.size(); ++i) links_[i]->set_index(i);
+  const auto links = GraphLinks{config_links, parent_links};
+  for (const auto & config : diags) diags_.push_back(create_diag(config, links));
+  for (const auto & config : nodes) nodes_.push_back(create_node(config, links));
 
   // Init struct that needs array index.
+  /*
   for (auto & node : nodes_) node->initialize_struct();
   for (auto & diag : diags_) diag->initialize_struct();
   for (auto & link : links_) link->initialize_struct();
+  */
 
   // Init status that needs struct.
+  /*
   for (auto & node : nodes_) node->initialize_status();
   for (auto & diag : diags_) diag->initialize_status();
   for (auto & link : links_) link->initialize_status();
+  */
 }
 
 std::vector<std::unique_ptr<UnitLink>> GraphLoader::release_links()
@@ -113,53 +85,47 @@ std::vector<std::unique_ptr<DiagUnit>> GraphLoader::release_diags()
   return std::move(diags_);
 }
 
-BaseUnit * GraphLoader::create_unit(UnitConfigItem config)
+std::unique_ptr<UnitLink> GraphLoader::create_link()
+{
+  return std::make_unique<UnitLink>();
+}
+
+std::unique_ptr<DiagUnit> GraphLoader::create_diag(UnitConfigItem config, const GraphLinks & links)
 {
   if (config->type == unit_name::diag) {
-    return diags_.emplace_back(create_diag(config)).get();
-  } else {
-    return nodes_.emplace_back(create_node(config)).get();
+    return std::make_unique<DiagUnit>(config, links);
   }
+  throw UnknownUnitType(config->data.path(), config->type);
 }
 
-UnitLink * GraphLoader::create_link(BaseUnit * parent, BaseUnit * child)
-{
-  return links_.emplace_back(std::make_unique<UnitLink>(parent, child)).get();
-}
-
-std::unique_ptr<DiagUnit> GraphLoader::create_diag(UnitConfigItem config)
-{
-  return std::make_unique<DiagUnit>(config);
-}
-
-std::unique_ptr<NodeUnit> GraphLoader::create_node(UnitConfigItem config)
+std::unique_ptr<NodeUnit> GraphLoader::create_node(UnitConfigItem config, const GraphLinks & links)
 {
   if (config->type == "and") {
-    return std::make_unique<MaxUnit>(config);
+    return std::make_unique<MaxUnit>(config, links);
   }
   if (config->type == "short-circuit-and") {
-    return std::make_unique<ShortCircuitMaxUnit>(config);
+    return std::make_unique<ShortCircuitMaxUnit>(config, links);
   }
   if (config->type == "or") {
-    return std::make_unique<MinUnit>(config);
+    return std::make_unique<MinUnit>(config, links);
   }
   if (config->type == "warn-to-ok") {
-    return std::make_unique<WarnToOkUnit>(config);
+    return std::make_unique<WarnToOkUnit>(config, links);
   }
   if (config->type == "warn-to-error") {
-    return std::make_unique<WarnToErrorUnit>(config);
+    return std::make_unique<WarnToErrorUnit>(config, links);
   }
   if (config->type == "ok") {
-    return std::make_unique<OkUnit>(config);
+    return std::make_unique<OkUnit>(config, links);
   }
   if (config->type == "warn") {
-    return std::make_unique<WarnUnit>(config);
+    return std::make_unique<WarnUnit>(config, links);
   }
   if (config->type == "error") {
-    return std::make_unique<ErrorUnit>(config);
+    return std::make_unique<ErrorUnit>(config, links);
   }
   if (config->type == "stale") {
-    return std::make_unique<StaleUnit>(config);
+    return std::make_unique<StaleUnit>(config, links);
   }
   throw UnknownUnitType(config->data.path(), config->type);
 }

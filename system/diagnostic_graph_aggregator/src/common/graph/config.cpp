@@ -98,7 +98,7 @@ UnitConfig * FileLoader::create_unit_config(const TreeData & data)
 
   const auto item = unit->data.optional("item").child("c");
   if (item.is_valid()) {
-    unit->list.push_back(create_link_config(item, unit));
+    unit->item = create_link_config(item, unit);
   }
   const auto list = unit->data.optional("list").children();
   for (const auto & data : list) {

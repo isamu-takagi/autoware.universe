@@ -16,6 +16,7 @@
 #define COMMON__GRAPH__LOADER_HPP_
 
 #include "types/config.hpp"
+#include "types/loader.hpp"
 #include "types/units.hpp"
 
 #include <memory>
@@ -34,10 +35,9 @@ public:
   std::vector<std::unique_ptr<UnitLink>> release_links();
 
 private:
-  UnitLink * create_link(BaseUnit * parent, BaseUnit * child);
-  BaseUnit * create_unit(UnitConfigItem config);
-  std::unique_ptr<DiagUnit> create_diag(UnitConfigItem config);
-  std::unique_ptr<NodeUnit> create_node(UnitConfigItem config);
+  std::unique_ptr<UnitLink> create_link();
+  std::unique_ptr<DiagUnit> create_diag(UnitConfigItem config, const GraphLinks & links);
+  std::unique_ptr<NodeUnit> create_node(UnitConfigItem config, const GraphLinks & links);
 
   // Note: keep correspondence between links and unit children order.
   std::vector<std::unique_ptr<NodeUnit>> nodes_;

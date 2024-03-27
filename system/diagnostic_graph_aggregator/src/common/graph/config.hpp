@@ -56,10 +56,9 @@ struct UnitConfig
   TreeData data;
   std::string type;
   std::string path;
+  LinkConfig::Item item;
   LinkConfig::List list;
-
-  // Note: not supported yet, topological_sort only uses list.
-  // LinkConfig::Item item;
+  size_t index;
 };
 
 struct FileConfig

@@ -17,17 +17,16 @@
 
 #include "units.hpp"
 
+#include <unordered_map>
 #include <vector>
 
 namespace diagnostic_graph_aggregator
 {
 
-class Linker
+struct GraphLinks
 {
-public:
-  virtual std::vector<UnitLink *> take_parents(BaseUnit * unit) = 0;
-  virtual std::vector<UnitLink *> take_child_list(BaseUnit * unit) = 0;
-  virtual UnitLink * take_child_item(BaseUnit * unit) = 0;
+  std::unordered_map<LinkConfig *, UnitLink *> config_links;
+  std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
 };
 
 }  // namespace diagnostic_graph_aggregator

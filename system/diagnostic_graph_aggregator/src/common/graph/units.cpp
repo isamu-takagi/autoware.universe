@@ -23,10 +23,11 @@
 namespace diagnostic_graph_aggregator
 {
 
-UnitLink::UnitLink(BaseUnit * parent, BaseUnit * child)
+std::vector<UnitLink *> children(const GraphLinks & links, std::vector<LinkConfig *> configs)
 {
-  parent_ = parent;
-  child_ = child;
+  std::vector<UnitLink *> result;
+  for (const auto & config : configs) result.push_back(links.config_links.at(config));
+  return result;
 }
 
 void UnitLink::initialize_struct()
@@ -41,21 +42,17 @@ void UnitLink::initialize_status()
   status_.used = true;
 }
 
+BaseUnit::BaseUnit(const UnitConfigItem & config, const GraphLinks & links)
+{
+  index_ = config->index;
+  links.parent_links.at(config);
+}
+
 std::vector<BaseUnit *> BaseUnit::get_child_units() const
 {
   std::vector<BaseUnit *> result;
   for (const auto & link : get_child_links()) result.push_back(link->get_child());
   return result;
-}
-
-void BaseUnit::initialize_children(Linker &)
-{
-  // Do nothing by default.
-}
-
-void BaseUnit::initialize_parents(Linker & linker)
-{
-  parents_ = linker.take_parents(this);
 }
 
 bool BaseUnit::update()
@@ -77,7 +74,8 @@ bool BaseUnit::update()
   return result;
 }
 
-NodeUnit::NodeUnit(const UnitConfigItem & config)
+NodeUnit::NodeUnit(const UnitConfigItem & config, const GraphLinks & links)
+: BaseUnit(config, links)
 {
   struct_.path = config->path;
   status_.level = DiagnosticStatus::STALE;
@@ -93,7 +91,8 @@ void NodeUnit::initialize_status()
   if (get_child_links().size() == 0) update();
 }
 
-LeafUnit::LeafUnit(const UnitConfigItem & config)
+LeafUnit::LeafUnit(const UnitConfigItem & config, const GraphLinks & links)
+: BaseUnit(config, links)
 {
   struct_.path = config->path;
   struct_.name = config->data.required("diag").text();
@@ -110,7 +109,8 @@ void LeafUnit::initialize_status()
   if (get_child_links().size() == 0) update();
 }
 
-DiagUnit::DiagUnit(const UnitConfigItem & config) : LeafUnit(config)
+DiagUnit::DiagUnit(const UnitConfigItem & config, const GraphLinks & links)
+: LeafUnit(config, links)
 {
   timeout_ = config->data.optional("timeout").real(1.0);
 }
@@ -144,13 +144,9 @@ bool DiagUnit::on_time(const rclcpp::Time & stamp)
   return update();
 }
 
-MaxUnit::MaxUnit(const UnitConfigItem & config) : NodeUnit(config)
+MaxUnit::MaxUnit(const UnitConfigItem & config, const GraphLinks & links) : NodeUnit(config, links)
 {
-}
-
-void MaxUnit::initialize_children(Linker & linker)
-{
-  links_ = linker.take_child_list(this);
+  links_ = children(links, config->list);
 }
 
 void MaxUnit::update_status()
@@ -172,13 +168,9 @@ void ShortCircuitMaxUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-MinUnit::MinUnit(const UnitConfigItem & config) : NodeUnit(config)
+MinUnit::MinUnit(const UnitConfigItem & config, const GraphLinks & links) : NodeUnit(config, links)
 {
-}
-
-void MinUnit::initialize_children(Linker & linker)
-{
-  links_ = linker.take_child_list(this);
+  links_ = children(links, config->list);
 }
 
 void MinUnit::update_status()
@@ -193,13 +185,10 @@ void MinUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-RemapUnit::RemapUnit(const UnitConfigItem & config) : NodeUnit(config)
+RemapUnit::RemapUnit(const UnitConfigItem & config, const GraphLinks & links)
+: NodeUnit(config, links)
 {
-}
-
-void RemapUnit::initialize_children(Linker & linker)
-{
-  link_ = linker.take_child_item(this);
+  link_ = links.config_links.at(config->item);
 }
 
 void RemapUnit::update_status()
@@ -208,21 +197,18 @@ void RemapUnit::update_status()
   status_.level = (level == level_from_) ? level_to_ : level;
 }
 
-WarnToOkUnit::WarnToOkUnit(const UnitConfigItem & config) : RemapUnit(config)
+WarnToOkUnit::WarnToOkUnit(const UnitConfigItem & config, const GraphLinks & links)
+: RemapUnit(config, links)
 {
   level_from_ = DiagnosticStatus::WARN;
   level_to_ = DiagnosticStatus::OK;
 }
 
-WarnToErrorUnit::WarnToErrorUnit(const UnitConfigItem & config) : RemapUnit(config)
+WarnToErrorUnit::WarnToErrorUnit(const UnitConfigItem & config, const GraphLinks & links)
+: RemapUnit(config, links)
 {
   level_from_ = DiagnosticStatus::WARN;
   level_to_ = DiagnosticStatus::ERROR;
-}
-
-ConstUnit::ConstUnit(const UnitConfigItem & config, DiagnosticLevel level) : NodeUnit(config)
-{
-  status_.level = level;
 }
 
 void ConstUnit::update_status()
@@ -230,20 +216,27 @@ void ConstUnit::update_status()
   // Do nothing. This unit always returns the same level.
 }
 
-OkUnit::OkUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::OK)
+OkUnit::OkUnit(const UnitConfigItem & config, const GraphLinks & links) : ConstUnit(config, links)
 {
+  status_.level = DiagnosticStatus::OK;
 }
 
-WarnUnit::WarnUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::WARN)
+WarnUnit::WarnUnit(const UnitConfigItem & config, const GraphLinks & links)
+: ConstUnit(config, links)
 {
+  status_.level = DiagnosticStatus::WARN;
 }
 
-ErrorUnit::ErrorUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::ERROR)
+ErrorUnit::ErrorUnit(const UnitConfigItem & config, const GraphLinks & links)
+: ConstUnit(config, links)
 {
+  status_.level = DiagnosticStatus::ERROR;
 }
 
-StaleUnit::StaleUnit(const UnitConfigItem & config) : ConstUnit(config, DiagnosticStatus::STALE)
+StaleUnit::StaleUnit(const UnitConfigItem & config, const GraphLinks & links)
+: ConstUnit(config, links)
 {
+  status_.level = DiagnosticStatus::STALE;
 }
 
 }  // namespace diagnostic_graph_aggregator
