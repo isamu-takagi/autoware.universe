@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils/loader.hpp"
+#include "graph/graph.hpp"
+#include "graph/units.hpp"
 
 #include <iostream>
 
@@ -21,19 +22,19 @@ namespace diagnostic_graph_aggregator
 
 void dump_root(const std::string & path)
 {
-  const auto color = "#FFFFFF";
+  const auto color = "#EEEEEE";
   Graph graph;
   graph.create(path);
 
-  for (const auto & node : graph.nodes) {
-    std::cout << "card " << node << " " << color << " [" << std::endl;
-    std::cout << node->get_path() << std::endl;
+  for (const auto & unit : graph.units()) {
+    std::cout << "card " << unit << " " << color << " [" << std::endl;
+    std::cout << unit->get_path() << std::endl;
     std::cout << "]" << std::endl;
   }
 
-  for (const auto & node : graph.nodes) {
-    for (const auto & child : node->children) {
-      std::cout << node << " --> " << child << std::endl;
+  for (const auto & unit : graph.units()) {
+    for (const auto & child : unit->get_child_units()) {
+      std::cout << unit << " --> " << child << std::endl;
     }
   }
 }
