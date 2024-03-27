@@ -25,10 +25,22 @@
 namespace diagnostic_graph_aggregator
 {
 
-struct GraphLinks
+class UnitLoader
 {
-  std::unordered_map<LinkConfig *, UnitLink *> config_links;
-  std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
+public:
+  struct GraphLinks;
+  UnitLoader(UnitConfig * config, GraphLinks & links) : config_(config), links_(links) {}
+  const std::string & path() const;
+  const std::string & type() const;
+  size_t index() const;
+  TreeData & data() const;
+  UnitLink * child() const;
+  std::vector<UnitLink *> children() const;
+  std::vector<UnitLink *> parents() const;
+
+private:
+  UnitConfig * config_;
+  GraphLinks & links_;
 };
 
 class GraphLoader
@@ -41,8 +53,8 @@ public:
 
 private:
   std::unique_ptr<UnitLink> create_link();
-  std::unique_ptr<DiagUnit> create_diag(UnitConfig * config, const GraphLinks & links);
-  std::unique_ptr<NodeUnit> create_node(UnitConfig * config, const GraphLinks & links);
+  std::unique_ptr<DiagUnit> create_diag(const UnitLoader & unit);
+  std::unique_ptr<NodeUnit> create_node(const UnitLoader & unit);
 
   // Note: keep correspondence between links and unit children order.
   std::vector<std::unique_ptr<NodeUnit>> nodes_;

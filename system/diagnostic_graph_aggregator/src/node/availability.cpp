@@ -14,7 +14,6 @@
 
 #include "availability.hpp"
 
-#include "graph/config.hpp"
 #include "graph/error.hpp"
 #include "graph/graph.hpp"
 #include "graph/units.hpp"

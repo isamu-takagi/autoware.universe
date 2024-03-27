@@ -50,7 +50,7 @@ private:
 class BaseUnit
 {
 public:
-  BaseUnit(UnitConfig * config, const GraphLinks & link);
+  explicit BaseUnit(const UnitLoader & unit);
   virtual ~BaseUnit() = default;
   virtual DiagnosticLevel get_level() const = 0;
   virtual std::string get_path() const = 0;
@@ -73,7 +73,7 @@ private:
 class NodeUnit : public BaseUnit
 {
 public:
-  explicit NodeUnit(UnitConfig * config, const GraphLinks & links);
+  explicit NodeUnit(const UnitLoader & unit);
   void initialize_struct();
   void initialize_status();
   bool is_leaf() const override { return false; }
@@ -90,7 +90,7 @@ protected:
 class LeafUnit : public BaseUnit
 {
 public:
-  explicit LeafUnit(UnitConfig * config, const GraphLinks & links);
+  explicit LeafUnit(const UnitLoader & unit);
   void initialize_struct();
   void initialize_status();
   bool is_leaf() const override { return true; }
@@ -108,7 +108,7 @@ protected:
 class DiagUnit : public LeafUnit
 {
 public:
-  explicit DiagUnit(UnitConfig * config, const GraphLinks & links);
+  explicit DiagUnit(const UnitLoader & unit);
   std::string get_type() const override { return "diag"; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
   bool on_time(const rclcpp::Time & stamp);
@@ -123,7 +123,7 @@ private:
 class MaxUnit : public NodeUnit
 {
 public:
-  explicit MaxUnit(UnitConfig * config, const GraphLinks & links);
+  explicit MaxUnit(const UnitLoader & unit);
   std::string get_type() const override { return "and"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
@@ -147,7 +147,7 @@ private:
 class MinUnit : public NodeUnit
 {
 public:
-  explicit MinUnit(UnitConfig * config, const GraphLinks & links);
+  explicit MinUnit(const UnitLoader & unit);
   std::string get_type() const override { return "or"; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
@@ -161,7 +161,7 @@ private:
 class RemapUnit : public NodeUnit
 {
 public:
-  explicit RemapUnit(UnitConfig * config, const GraphLinks & links);
+  explicit RemapUnit(const UnitLoader & unit);
   std::vector<UnitLink *> get_child_links() const override { return {link_}; }
 
 protected:
@@ -176,14 +176,14 @@ private:
 class WarnToOkUnit : public RemapUnit
 {
 public:
-  explicit WarnToOkUnit(UnitConfig * config, const GraphLinks & links);
+  explicit WarnToOkUnit(const UnitLoader & unit);
   std::string get_type() const override { return "warn-to-ok"; }
 };
 
 class WarnToErrorUnit : public RemapUnit
 {
 public:
-  explicit WarnToErrorUnit(UnitConfig * config, const GraphLinks & links);
+  explicit WarnToErrorUnit(const UnitLoader & unit);
   std::string get_type() const override { return "warn-to-error"; }
 };
 
@@ -200,28 +200,28 @@ private:
 class OkUnit : public ConstUnit
 {
 public:
-  explicit OkUnit(UnitConfig * config, const GraphLinks & links);
+  explicit OkUnit(const UnitLoader & unit);
   std::string get_type() const override { return "ok"; }
 };
 
 class WarnUnit : public ConstUnit
 {
 public:
-  explicit WarnUnit(UnitConfig * config, const GraphLinks & links);
+  explicit WarnUnit(const UnitLoader & unit);
   std::string get_type() const override { return "warn"; }
 };
 
 class ErrorUnit : public ConstUnit
 {
 public:
-  explicit ErrorUnit(UnitConfig * config, const GraphLinks & links);
+  explicit ErrorUnit(const UnitLoader & unit);
   std::string get_type() const override { return "error"; }
 };
 
 class StaleUnit : public ConstUnit
 {
 public:
-  explicit StaleUnit(UnitConfig * config, const GraphLinks & links);
+  explicit StaleUnit(const UnitLoader & unit);
   std::string get_type() const override { return "stale"; }
 };
 

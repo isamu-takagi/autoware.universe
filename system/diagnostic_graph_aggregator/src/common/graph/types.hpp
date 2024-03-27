@@ -46,17 +46,18 @@ using tier4_system_msgs::msg::DiagNodeStatus;
 using tier4_system_msgs::msg::DiagNodeStruct;
 using DiagnosticLevel = DiagnosticStatus::_level_type;
 
+struct PathConfig;
+struct EditConfig;
+struct UnitConfig;
+struct LinkConfig;
+
+class TreeData;
 class UnitLink;
 class BaseUnit;
 class NodeUnit;
 class DiagUnit;
 class Graph;
-
-struct GraphLinks;
-struct PathConfig;
-struct EditConfig;
-struct UnitConfig;
-struct LinkConfig;
+class UnitLoader;
 
 }  // namespace diagnostic_graph_aggregator
 

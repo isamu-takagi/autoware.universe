@@ -25,6 +25,51 @@
 namespace diagnostic_graph_aggregator
 {
 
+struct UnitLoader::GraphLinks
+{
+  std::unordered_map<LinkConfig *, UnitLink *> config_links;
+  std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
+};
+
+size_t UnitLoader::index() const
+{
+  return config_->index;
+}
+
+const std::string & UnitLoader::path() const
+{
+  return config_->path;
+}
+
+const std::string & UnitLoader::type() const
+{
+  return config_->type;
+}
+
+TreeData & UnitLoader::data() const
+{
+  return config_->data;
+}
+
+UnitLink * UnitLoader::child() const
+{
+  return links_.config_links.at(config_->item);
+}
+
+std::vector<UnitLink *> UnitLoader::children() const
+{
+  std::vector<UnitLink *> result;
+  for (const auto & config : config_->list) {
+    result.push_back(links_.config_links.at(config));
+  }
+  return result;
+}
+
+std::vector<UnitLink *> UnitLoader::parents() const
+{
+  return links_.parent_links.at(config_);
+}
+
 GraphLoader::GraphLoader(const std::string & file)
 {
   TreeLoader tree = TreeLoader::Load(file);
@@ -40,31 +85,31 @@ GraphLoader::GraphLoader(const std::string & file)
   for (size_t i = 0; i < nodes.size(); ++i) nodes[i]->index = i;
 
   // Create link objects.
-  std::unordered_map<LinkConfig *, UnitLink *> config_links;
-  std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
+  UnitLoader::GraphLinks graph_links;
   for (const auto & config : root.units) {
-    parent_links[config.get()] = {};
+    graph_links.parent_links[config.get()] = {};
   }
   for (const auto & config : root.links) {
     const auto link = links_.emplace_back(create_link()).get();
-    config_links[config.get()] = link;
-    parent_links[config->child].push_back(link);
+    graph_links.config_links[config.get()] = link;
+    graph_links.parent_links[config->child].push_back(link);
   }
 
   // Create node objects.
-  const auto links = GraphLinks{config_links, parent_links};
   std::unordered_map<UnitConfig *, BaseUnit *> config_units;
   for (const auto & config : diags) {
-    const auto diag = diags_.emplace_back(create_diag(config, links)).get();
+    const auto unit = UnitLoader(config, graph_links);
+    const auto diag = diags_.emplace_back(create_diag(unit)).get();
     config_units[config] = diag;
   }
   for (const auto & config : nodes) {
-    const auto node = nodes_.emplace_back(create_node(config, links)).get();
+    const auto unit = UnitLoader(config, graph_links);
+    const auto node = nodes_.emplace_back(create_node(unit)).get();
     config_units[config] = node;
   }
 
   // Connect links and nodes;
-  for (const auto & [config, link] : config_links) {
+  for (const auto & [config, link] : graph_links.config_links) {
     const auto parent = config_units.at(config->parent);
     const auto child = config_units.at(config->child);
     link->initialize_object(parent, child);
@@ -101,44 +146,44 @@ std::unique_ptr<UnitLink> GraphLoader::create_link()
   return std::make_unique<UnitLink>();
 }
 
-std::unique_ptr<DiagUnit> GraphLoader::create_diag(UnitConfig * config, const GraphLinks & links)
+std::unique_ptr<DiagUnit> GraphLoader::create_diag(const UnitLoader & unit)
 {
-  if (config->type == unit_name::diag) {
-    return std::make_unique<DiagUnit>(config, links);
+  if (unit.type() == unit_name::diag) {
+    return std::make_unique<DiagUnit>(unit);
   }
-  throw UnknownUnitType(config->data.path(), config->type);
+  throw UnknownUnitType(unit.data().path(), unit.type());
 }
 
-std::unique_ptr<NodeUnit> GraphLoader::create_node(UnitConfig * config, const GraphLinks & links)
+std::unique_ptr<NodeUnit> GraphLoader::create_node(const UnitLoader & unit)
 {
-  if (config->type == "and") {
-    return std::make_unique<MaxUnit>(config, links);
+  if (unit.type() == "and") {
+    return std::make_unique<MaxUnit>(unit);
   }
-  if (config->type == "short-circuit-and") {
-    return std::make_unique<ShortCircuitMaxUnit>(config, links);
+  if (unit.type() == "short-circuit-and") {
+    return std::make_unique<ShortCircuitMaxUnit>(unit);
   }
-  if (config->type == "or") {
-    return std::make_unique<MinUnit>(config, links);
+  if (unit.type() == "or") {
+    return std::make_unique<MinUnit>(unit);
   }
-  if (config->type == "warn-to-ok") {
-    return std::make_unique<WarnToOkUnit>(config, links);
+  if (unit.type() == "warn-to-ok") {
+    return std::make_unique<WarnToOkUnit>(unit);
   }
-  if (config->type == "warn-to-error") {
-    return std::make_unique<WarnToErrorUnit>(config, links);
+  if (unit.type() == "warn-to-error") {
+    return std::make_unique<WarnToErrorUnit>(unit);
   }
-  if (config->type == "ok") {
-    return std::make_unique<OkUnit>(config, links);
+  if (unit.type() == "ok") {
+    return std::make_unique<OkUnit>(unit);
   }
-  if (config->type == "warn") {
-    return std::make_unique<WarnUnit>(config, links);
+  if (unit.type() == "warn") {
+    return std::make_unique<WarnUnit>(unit);
   }
-  if (config->type == "error") {
-    return std::make_unique<ErrorUnit>(config, links);
+  if (unit.type() == "error") {
+    return std::make_unique<ErrorUnit>(unit);
   }
-  if (config->type == "stale") {
-    return std::make_unique<StaleUnit>(config, links);
+  if (unit.type() == "stale") {
+    return std::make_unique<StaleUnit>(unit);
   }
-  throw UnknownUnitType(config->data.path(), config->type);
+  throw UnknownUnitType(unit.data().path(), unit.type());
 }
 
 }  // namespace diagnostic_graph_aggregator
