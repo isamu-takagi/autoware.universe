@@ -20,6 +20,15 @@ namespace diagnostic_graph_aggregator::unit_name
 
 constexpr char const * link = "link";
 constexpr char const * diag = "diag";
+constexpr char const * min = "or";
+constexpr char const * max = "and";
+constexpr char const * short_circuit_max = "short-circuit-and";
+constexpr char const * warn_to_ok = "warn-to-ok";
+constexpr char const * warn_to_error = "warn-to-error";
+constexpr char const * ok = "ok";
+constexpr char const * warn = "warn";
+constexpr char const * error = "error";
+constexpr char const * stale = "stale";
 
 }  // namespace diagnostic_graph_aggregator::unit_name
 

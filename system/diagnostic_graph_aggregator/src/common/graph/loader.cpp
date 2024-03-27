@@ -156,31 +156,31 @@ std::unique_ptr<DiagUnit> GraphLoader::create_diag(const UnitLoader & unit)
 
 std::unique_ptr<NodeUnit> GraphLoader::create_node(const UnitLoader & unit)
 {
-  if (unit.type() == "and") {
+  if (unit.type() == unit_name::max) {
     return std::make_unique<MaxUnit>(unit);
   }
-  if (unit.type() == "short-circuit-and") {
+  if (unit.type() == unit_name::short_circuit_max) {
     return std::make_unique<ShortCircuitMaxUnit>(unit);
   }
-  if (unit.type() == "or") {
+  if (unit.type() == unit_name::min) {
     return std::make_unique<MinUnit>(unit);
   }
-  if (unit.type() == "warn-to-ok") {
+  if (unit.type() == unit_name::warn_to_ok) {
     return std::make_unique<WarnToOkUnit>(unit);
   }
-  if (unit.type() == "warn-to-error") {
+  if (unit.type() == unit_name::warn_to_error) {
     return std::make_unique<WarnToErrorUnit>(unit);
   }
-  if (unit.type() == "ok") {
+  if (unit.type() == unit_name::ok) {
     return std::make_unique<OkUnit>(unit);
   }
-  if (unit.type() == "warn") {
+  if (unit.type() == unit_name::warn) {
     return std::make_unique<WarnUnit>(unit);
   }
-  if (unit.type() == "error") {
+  if (unit.type() == unit_name::error) {
     return std::make_unique<ErrorUnit>(unit);
   }
-  if (unit.type() == "stale") {
+  if (unit.type() == unit_name::stale) {
     return std::make_unique<StaleUnit>(unit);
   }
   throw UnknownUnitType(unit.data().path(), unit.type());

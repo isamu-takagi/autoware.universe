@@ -43,6 +43,7 @@ public:
   ~Graph();  // For unique_ptr members.
 
 private:
+  // Note: keep order correspondence between links and unit children for viewer.
   std::vector<std::unique_ptr<NodeUnit>> nodes_;
   std::vector<std::unique_ptr<DiagUnit>> diags_;
   std::vector<std::unique_ptr<UnitLink>> links_;

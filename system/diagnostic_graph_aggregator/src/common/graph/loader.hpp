@@ -56,7 +56,7 @@ private:
   std::unique_ptr<DiagUnit> create_diag(const UnitLoader & unit);
   std::unique_ptr<NodeUnit> create_node(const UnitLoader & unit);
 
-  // Note: keep correspondence between links and unit children order.
+  // Note: keep order correspondence between links and unit children for viewer.
   std::vector<std::unique_ptr<NodeUnit>> nodes_;
   std::vector<std::unique_ptr<DiagUnit>> diags_;
   std::vector<std::unique_ptr<UnitLink>> links_;

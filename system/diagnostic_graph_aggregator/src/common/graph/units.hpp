@@ -15,6 +15,7 @@
 #ifndef COMMON__GRAPH__UNITS_HPP_
 #define COMMON__GRAPH__UNITS_HPP_
 
+#include "names.hpp"
 #include "types.hpp"
 
 #include <rclcpp/time.hpp>
@@ -64,7 +65,7 @@ protected:
   bool update();
 
 private:
-  virtual void update_status() = 0;  // Type dependent part of the update function.
+  virtual void update_status() = 0;
   size_t index_;
   std::vector<UnitLink *> parents_;
   std::optional<DiagnosticLevel> prev_level_;
@@ -109,7 +110,7 @@ class DiagUnit : public LeafUnit
 {
 public:
   explicit DiagUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "diag"; }
+  std::string get_type() const override { return unit_name::diag; }
   std::vector<UnitLink *> get_child_links() const override { return {}; }
   bool on_time(const rclcpp::Time & stamp);
   bool on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status);
@@ -124,7 +125,7 @@ class MaxUnit : public NodeUnit
 {
 public:
   explicit MaxUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "and"; }
+  std::string get_type() const override { return unit_name::max; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
 protected:
@@ -138,7 +139,7 @@ class ShortCircuitMaxUnit : public MaxUnit
 {
 public:
   using MaxUnit::MaxUnit;
-  std::string get_type() const override { return "short-circuit-and"; }
+  std::string get_type() const override { return unit_name::short_circuit_max; }
 
 private:
   void update_status() override;
@@ -148,7 +149,7 @@ class MinUnit : public NodeUnit
 {
 public:
   explicit MinUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "or"; }
+  std::string get_type() const override { return unit_name::min; }
   std::vector<UnitLink *> get_child_links() const override { return links_; }
 
 protected:
@@ -177,14 +178,14 @@ class WarnToOkUnit : public RemapUnit
 {
 public:
   explicit WarnToOkUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "warn-to-ok"; }
+  std::string get_type() const override { return unit_name::warn_to_ok; }
 };
 
 class WarnToErrorUnit : public RemapUnit
 {
 public:
   explicit WarnToErrorUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "warn-to-error"; }
+  std::string get_type() const override { return unit_name::warn_to_error; }
 };
 
 class ConstUnit : public NodeUnit
@@ -201,28 +202,28 @@ class OkUnit : public ConstUnit
 {
 public:
   explicit OkUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "ok"; }
+  std::string get_type() const override { return unit_name::ok; }
 };
 
 class WarnUnit : public ConstUnit
 {
 public:
   explicit WarnUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "warn"; }
+  std::string get_type() const override { return unit_name::warn; }
 };
 
 class ErrorUnit : public ConstUnit
 {
 public:
   explicit ErrorUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "error"; }
+  std::string get_type() const override { return unit_name::error; }
 };
 
 class StaleUnit : public ConstUnit
 {
 public:
   explicit StaleUnit(const UnitLoader & unit);
-  std::string get_type() const override { return "stale"; }
+  std::string get_type() const override { return unit_name::stale; }
 };
 
 }  // namespace diagnostic_graph_aggregator
