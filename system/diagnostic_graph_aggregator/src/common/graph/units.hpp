@@ -31,12 +31,13 @@ namespace diagnostic_graph_aggregator
 class UnitLink
 {
 public:
+  void initialize_object(BaseUnit * parent, BaseUnit * child);
+  void initialize_struct();
+  void initialize_status();
   DiagLinkStruct get_struct() const { return struct_; }
   DiagLinkStatus get_status() const { return status_; }
   BaseUnit * get_parent() const { return parent_; }
   BaseUnit * get_child() const { return child_; }
-  void initialize_struct();  // This function must be called after setting the index.
-  void initialize_status();  // This function must be called after setting the struct.
 
   auto get_used() const { return status_.used; }
   void set_used(bool used) { status_.used = used; }
@@ -75,13 +76,13 @@ class NodeUnit : public BaseUnit
 {
 public:
   explicit NodeUnit(const UnitConfigItem & config, const GraphLinks & links);
+  void initialize_struct();
+  void initialize_status();
+  bool is_leaf() const override { return false; }
   DiagNodeStruct get_struct() const { return struct_; }
   DiagNodeStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_path() const override { return struct_.path; }
-  bool is_leaf() const override { return false; }
-  void initialize_struct();  // This function must be called after setting the index.
-  void initialize_status();  // This function must be called after setting the struct.
 
 protected:
   DiagNodeStruct struct_;
@@ -92,14 +93,14 @@ class LeafUnit : public BaseUnit
 {
 public:
   explicit LeafUnit(const UnitConfigItem & config, const GraphLinks & links);
+  void initialize_struct();
+  void initialize_status();
+  bool is_leaf() const override { return true; }
   DiagLeafStruct get_struct() const { return struct_; }
   DiagLeafStatus get_status() const { return status_; }
   DiagnosticLevel get_level() const override { return status_.level; }
   std::string get_name() const { return struct_.name; }
   std::string get_path() const override { return struct_.path; }
-  bool is_leaf() const override { return true; }
-  void initialize_struct();  // This function must be called after setting the index.
-  void initialize_status();  // This function must be called after setting the struct.
 
 protected:
   DiagLeafStruct struct_;

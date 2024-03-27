@@ -30,6 +30,12 @@ std::vector<UnitLink *> children(const GraphLinks & links, std::vector<LinkConfi
   return result;
 }
 
+void UnitLink::initialize_object(BaseUnit * parent, BaseUnit * child)
+{
+  parent_ = parent;
+  child_ = child;
+}
+
 void UnitLink::initialize_struct()
 {
   struct_.parent = parent_->get_index();
@@ -39,7 +45,7 @@ void UnitLink::initialize_struct()
 
 void UnitLink::initialize_status()
 {
-  status_.used = true;
+  // Do nothing.
 }
 
 BaseUnit::BaseUnit(const UnitConfigItem & config, const GraphLinks & links)
@@ -101,7 +107,7 @@ LeafUnit::LeafUnit(const UnitConfigItem & config, const GraphLinks & links)
 
 void LeafUnit::initialize_struct()
 {
-  // Do nothing by default.
+  // Do nothing.
 }
 
 void LeafUnit::initialize_status()

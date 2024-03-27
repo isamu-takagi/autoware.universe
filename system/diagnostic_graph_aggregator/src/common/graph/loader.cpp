@@ -29,17 +29,17 @@ GraphLoader::GraphLoader(const std::string & file)
 {
   TreeLoader tree = TreeLoader::Load(file);
   FileConfig root = tree.construct();
+
+  // Init array index to be able get it from unit itself.
   std::vector<UnitConfig *> diags;
   std::vector<UnitConfig *> nodes;
   for (const auto & config : root.units) {
     (config->type == unit_name::diag ? diags : nodes).push_back(config.get());
   }
-
-  // Init array index to be able get it from unit itself.
   for (size_t i = 0; i < diags.size(); ++i) diags[i]->index = i;
   for (size_t i = 0; i < nodes.size(); ++i) nodes[i]->index = i;
 
-  // Create links.
+  // Create link objects.
   std::unordered_map<LinkConfig *, UnitLink *> config_links;
   std::unordered_map<UnitConfig *, std::vector<UnitLink *>> parent_links;
   for (const auto & config : root.units) {
@@ -51,23 +51,34 @@ GraphLoader::GraphLoader(const std::string & file)
     parent_links[config->child].push_back(link);
   }
 
+  // Create node objects.
   const auto links = GraphLinks{config_links, parent_links};
-  for (const auto & config : diags) diags_.push_back(create_diag(config, links));
-  for (const auto & config : nodes) nodes_.push_back(create_node(config, links));
+  std::unordered_map<UnitConfig *, BaseUnit *> config_units;
+  for (const auto & config : diags) {
+    const auto diag = diags_.emplace_back(create_diag(config, links)).get();
+    config_units[config] = diag;
+  }
+  for (const auto & config : nodes) {
+    const auto node = nodes_.emplace_back(create_node(config, links)).get();
+    config_units[config] = node;
+  }
 
-  // Init struct that needs array index.
-  /*
+  // Connect links and nodes;
+  for (const auto & [config, link] : config_links) {
+    const auto parent = config_units.at(config->parent);
+    const auto child = config_units.at(config->child);
+    link->initialize_object(parent, child);
+  }
+
+  // Init struct.
   for (auto & node : nodes_) node->initialize_struct();
   for (auto & diag : diags_) diag->initialize_struct();
   for (auto & link : links_) link->initialize_struct();
-  */
 
   // Init status that needs struct.
-  /*
   for (auto & node : nodes_) node->initialize_status();
   for (auto & diag : diags_) diag->initialize_status();
   for (auto & link : links_) link->initialize_status();
-  */
 }
 
 std::vector<std::unique_ptr<UnitLink>> GraphLoader::release_links()
