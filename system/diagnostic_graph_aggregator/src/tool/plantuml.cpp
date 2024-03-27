@@ -21,12 +21,13 @@ namespace diagnostic_graph_aggregator
 
 void dump_root(const std::string & path)
 {
-  const auto graph = load_graph_nodes(path);
   const auto color = "#FFFFFF";
+  Graph graph;
+  graph.create(path);
 
   for (const auto & node : graph.nodes) {
     std::cout << "card " << node << " " << color << " [" << std::endl;
-    std::cout << node->path << std::endl;
+    std::cout << node->get_path() << std::endl;
     std::cout << "]" << std::endl;
   }
 

@@ -60,6 +60,7 @@ public:
   virtual std::vector<BaseUnit *> get_child_units() const;
   virtual bool is_leaf() const = 0;
   size_t get_index() const { return index_; }
+  size_t get_parent_size() const { return parents_.size(); }
 
 protected:
   bool update();

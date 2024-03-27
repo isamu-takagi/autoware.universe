@@ -127,12 +127,6 @@ struct GraphStructure : public Exception
   using Exception::Exception;
 };
 
-/*
-struct InvalidValue : public Exception
-{
-};
-*/
-
 }  // namespace diagnostic_graph_aggregator
 
 #endif  // COMMON__GRAPH__ERROR_HPP_

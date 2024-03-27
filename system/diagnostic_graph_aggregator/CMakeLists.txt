@@ -24,11 +24,10 @@ target_include_directories(aggregator PRIVATE src/common)
 #)
 #target_include_directories(converter PRIVATE src/common)
 
-#ament_auto_add_executable(tree
-#  src/tool/tree.cpp
-#  src/tool/utils/loader.cpp
-#)
-#target_include_directories(tree PRIVATE src/common)
+ament_auto_add_executable(tree
+  src/tool/tree.cpp
+)
+target_include_directories(tree PRIVATE src/common)
 
 #ament_auto_add_executable(plantuml
 #  src/tool/plantuml.cpp
