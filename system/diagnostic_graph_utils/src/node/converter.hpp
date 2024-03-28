@@ -15,6 +15,7 @@
 #ifndef NODE__CONVERTER_HPP_
 #define NODE__CONVERTER_HPP_
 
+#include "diagnostic_graph_utils/structure.hpp"
 #include "graph/types.hpp"
 
 #include <rclcpp/rclcpp.hpp>
