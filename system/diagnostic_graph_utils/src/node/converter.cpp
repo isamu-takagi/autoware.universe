@@ -14,115 +14,56 @@
 
 #include "converter.hpp"
 
-#include <algorithm>
+#include <memory>
 
-namespace diagnostic_graph_aggregator
+namespace diagnostic_graph_utils
 {
-
-std::string level_to_string(DiagnosticLevel level)
-{
-  switch (level) {
-    case DiagnosticStatus::OK:
-      return "OK";
-    case DiagnosticStatus::WARN:
-      return "WARN";
-    case DiagnosticStatus::ERROR:
-      return "ERROR";
-    case DiagnosticStatus::STALE:
-      return "STALE";
-  }
-  return "UNKNOWN";
-}
-
-std::string parent_path(const std::string & path)
-{
-  return path.substr(0, path.rfind('/'));
-}
-
-auto create_tree(const DiagnosticGraph & graph)
-{
-  std::map<std::string, std::unique_ptr<TreeNode>, std::greater<std::string>> tree;
-  for (const auto & node : graph.nodes) {
-    tree.emplace(node.status.name, std::make_unique<TreeNode>(true));
-  }
-  for (const auto & node : graph.nodes) {
-    std::string path = node.status.name;
-    while (path = parent_path(path), !path.empty()) {
-      if (tree.count(path)) break;
-      tree.emplace(path, std::make_unique<TreeNode>(false));
-    }
-  }
-  for (const auto & [path, node] : tree) {
-    const auto parent = parent_path(path);
-    node->parent = parent.empty() ? nullptr : tree[parent].get();
-  }
-  return tree;
-}
 
 ConverterNode::ConverterNode() : Node("converter")
 {
   using std::placeholders::_1;
-  const auto qos_graph = rclcpp::QoS(1);
-  const auto qos_array = rclcpp::QoS(1);
-
-  const auto callback = std::bind(&ConverterNode::on_graph, this, _1);
-  sub_graph_ = create_subscription<DiagnosticGraph>("/diagnostics_graph", qos_graph, callback);
-  pub_array_ = create_publisher<DiagnosticArray>("/diagnostics_agg", qos_array);
-
-  initialize_tree_ = false;
-  complement_tree_ = declare_parameter<bool>("complement_tree");
+  pub_array_ = create_publisher<DiagnosticArray>("/diagnostics_array", rclcpp::QoS(1));
+  sub_graph_.register_update_callback(std::bind(&ConverterNode::on_update, this, _1));
+  sub_graph_.subscribe(*this, 1);
 }
 
-void ConverterNode::on_graph(const DiagnosticGraph::ConstSharedPtr msg)
+void ConverterNode::on_update(DiagGraph::ConstSharedPtr graph)
 {
-  DiagnosticArray message;
-  message.header.stamp = msg->stamp;
-  message.status.reserve(msg->nodes.size());
-  for (const auto & node : msg->nodes) {
-    message.status.push_back(node.status);
-    for (const auto & link : node.links) {
-      diagnostic_msgs::msg::KeyValue kv;
-      const auto & status = msg->nodes[link.index].status;
-      kv.key = status.name;
-      kv.value = level_to_string(status.level);
-      if (link.used) {
-        message.status.back().values.push_back(kv);
-      }
+  const auto & nodes = graph->nodes();
+  const auto & diags = graph->diags();
+
+  DiagnosticArray array;
+  array.status.reserve(nodes.size() + diags.size());
+  for (const auto & node : nodes) {
+    const auto & path = node->path();
+    if (!path.empty()) {
+      DiagnosticStatus msg;
+      msg.level = node->level();
+      msg.name = path;
+      array.status.push_back(msg);
     }
   }
-
-  if (complement_tree_ && !initialize_tree_) {
-    initialize_tree_ = true;
-    tree_ = create_tree(*msg);
-  }
-
-  if (complement_tree_) {
-    for (const auto & [path, node] : tree_) {
-      node->level = DiagnosticStatus::OK;
-    }
-    for (const auto & node : msg->nodes) {
-      tree_[node.status.name]->level = node.status.level;
-    }
-    for (const auto & [path, node] : tree_) {
-      if (!node->parent) continue;
-      node->parent->level = std::max(node->parent->level, node->level);
-    }
-    for (const auto & [path, node] : tree_) {
-      if (node->leaf) continue;
-      message.status.emplace_back();
-      message.status.back().name = path;
-      message.status.back().level = node->level;
+  for (const auto & diag : diags) {
+    const auto & path = diag->path();
+    if (!path.empty()) {
+      DiagnosticStatus msg;
+      const auto & status = diag->status();
+      msg.level = diag->level();
+      msg.name = path;
+      msg.message = status.message;
+      msg.hardware_id = status.hardware_id;
+      msg.values = status.values;
+      array.status.push_back(msg);
     }
   }
-
-  pub_array_->publish(message);
+  pub_array_->publish(array);
 }
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace diagnostic_graph_utils
 
 int main(int argc, char ** argv)
 {
-  using diagnostic_graph_aggregator::ConverterNode;
+  using diagnostic_graph_utils::ConverterNode;
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
   auto node = std::make_shared<ConverterNode>();

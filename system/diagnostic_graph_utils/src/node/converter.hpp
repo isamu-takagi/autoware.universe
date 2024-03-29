@@ -15,27 +15,15 @@
 #ifndef NODE__CONVERTER_HPP_
 #define NODE__CONVERTER_HPP_
 
-#include "diagnostic_graph_utils/structure.hpp"
-#include "graph/types.hpp"
+#include "diagnostic_graph_utils/subscription.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <functional>
-#include <map>  // Use map for sorting keys.
-#include <memory>
-#include <string>
-#include <vector>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
-namespace diagnostic_graph_aggregator
+namespace diagnostic_graph_utils
 {
-
-struct TreeNode
-{
-  explicit TreeNode(bool leaf) : leaf(leaf) {}
-  bool leaf;
-  TreeNode * parent;
-  uint8_t level;
-};
 
 class ConverterNode : public rclcpp::Node
 {
@@ -43,14 +31,13 @@ public:
   ConverterNode();
 
 private:
-  bool initialize_tree_;
-  bool complement_tree_;
-  std::map<std::string, std::unique_ptr<TreeNode>, std::greater<std::string>> tree_;
-  rclcpp::Subscription<DiagnosticGraph>::SharedPtr sub_graph_;
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  void on_update(DiagGraph::ConstSharedPtr graph);
   rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_array_;
-  void on_graph(const DiagnosticGraph::ConstSharedPtr msg);
+  DiagGraphSubscription sub_graph_;
 };
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace diagnostic_graph_utils
 
 #endif  // NODE__CONVERTER_HPP_

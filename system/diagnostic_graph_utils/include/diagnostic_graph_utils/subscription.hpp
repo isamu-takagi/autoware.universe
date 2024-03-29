@@ -15,6 +15,8 @@
 #ifndef DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
 #define DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
 
+#include "diagnostic_graph_utils/graph.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_system_msgs/msg/diag_graph_status.hpp>
@@ -23,10 +25,15 @@
 namespace diagnostic_graph_utils
 {
 
-class DiagnosticGraphSubscription
+class DiagGraphSubscription
 {
 public:
-  DiagnosticGraphSubscription(rclcpp::Node & node, size_t depth);
+  using CallbackType = std::function<void(DiagGraph::SharedPtr)>;
+  DiagGraphSubscription();
+  DiagGraphSubscription(rclcpp::Node & node, size_t depth);
+  void subscribe(rclcpp::Node & node, size_t depth);
+  void register_create_callback(const CallbackType & callback);
+  void register_update_callback(const CallbackType & callback);
 
 private:
   using DiagGraphStruct = tier4_system_msgs::msg::DiagGraphStruct;
@@ -35,6 +42,10 @@ private:
   void on_status(const DiagGraphStatus & msg);
   rclcpp::Subscription<DiagGraphStruct>::SharedPtr sub_struct_;
   rclcpp::Subscription<DiagGraphStatus>::SharedPtr sub_status_;
+
+  DiagGraph::SharedPtr graph_;
+  CallbackType create_callback_;
+  CallbackType update_callback_;
 };
 
 }  // namespace diagnostic_graph_utils

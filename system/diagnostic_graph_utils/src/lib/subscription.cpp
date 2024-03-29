@@ -17,17 +17,51 @@
 namespace diagnostic_graph_utils
 {
 
-DiagnosticGraphSubscription::DiagnosticGraphSubscription(rclcpp::Node & node, size_t depth)
+DiagGraphSubscription::DiagGraphSubscription()
+{
+  graph_ = std::make_shared<DiagGraph>();
+}
+
+DiagGraphSubscription::DiagGraphSubscription(rclcpp::Node & node, size_t depth)
+{
+  graph_ = std::make_shared<DiagGraph>();
+  subscribe(node, depth);
+}
+
+void DiagGraphSubscription::subscribe(rclcpp::Node & node, size_t depth)
 {
   const auto qos_struct = rclcpp::QoS(1).transient_local();
   const auto qos_status = rclcpp::QoS(depth);
 
   sub_struct_ = node.create_subscription<DiagGraphStruct>(
     "/diagnostics_graph/struct", qos_struct,
-    std::bind(&DiagnosticGraphSubscription::on_struct, this, std::placeholders::_1));
+    std::bind(&DiagGraphSubscription::on_struct, this, std::placeholders::_1));
   sub_status_ = node.create_subscription<DiagGraphStatus>(
     "/diagnostics_graph/status", qos_status,
-    std::bind(&DiagnosticGraphSubscription::on_status, this, std::placeholders::_1));
+    std::bind(&DiagGraphSubscription::on_status, this, std::placeholders::_1));
+}
+
+void DiagGraphSubscription::register_create_callback(const CallbackType & callback)
+{
+  create_callback_ = callback;
+}
+
+void DiagGraphSubscription::register_update_callback(const CallbackType & callback)
+{
+  update_callback_ = callback;
+}
+
+void DiagGraphSubscription::on_struct(const DiagGraphStruct & msg)
+{
+  graph_->create(msg);
+  if (create_callback_) create_callback_(graph_);
+}
+
+void DiagGraphSubscription::on_status(const DiagGraphStatus & msg)
+{
+  if (graph_->update(msg)) {
+    if (update_callback_) update_callback_(graph_);
+  }
 }
 
 }  // namespace diagnostic_graph_utils
