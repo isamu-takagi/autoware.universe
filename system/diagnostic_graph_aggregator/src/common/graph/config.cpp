@@ -128,7 +128,7 @@ TreeLoader TreeLoader::Load(const std::string & path)
 {
   PathConfig root(TreeData::None());
   root.original = path;
-  root.resolved = path;
+  root.resolved = resolve_file_path(path, root.data);
   return TreeLoader(&root);
 }
 
