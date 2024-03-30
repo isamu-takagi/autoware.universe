@@ -39,7 +39,7 @@ void DumpNode::on_create(DiagGraph::ConstSharedPtr graph)
   const std::string title_level = "Level";
   const std::string title_path = "Path";
   const std::string title_type = "Type";
-  const std::string title_link = "Link";
+  const std::string title_link = "Children";
 
   // Merge nodes and units as units.
   std::vector<DiagUnit *> units;

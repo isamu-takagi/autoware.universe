@@ -98,7 +98,7 @@ LeafUnit::LeafUnit(const UnitLoader & unit) : BaseUnit(unit)
 
 void LeafUnit::initialize_struct()
 {
-  // Do nothing.
+  struct_.type = get_type();
 }
 
 void LeafUnit::initialize_status()

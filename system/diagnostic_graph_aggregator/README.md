@@ -73,9 +73,8 @@ ros2 launch diagnostic_graph_aggregator example-edit.launch.xml
 
 ## Debug tools
 
-- [dump](./doc/tool/dump.md)
-- [converter](./doc/tool/converter.md)
 - [tree](./doc/tool/tree.md)
+- [diagnostic_graph_utils](../diagnostic_graph_utils/README.md)
 
 ## Graph file format
 
