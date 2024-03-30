@@ -19,11 +19,6 @@ ament_auto_add_executable(aggregator
 )
 target_include_directories(aggregator PRIVATE src/common)
 
-#ament_auto_add_executable(converter
-#  src/node/converter.cpp
-#)
-#target_include_directories(converter PRIVATE src/common)
-
 ament_auto_add_executable(tree
   src/tool/tree.cpp
 )
@@ -44,11 +39,5 @@ if(BUILD_TESTING)
   target_compile_definitions(gtest_${PROJECT_NAME} PRIVATE TEST_RESOURCE_PATH="${RESOURCE_PATH}")
   target_include_directories(gtest_${PROJECT_NAME} PRIVATE src/common)
 endif()
-
-install(PROGRAMS
-  script/dump.py
-  RENAME dump
-  DESTINATION lib/${PROJECT_NAME}
-)
 
 ament_auto_package(INSTALL_TO_SHARE config example launch)

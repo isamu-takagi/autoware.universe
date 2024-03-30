@@ -9,6 +9,10 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/lib/subscription.cpp
 )
 
+ament_auto_add_executable(dump
+  src/node/dump.cpp
+)
+
 ament_auto_add_executable(converter
   src/node/converter.cpp
 )

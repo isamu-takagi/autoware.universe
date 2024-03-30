@@ -31,15 +31,25 @@ namespace diagnostic_graph_utils
 class DiagUnit
 {
 public:
-  using DiagLevel = diagnostic_msgs::msg::DiagnosticStatus::_level_type;
+  using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using DiagLevel = DiagStatus::_level_type;
   virtual DiagLevel level() const = 0;
-  virtual const std::string & type() const = 0;
-  virtual const std::string & path() const = 0;
+  virtual std::string type() const = 0;
+  virtual std::string path() const = 0;
+  virtual std::vector<DiagUnit *> children() const = 0;
 };
 
 class DiagLink
 {
-  // Not supported now.
+public:
+  using DiagLinkStruct = tier4_system_msgs::msg::DiagLinkStruct;
+  using DiagLinkStatus = tier4_system_msgs::msg::DiagLinkStatus;
+  explicit DiagLink(const DiagLinkStruct & msg) : struct_(msg) {}
+  void update(const DiagLinkStatus & msg) { status_ = msg; }
+
+private:
+  DiagLinkStruct struct_;
+  DiagLinkStatus status_;
 };
 
 class DiagNode : public DiagUnit
@@ -49,14 +59,17 @@ public:
   using DiagNodeStatus = tier4_system_msgs::msg::DiagNodeStatus;
   explicit DiagNode(const DiagNodeStruct & msg) : struct_(msg) {}
   void update(const DiagNodeStatus & msg) { status_ = msg; }
+  void add_children(DiagUnit * unit) { children_.push_back(unit); }
 
   DiagLevel level() const override { return status_.level; }
-  const std::string & type() const override { return struct_.type; }
-  const std::string & path() const override { return struct_.path; }
+  std::string type() const override { return struct_.type; }
+  std::string path() const override { return struct_.path; }
+  std::vector<DiagUnit *> children() const override { return children_; }
 
 private:
   DiagNodeStruct struct_;
   DiagNodeStatus status_;
+  std::vector<DiagUnit *> children_;
 };
 
 class DiagLeaf : public DiagUnit
@@ -69,8 +82,9 @@ public:
   const DiagLeafStatus & status() const { return status_; }
 
   DiagLevel level() const override { return status_.level; }
-  const std::string & type() const override { return struct_.type; }
-  const std::string & path() const override { return struct_.path; }
+  std::string type() const override { return struct_.type; }
+  std::string path() const override { return struct_.path; }
+  std::vector<DiagUnit *> children() const override { return {}; }
 
 private:
   DiagLeafStruct struct_;
