@@ -30,7 +30,7 @@ namespace diagnostic_graph_aggregator
 class Graph
 {
 public:
-  void create(const std::string & file);
+  void create(const std::string & file, const std::string & id = "");
   void update(const rclcpp::Time & stamp);
   bool update(const rclcpp::Time & stamp, const DiagnosticStatus & status);
   const auto & nodes() const { return nodes_; }
@@ -49,6 +49,7 @@ private:
   std::vector<std::unique_ptr<UnitLink>> links_;
   std::vector<BaseUnit *> units_;
   std::unordered_map<std::string, DiagUnit *> names_;
+  std::string id_;
 };
 
 }  // namespace diagnostic_graph_aggregator

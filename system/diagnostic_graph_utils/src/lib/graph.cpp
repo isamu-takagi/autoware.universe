@@ -19,7 +19,7 @@ namespace diagnostic_graph_utils
 
 void DiagGraph::create(const DiagGraphStruct & msg)
 {
-  name_ = msg.name;
+  id_ = msg.id;
   for (const auto & node : msg.nodes) nodes_.push_back(std::make_unique<DiagNode>(node));
   for (const auto & diag : msg.diags) diags_.push_back(std::make_unique<DiagLeaf>(diag));
   for (const auto & link : msg.links) links_.push_back(std::make_unique<DiagLink>(link));
@@ -41,7 +41,7 @@ void DiagGraph::create(const DiagGraphStruct & msg)
 
 bool DiagGraph::update(const DiagGraphStatus & msg)
 {
-  if (name_ != msg.name) return false;
+  if (id_ != msg.id) return false;
   for (size_t i = 0; i < msg.nodes.size(); ++i) nodes_[i]->update(msg.nodes[i]);
   for (size_t i = 0; i < msg.diags.size(); ++i) diags_[i]->update(msg.diags[i]);
   for (size_t i = 0; i < msg.links.size(); ++i) links_[i]->update(msg.links[i]);

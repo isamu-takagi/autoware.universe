@@ -15,6 +15,7 @@
 #include "aggregator.hpp"
 
 #include <memory>
+#include <sstream>
 #include <string>
 
 namespace diagnostic_graph_aggregator
@@ -22,10 +23,14 @@ namespace diagnostic_graph_aggregator
 
 AggregatorNode::AggregatorNode() : Node("aggregator")
 {
+  const auto stamp = now();
+
   // Init diagnostics graph.
   {
     const auto graph_file = declare_parameter<std::string>("graph_file");
-    graph_.create(graph_file);
+    std::ostringstream sout;
+    sout << std::hex << stamp.nanoseconds();
+    graph_.create(graph_file, sout.str());
   }
 
   // Init plugins.
@@ -50,7 +55,6 @@ AggregatorNode::AggregatorNode() : Node("aggregator")
   }
 
   // Send structure topic once.
-  const auto stamp = now();
   pub_struct_->publish(graph_.create_struct(stamp));
 }
 

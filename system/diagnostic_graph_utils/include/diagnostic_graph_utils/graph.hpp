@@ -105,7 +105,7 @@ public:
   const auto & links() const { return links_; }
 
 private:
-  std::string name_;
+  std::string id_;
   std::vector<std::unique_ptr<DiagNode>> nodes_;
   std::vector<std::unique_ptr<DiagLeaf>> diags_;
   std::vector<std::unique_ptr<DiagLink>> links_;
