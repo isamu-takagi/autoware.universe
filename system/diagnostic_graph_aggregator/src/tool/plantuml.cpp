@@ -28,13 +28,13 @@ void dump_root(const std::string & path)
 
   for (const auto & unit : graph.units()) {
     std::cout << "card " << unit << " " << color << " [" << std::endl;
-    std::cout << unit->get_path() << std::endl;
+    std::cout << unit->path() << std::endl;
     std::cout << "]" << std::endl;
   }
 
   for (const auto & unit : graph.units()) {
-    for (const auto & child : unit->get_child_units()) {
-      std::cout << unit << " --> " << child << std::endl;
+    for (const auto & link : unit->child_links()) {
+      std::cout << unit << " --> " << link->child() << std::endl;
     }
   }
 }

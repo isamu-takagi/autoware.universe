@@ -32,7 +32,7 @@ ModesAvailability::ModesAvailability(rclcpp::Node & node, const Graph & graph)
   using PathDict = std::unordered_map<std::string, BaseUnit *>;
   PathDict paths;
   for (const auto & unit : graph.units()) {
-    paths[unit->get_path()] = unit;
+    paths[unit->path()] = unit;
   }
 
   const auto find_unit = [](const PathDict & paths, const std::string & name) {
@@ -56,9 +56,7 @@ ModesAvailability::ModesAvailability(rclcpp::Node & node, const Graph & graph)
 
 void ModesAvailability::update(const rclcpp::Time & stamp) const
 {
-  const auto is_ok = [](const BaseUnit * unit) {
-    return unit->get_level() == DiagnosticStatus::OK;
-  };
+  const auto is_ok = [](const BaseUnit * unit) { return unit->level() == DiagnosticStatus::OK; };
 
   // clang-format off
   Availability message;

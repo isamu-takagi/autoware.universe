@@ -22,13 +22,13 @@ namespace diagnostic_graph_aggregator
 
 void dump_unit(const BaseUnit * unit, const std::string & indent = "", bool root = true)
 {
-  const auto path = unit->get_path().empty() ? "" : unit->get_path() + " ";
-  const auto type = "(" + unit->get_type() + ")";
+  const auto path = unit->path().empty() ? "" : unit->path() + " ";
+  const auto type = "(" + unit->type() + ")";
   std::cout << indent << "- " << path << type << std::endl;
 
-  if (root || unit->get_parent_size() == 1) {
-    for (const auto child : unit->get_child_units()) {
-      dump_unit(child, indent + "    ", false);
+  if (root || unit->parent_size() == 1) {
+    for (const auto link : unit->child_links()) {
+      dump_unit(link->child(), indent + "    ", false);
     }
   }
 }
@@ -40,20 +40,20 @@ void dump_root(const std::string & path)
 
   std::cout << "===== Top-level trees ============================" << std::endl;
   for (const auto & unit : graph.units()) {
-    if (unit->get_parent_size() == 0 && unit->get_child_links().size() != 0) {
+    if (unit->parent_size() == 0 && unit->child_links().size() != 0) {
       dump_unit(unit);
     }
   }
   std::cout << "===== Subtrees ===================================" << std::endl;
   for (const auto & unit : graph.units()) {
-    if (unit->get_parent_size() >= 2 && unit->get_child_links().size() != 0) {
+    if (unit->parent_size() >= 2 && unit->child_links().size() != 0) {
       dump_unit(unit);
     }
   }
 
   std::cout << "===== Isolated units =============================" << std::endl;
   for (const auto & unit : graph.units()) {
-    if (unit->get_parent_size() == 0 && unit->get_child_links().size() == 0) {
+    if (unit->parent_size() == 0 && unit->child_links().size() == 0) {
       dump_unit(unit);
     }
   }

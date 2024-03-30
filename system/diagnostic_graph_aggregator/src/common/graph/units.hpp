@@ -33,13 +33,10 @@ public:
   void initialize_object(BaseUnit * parent, BaseUnit * child);
   void initialize_struct();
   void initialize_status();
-  DiagLinkStruct get_struct() const { return struct_; }
-  DiagLinkStatus get_status() const { return status_; }
-  BaseUnit * get_parent() const { return parent_; }
-  BaseUnit * get_child() const { return child_; }
-
-  auto get_used() const { return status_.used; }
-  void set_used(bool used) { status_.used = used; }
+  DiagLinkStruct create_struct() const { return struct_; }
+  DiagLinkStatus create_status() const { return status_; }
+  BaseUnit * parent() const { return parent_; }
+  BaseUnit * child() const { return child_; }
 
 private:
   BaseUnit * parent_;
@@ -53,14 +50,13 @@ class BaseUnit
 public:
   explicit BaseUnit(const UnitLoader & unit);
   virtual ~BaseUnit() = default;
-  virtual DiagnosticLevel get_level() const = 0;
-  virtual std::string get_path() const = 0;
-  virtual std::string get_type() const = 0;
-  virtual std::vector<UnitLink *> get_child_links() const = 0;
-  virtual std::vector<BaseUnit *> get_child_units() const;
+  virtual DiagnosticLevel level() const = 0;
+  virtual std::string path() const = 0;
+  virtual std::string type() const = 0;
+  virtual std::vector<UnitLink *> child_links() const = 0;
   virtual bool is_leaf() const = 0;
-  size_t get_index() const { return index_; }
-  size_t get_parent_size() const { return parents_.size(); }
+  size_t index() const { return index_; }
+  size_t parent_size() const { return parents_.size(); }
 
 protected:
   bool update();
@@ -79,10 +75,10 @@ public:
   void initialize_struct();
   void initialize_status();
   bool is_leaf() const override { return false; }
-  DiagNodeStruct get_struct() const { return struct_; }
-  DiagNodeStatus get_status() const { return status_; }
-  DiagnosticLevel get_level() const override { return status_.level; }
-  std::string get_path() const override { return struct_.path; }
+  DiagNodeStruct create_struct() const { return struct_; }
+  DiagNodeStatus create_status() const { return status_; }
+  DiagnosticLevel level() const override { return status_.level; }
+  std::string path() const override { return struct_.path; }
 
 protected:
   DiagNodeStruct struct_;
@@ -96,11 +92,11 @@ public:
   void initialize_struct();
   void initialize_status();
   bool is_leaf() const override { return true; }
-  DiagLeafStruct get_struct() const { return struct_; }
-  DiagLeafStatus get_status() const { return status_; }
-  DiagnosticLevel get_level() const override { return status_.level; }
-  std::string get_name() const { return struct_.name; }
-  std::string get_path() const override { return struct_.path; }
+  DiagLeafStruct create_struct() const { return struct_; }
+  DiagLeafStatus create_status() const { return status_; }
+  DiagnosticLevel level() const override { return status_.level; }
+  std::string name() const { return struct_.name; }
+  std::string path() const override { return struct_.path; }
 
 protected:
   DiagLeafStruct struct_;
@@ -111,8 +107,8 @@ class DiagUnit : public LeafUnit
 {
 public:
   explicit DiagUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::diag; }
-  std::vector<UnitLink *> get_child_links() const override { return {}; }
+  std::string type() const override { return unit_name::diag; }
+  std::vector<UnitLink *> child_links() const override { return {}; }
   bool on_time(const rclcpp::Time & stamp);
   bool on_diag(const rclcpp::Time & stamp, const DiagnosticStatus & status);
 
@@ -126,8 +122,8 @@ class MaxUnit : public NodeUnit
 {
 public:
   explicit MaxUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::max; }
-  std::vector<UnitLink *> get_child_links() const override { return links_; }
+  std::string type() const override { return unit_name::max; }
+  std::vector<UnitLink *> child_links() const override { return links_; }
 
 protected:
   std::vector<UnitLink *> links_;
@@ -140,7 +136,7 @@ class ShortCircuitMaxUnit : public MaxUnit
 {
 public:
   using MaxUnit::MaxUnit;
-  std::string get_type() const override { return unit_name::short_circuit_max; }
+  std::string type() const override { return unit_name::short_circuit_max; }
 
 private:
   void update_status() override;
@@ -150,8 +146,8 @@ class MinUnit : public NodeUnit
 {
 public:
   explicit MinUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::min; }
-  std::vector<UnitLink *> get_child_links() const override { return links_; }
+  std::string type() const override { return unit_name::min; }
+  std::vector<UnitLink *> child_links() const override { return links_; }
 
 protected:
   std::vector<UnitLink *> links_;
@@ -164,7 +160,7 @@ class RemapUnit : public NodeUnit
 {
 public:
   explicit RemapUnit(const UnitLoader & unit);
-  std::vector<UnitLink *> get_child_links() const override { return {link_}; }
+  std::vector<UnitLink *> child_links() const override { return {link_}; }
 
 protected:
   UnitLink * link_;
@@ -179,21 +175,21 @@ class WarnToOkUnit : public RemapUnit
 {
 public:
   explicit WarnToOkUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::warn_to_ok; }
+  std::string type() const override { return unit_name::warn_to_ok; }
 };
 
 class WarnToErrorUnit : public RemapUnit
 {
 public:
   explicit WarnToErrorUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::warn_to_error; }
+  std::string type() const override { return unit_name::warn_to_error; }
 };
 
 class ConstUnit : public NodeUnit
 {
 public:
   using NodeUnit::NodeUnit;
-  std::vector<UnitLink *> get_child_links() const override { return {}; }
+  std::vector<UnitLink *> child_links() const override { return {}; }
 
 private:
   void update_status() override;
@@ -203,28 +199,28 @@ class OkUnit : public ConstUnit
 {
 public:
   explicit OkUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::ok; }
+  std::string type() const override { return unit_name::ok; }
 };
 
 class WarnUnit : public ConstUnit
 {
 public:
   explicit WarnUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::warn; }
+  std::string type() const override { return unit_name::warn; }
 };
 
 class ErrorUnit : public ConstUnit
 {
 public:
   explicit ErrorUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::error; }
+  std::string type() const override { return unit_name::error; }
 };
 
 class StaleUnit : public ConstUnit
 {
 public:
   explicit StaleUnit(const UnitLoader & unit);
-  std::string get_type() const override { return unit_name::stale; }
+  std::string type() const override { return unit_name::stale; }
 };
 
 }  // namespace diagnostic_graph_aggregator

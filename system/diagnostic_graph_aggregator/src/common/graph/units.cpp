@@ -31,8 +31,8 @@ void UnitLink::initialize_object(BaseUnit * parent, BaseUnit * child)
 
 void UnitLink::initialize_struct()
 {
-  struct_.parent = parent_->get_index();
-  struct_.child = child_->get_index();
+  struct_.parent = parent_->index();
+  struct_.child = child_->index();
   struct_.is_leaf = child_->is_leaf();
 }
 
@@ -47,27 +47,20 @@ BaseUnit::BaseUnit(const UnitLoader & unit)
   parents_ = unit.parents();
 }
 
-std::vector<BaseUnit *> BaseUnit::get_child_units() const
-{
-  std::vector<BaseUnit *> result;
-  for (const auto & link : get_child_links()) result.push_back(link->get_child());
-  return result;
-}
-
 bool BaseUnit::update()
 {
   // Update the level of this unit.
   update_status();
 
   // If the level does not change, it will not affect the parents.
-  const auto level = get_level();
-  if (level == prev_level_) return false;
-  prev_level_ = level;
+  const auto curr_level = level();
+  if (curr_level == prev_level_) return false;
+  prev_level_ = curr_level;
 
   // If the level changes, the parents also need to be updated.
   bool result = false;
   for (const auto & link : parents_) {
-    const auto unit = link->get_parent();
+    const auto unit = link->parent();
     result = result || unit->update();
   }
   return result;
@@ -81,12 +74,12 @@ NodeUnit::NodeUnit(const UnitLoader & unit) : BaseUnit(unit)
 
 void NodeUnit::initialize_struct()
 {
-  struct_.type = get_type();
+  struct_.type = type();
 }
 
 void NodeUnit::initialize_status()
 {
-  if (get_child_links().size() == 0) update();
+  if (child_links().size() == 0) update();
 }
 
 LeafUnit::LeafUnit(const UnitLoader & unit) : BaseUnit(unit)
@@ -98,12 +91,12 @@ LeafUnit::LeafUnit(const UnitLoader & unit) : BaseUnit(unit)
 
 void LeafUnit::initialize_struct()
 {
-  struct_.type = get_type();
+  struct_.type = type();
 }
 
 void LeafUnit::initialize_status()
 {
-  if (get_child_links().size() == 0) update();
+  if (child_links().size() == 0) update();
 }
 
 DiagUnit::DiagUnit(const UnitLoader & unit) : LeafUnit(unit)
@@ -149,7 +142,7 @@ void MaxUnit::update_status()
 {
   DiagnosticLevel level = DiagnosticStatus::OK;
   for (const auto & link : links_) {
-    level = std::max(level, link->get_child()->get_level());
+    level = std::max(level, link->child()->level());
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
@@ -159,7 +152,7 @@ void ShortCircuitMaxUnit::update_status()
   // TODO(Takagi, Isamu): update link flags.
   DiagnosticLevel level = DiagnosticStatus::OK;
   for (const auto & link : links_) {
-    level = std::max(level, link->get_child()->get_level());
+    level = std::max(level, link->child()->level());
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
@@ -175,7 +168,7 @@ void MinUnit::update_status()
   if (!links_.empty()) {
     level = DiagnosticStatus::STALE;
     for (const auto & link : links_) {
-      level = std::min(level, link->get_child()->get_level());
+      level = std::min(level, link->child()->level());
     }
   }
   status_.level = std::min(level, DiagnosticStatus::ERROR);
@@ -188,7 +181,7 @@ RemapUnit::RemapUnit(const UnitLoader & unit) : NodeUnit(unit)
 
 void RemapUnit::update_status()
 {
-  const auto level = link_->get_child()->get_level();
+  const auto level = link_->child()->level();
   status_.level = (level == level_from_) ? level_to_ : level;
 }
 

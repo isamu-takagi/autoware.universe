@@ -30,7 +30,7 @@ void Graph::create(const std::string & file, const std::string & id)
   nodes_ = graph.release_nodes();
   diags_ = graph.release_diags();
   links_ = graph.release_links();
-  for (const auto & diag : diags_) names_[diag->get_name()] = diag.get();
+  for (const auto & diag : diags_) names_[diag->name()] = diag.get();
   for (const auto & node : nodes_) units_.push_back(node.get());
   for (const auto & diag : diags_) units_.push_back(diag.get());
 
@@ -55,9 +55,9 @@ DiagGraphStruct Graph::create_struct(const rclcpp::Time & stamp) const
   DiagGraphStruct msg;
   msg.stamp = stamp;
   msg.id = id_;
-  for (const auto & node : nodes_) msg.nodes.push_back(node->get_struct());
-  for (const auto & diag : diags_) msg.diags.push_back(diag->get_struct());
-  for (const auto & link : links_) msg.links.push_back(link->get_struct());
+  for (const auto & node : nodes_) msg.nodes.push_back(node->create_struct());
+  for (const auto & diag : diags_) msg.diags.push_back(diag->create_struct());
+  for (const auto & link : links_) msg.links.push_back(link->create_struct());
   return msg;
 }
 
@@ -66,9 +66,9 @@ DiagGraphStatus Graph::create_status(const rclcpp::Time & stamp) const
   DiagGraphStatus msg;
   msg.stamp = stamp;
   msg.id = id_;
-  for (const auto & node : nodes_) msg.nodes.push_back(node->get_status());
-  for (const auto & diag : diags_) msg.diags.push_back(diag->get_status());
-  for (const auto & link : links_) msg.links.push_back(link->get_status());
+  for (const auto & node : nodes_) msg.nodes.push_back(node->create_status());
+  for (const auto & diag : diags_) msg.diags.push_back(diag->create_status());
+  for (const auto & link : links_) msg.links.push_back(link->create_status());
   return msg;
 }
 
