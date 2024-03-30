@@ -1,6 +1,6 @@
 # Diag
 
-The `diag` object is a node that refers to a specific status within the source diagnostics.
+The `diag` object is a unit that refers to a specific status within the source diagnostics.
 
 ## Format
 

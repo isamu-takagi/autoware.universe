@@ -70,7 +70,7 @@ FileLoader::FileLoader(const PathConfig * path)
   TreeData tree = TreeData::Load(path->resolved);
   const auto paths = tree.optional("files").children("files");
   const auto edits = tree.optional("edits").children("edits");
-  const auto units = tree.optional("nodes").children("nodes");
+  const auto units = tree.optional("units").children("units");
   for (const auto & data : paths) create_path_config(data);
   for (const auto & data : edits) create_edit_config(data);
   for (const auto & data : units) create_unit_config(data);
@@ -265,7 +265,7 @@ void topological_sort(FileConfig & config)
     result.push_back(unit);
   }
 
-  // Detect circulation because the result does not include the nodes on the loop.
+  // Detect circulation because the result does not include the units on the loop.
   if (result.size() != units.size()) {
     throw GraphStructure("detect graph circulation");
   }

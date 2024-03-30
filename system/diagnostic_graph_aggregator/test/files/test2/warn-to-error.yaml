@@ -1,4 +1,4 @@
-nodes:
+units:
   - path: output
     type: warn-to-error
     item:

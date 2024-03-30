@@ -1,6 +1,6 @@
 # Constant
 
-The constant object is a node with a fixed error level.
+The constant object is a unit with a fixed error level.
 
 ## Format
 
