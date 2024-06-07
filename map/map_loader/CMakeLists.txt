@@ -75,11 +75,6 @@ if(BUILD_TESTING)
   add_testcase(test/test_differential_map_loader_module.cpp)
 endif()
 
-install(PROGRAMS
-  script/map_hash_generator
-  DESTINATION lib/${PROJECT_NAME}
-)
-
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
