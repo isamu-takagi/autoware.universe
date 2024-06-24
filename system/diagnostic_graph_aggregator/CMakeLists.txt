@@ -16,7 +16,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 ament_auto_add_executable(tree src/tool/tree.cpp)
 target_include_directories(tree PRIVATE src/common)
 
-ament_auto_add_executable(spreadsheet src/tool/plantuml.cpp)
+ament_auto_add_executable(spreadsheet src/tool/spreadsheet.cpp)
 target_include_directories(spreadsheet PRIVATE src/common)
 
 ament_auto_add_executable(plantuml src/tool/plantuml.cpp)

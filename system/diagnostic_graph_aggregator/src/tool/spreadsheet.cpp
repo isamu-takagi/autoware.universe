@@ -20,8 +20,7 @@
 namespace diagnostic_graph_aggregator
 {
 
-enum class NodeType
-{
+enum class LinkType {
   Root,
   Node,
   Leaf,
@@ -29,7 +28,7 @@ enum class NodeType
 
 struct TableRow
 {
-  BaseUnit * unit;
+  const BaseUnit * unit;
   int depth;
   bool is_leaf;
 };
@@ -37,47 +36,44 @@ struct TableRow
 struct Table
 {
 public:
-  Table(const std::string & path);
+  explicit Table(const std::string & path);
   std::vector<TableRow> rows_;
 
 private:
-  void flatten(const BaseUnit * unit, int depth, NodeType type);
-}
+  void flatten(const BaseUnit * unit, int depth, LinkType type);
+  Graph graph_;
+};
 
 Table::Table(const std::string & path)
 {
-  Graph graph;
-  graph.create(path);
+  graph_.create(path);
 
-  for (const auto & unit : graph.units()) {
+  for (const auto & unit : graph_.units()) {
     if (unit->parent_size() == 0 && unit->child_links().size() != 0) {
-      flatten(unit, 0, NodeType::Root);
+      flatten(unit, 0, LinkType::Root);
     }
   }
-  for (const auto & unit : graph.units()) {
+  for (const auto & unit : graph_.units()) {
     if (unit->parent_size() == 0 && unit->child_links().size() == 0) {
-      flatten(unit, 0, NodeType::Root);
+      flatten(unit, 0, LinkType::Root);
     }
   }
-  for (const auto & unit : graph.units()) {
+  for (const auto & unit : graph_.units()) {
     if (unit->parent_size() >= 2 && unit->child_links().size() != 0) {
-      flatten(unit, 0, NodeType::Root);
+      flatten(unit, 0, LinkType::Root);
     }
   }
 }
 
-void Table::flatten(const BaseUnit * unit, int depth, UnitType type)
+void Table::flatten(const BaseUnit * unit, int depth, LinkType type)
 {
-  const auto is_root = (type == UnitType::Root);
+  const auto is_root = (type == LinkType::Root);
   const auto is_node = (unit->parent_size() == 1);
-
-  TableRow row;
-  row.depth = depth;
-  rows_.push_back(row);
+  rows_.push_back(TableRow{unit, depth, false});
 
   if (is_root || is_node) {
     for (const auto link : unit->child_links()) {
-      flatten(link->child(), depth + 1, false);
+      flatten(link->child(), depth + 1, LinkType::Node);
     }
   }
 }
@@ -90,5 +86,9 @@ int main(int argc, char ** argv)
     std::cerr << "usage: tree <path>" << std::endl;
     return 1;
   }
-  diagnostic_graph_aggregator::dump_root(argv[1]);
+
+  auto table = diagnostic_graph_aggregator::Table(argv[1]);
+  for (const auto & row : table.rows_) {
+    std::cout << row.depth << " " << row.unit->path() << std::endl;
+  }
 }
