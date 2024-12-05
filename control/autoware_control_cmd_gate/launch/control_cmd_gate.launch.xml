@@ -1,0 +1,7 @@
+<launch>
+  <arg name="config" default="$(find-pkg-share autoware_control_cmd_gate)/config/default.param.yaml"/>
+  <!-- <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/> -->
+  <node pkg="autoware_control_cmd_gate" exec="control_cmd_gate_node">
+    <param from="$(var config)"/>
+  </node>
+</launch>

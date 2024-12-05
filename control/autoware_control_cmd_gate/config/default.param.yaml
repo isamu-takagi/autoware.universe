@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    inputs: [stop, auto, remote, local]
+    emergency_stop_acceleration: -2.4

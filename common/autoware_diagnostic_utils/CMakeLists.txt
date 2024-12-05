@@ -1,0 +1,14 @@
+cmake_minimum_required(VERSION 3.14)
+project(autoware_diagnostic_utils)
+
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/timeout.cpp
+)
+
+if(BUILD_TESTING)
+endif()
+
+ament_auto_package()
