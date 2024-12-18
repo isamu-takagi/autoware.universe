@@ -22,7 +22,10 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner
@@ -64,7 +67,7 @@ std::optional<PullOverPath> ShiftPullOver::plan(
       modified_goal_pose, id, planner_data, previous_module_output, road_lanes, pull_over_lanes,
       lateral_jerk);
     if (!pull_over_path) continue;
-    return *pull_over_path;
+    return pull_over_path;
   }
 
   return {};

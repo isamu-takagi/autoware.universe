@@ -34,9 +34,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <limits>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -630,7 +634,7 @@ bool StartPlannerModule::isExecutionReady() const
   }();
 
   if (!is_safe) {
-    stop_pose_ = planner_data_->self_odometry->pose.pose;
+    stop_pose_ = PoseWithDetail(planner_data_->self_odometry->pose.pose);
   }
 
   return is_safe;

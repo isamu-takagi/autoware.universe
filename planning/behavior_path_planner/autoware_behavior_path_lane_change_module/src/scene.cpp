@@ -42,6 +42,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -111,9 +112,8 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->lanes_ptr->target_lane_in_goal_section =
     route_handler_ptr->isInGoalRouteSection(target_lanes.back());
 
-  common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
-    *route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
-    common_data_ptr_->lc_param_ptr->backward_lane_length);
+  common_data_ptr_->lanes_ptr->preceding_target =
+    utils::lane_change::get_preceding_lanes(common_data_ptr_);
 
   lane_change_debug_.current_lanes = common_data_ptr_->lanes_ptr->current;
   lane_change_debug_.target_lanes = common_data_ptr_->lanes_ptr->target;
@@ -130,7 +130,7 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
 }
 
-void NormalLaneChange::update_transient_data()
+void NormalLaneChange::update_transient_data(const bool is_approved)
 {
   if (
     !common_data_ptr_ || !common_data_ptr_->is_data_available() ||
@@ -148,6 +148,13 @@ void NormalLaneChange::update_transient_data()
   transient_data.current_path_velocity =
     prev_module_output_.path.points.at(nearest_seg_idx).point.longitudinal_velocity_mps;
   transient_data.current_path_seg_idx = nearest_seg_idx;
+
+  const auto active_signal_duration =
+    signal_activation_time_ ? (clock_.now() - signal_activation_time_.value()).seconds() : 0.0;
+  transient_data.lane_change_prepare_duration =
+    is_approved ? status_.lane_change_path.info.duration.prepare
+                : calculation::calc_actual_prepare_duration(
+                    common_data_ptr_, common_data_ptr_->get_ego_speed(), active_signal_duration);
 
   std::tie(transient_data.lane_changing_length, transient_data.current_dist_buffer) =
     calculation::calc_lc_length_and_dist_buffer(common_data_ptr_, get_current_lanes());
@@ -327,6 +334,8 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info() const
     return get_terminal_turn_signal_info();
   }
 
+  set_signal_activation_time();
+
   return get_turn_signal(getEgoPose(), getLaneChangePath().info.lane_changing_end);
 }
 
@@ -355,9 +364,14 @@ TurnSignalInfo NormalLaneChange::get_terminal_turn_signal_info() const
   const auto nearest_yaw_threshold = common_param.ego_nearest_yaw_threshold;
   const auto current_nearest_seg_idx = common_data_ptr_->transient_data.current_path_seg_idx;
 
-  return getTurnSignalDecider().overwrite_turn_signal(
+  const auto turn_signal_info = getTurnSignalDecider().overwrite_turn_signal(
     path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
     terminal_turn_signal_info, nearest_dist_threshold, nearest_yaw_threshold);
+
+  set_signal_activation_time(
+    turn_signal_info.turn_signal.command != terminal_turn_signal_info.turn_signal.command);
+
+  return turn_signal_info;
 }
 
 LaneChangePath NormalLaneChange::getLaneChangePath() const
@@ -428,8 +442,6 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
       output.path = utils::combinePath(output.path, *found_extended_path);
     }
     output.reference_path = getReferencePath();
-    output.turn_signal_info =
-      get_turn_signal(getEgoPose(), status_.lane_change_path.info.lane_changing_end);
 
     if (isStopState()) {
       const auto current_velocity = getEgoVelocity();
@@ -445,11 +457,16 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
 
   extendOutputDrivableArea(output);
 
+  const auto turn_signal_info =
+    get_turn_signal(getEgoPose(), status_.lane_change_path.info.lane_changing_end);
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, prev_module_output_.turn_signal_info,
-    output.turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
+    turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
+
+  set_signal_activation_time(
+    output.turn_signal_info.turn_signal.command != turn_signal_info.turn_signal.command);
 
   return output;
 }
@@ -664,7 +681,7 @@ void NormalLaneChange::resetParameters()
   is_abort_approval_requested_ = false;
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
-  status_ = {};
+  status_ = LaneChangeStatus();
   unsafe_hysteresis_count_ = 0;
   lane_change_debug_.reset();
 
@@ -970,6 +987,7 @@ lane_change::TargetObjects NormalLaneChange::get_target_objects(
 
 FilteredLanesObjects NormalLaneChange::filter_objects() const
 {
+  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
     objects, lane_change_parameters_->safety.target_object_types);
