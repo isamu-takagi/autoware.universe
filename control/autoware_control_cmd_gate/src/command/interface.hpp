@@ -20,9 +20,6 @@
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 
-#include <memory>
-#include <string>
-
 namespace autoware::control_cmd_gate
 {
 
@@ -60,7 +57,7 @@ private:
 class CommandBridge : public CommandInput, public CommandOutput
 {
 public:
-  explicitCommandBridge(CommandOutput * output) : CommandInput(output) {}
+  explicit CommandBridge(CommandOutput * output) : CommandInput(output) {}
   void on_control(const Control::ConstSharedPtr msg) override;
   void on_gear(const GearCommand::ConstSharedPtr msg) override;
   void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg) override;

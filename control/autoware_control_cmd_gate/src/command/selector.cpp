@@ -20,10 +20,11 @@
 namespace autoware::control_cmd_gate
 {
 
-CommandSource::CommandSource(const std::string & name, diagnostic_updater::Updater & diag)
+CommandSource::CommandSource(CommandOutput * output) : CommandBridge(output)
 {
 }
 
+/*
 void CommandSource::select(std::unique_ptr<CommandOutput> && output)
 {
   output_ = std::move(output);
@@ -40,29 +41,35 @@ void CommandSource::select(CommandSource & other)
   if (turn_indicators_) on_turn_indicators(turn_indicators_);
   if (hazard_lights_) on_hazard_lights(hazard_lights_);
 }
+*/
 
 void CommandSource::on_control(const Control::ConstSharedPtr msg)
 {
   // NOTE: Control is not saved because it is sent periodically.
-  if (output_) output_->on_control(msg);
+  Super::on_control(msg);
 }
 
 void CommandSource::on_gear(const GearCommand::ConstSharedPtr msg)
 {
   gear_ = msg;
-  if (output_) output_->on_gear(msg);
+  Super::on_gear(msg);
 }
 
 void CommandSource::on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg)
 {
   turn_indicators_ = msg;
-  if (output_) output_->on_turn_indicators(msg);
+  Super::on_turn_indicators(msg);
 }
 
 void CommandSource::on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg)
 {
   hazard_lights_ = msg;
-  if (output_) output_->on_hazard_lights(msg);
+  Super::on_hazard_lights(msg);
+}
+
+CommandSelector::CommandSelector()
+{
+  ignore_ = std::make_unique<CommandIgnore>();
 }
 
 }  // namespace autoware::control_cmd_gate

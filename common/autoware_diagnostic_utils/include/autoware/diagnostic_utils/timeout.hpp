@@ -34,7 +34,7 @@ public:
 
 public:
   TimeoutDiag(const Params & params, const rclcpp::Clock & clock, const std::string & name);
-  void update(rclcpp::Time stamp);
+  void update();
 
 private:
   void run(diagnostic_updater::DiagnosticStatusWrapper & stat) override;

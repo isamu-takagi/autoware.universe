@@ -23,9 +23,9 @@ TimeoutDiag::TimeoutDiag(
 {
 }
 
-void TimeoutDiag::update(rclcpp::Time stamp)
+void TimeoutDiag::update()
 {
-  last_stamp_ = stamp;
+  last_stamp_ = clock_.now();
 }
 
 void TimeoutDiag::run(diagnostic_updater::DiagnosticStatusWrapper & stat)

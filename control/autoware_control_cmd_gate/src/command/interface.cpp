@@ -14,9 +14,6 @@
 
 #include "interface.hpp"
 
-#include <stdexcept>
-#include <utility>
-
 namespace autoware::control_cmd_gate
 {
 

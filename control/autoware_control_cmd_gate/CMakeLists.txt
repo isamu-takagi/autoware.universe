@@ -10,6 +10,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   "src/command/diagnostics.cpp"
   "src/command/publisher.cpp"
   "src/command/subscription.cpp"
+  "src/command/selector.cpp"
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}

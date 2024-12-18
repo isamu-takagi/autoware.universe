@@ -27,6 +27,7 @@ CommandDiagnostics::CommandDiagnostics(
 
 void CommandDiagnostics::on_control(const Control::ConstSharedPtr msg)
 {
+  timeout_.update();
   CommandBridge::on_control(msg);
 }
 

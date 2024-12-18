@@ -15,45 +15,28 @@
 #ifndef COMMAND__SELECTOR_HPP_
 #define COMMAND__SELECTOR_HPP_
 
-#include "../diag/timeout.hpp"
-
-#include <diagnostic_updater/diagnostic_status_wrapper.hpp>
-#include <diagnostic_updater/diagnostic_updater.hpp>
-
-#include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_vehicle_msgs/msg/gear_command.hpp>
-#include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include "interface.hpp"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace autoware::control_cmd_gate
 {
 
-using autoware_control_msgs::msg::Control;
-using autoware_vehicle_msgs::msg::GearCommand;
-using autoware_vehicle_msgs::msg::HazardLightsCommand;
-using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
-
-class CommandOutput
+class CommandIgnore : public CommandOutput
 {
 public:
-  virtual ~CommandOutput() = default;
-  virtual void on_control(const Control::ConstSharedPtr msg) = 0;
-  virtual void on_gear(const GearCommand::ConstSharedPtr msg) = 0;
-  virtual void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg) = 0;
-  virtual void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg) = 0;
+  void on_control(const Control::ConstSharedPtr) override {}
+  void on_gear(const GearCommand::ConstSharedPtr) override {}
+  void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr) override {}
+  void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr) override {}
 };
 
-class CommandSource
+class CommandSource : public CommandBridge
 {
 public:
-  explicit CommandSource(const std::string & name, diagnostic_updater::Updater & diag);
-  virtual ~CommandSource() = default;
-
-  void select(std::unique_ptr<CommandOutput> && output);
-  void select(CommandSource & source);
+  explicit CommandSource(CommandOutput * output);
 
 protected:
   void on_control(const Control::ConstSharedPtr msg);
@@ -62,11 +45,21 @@ protected:
   void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg);
 
 private:
-  std::unique_ptr<CommandOutput> output_;
-  TimeoutDiag timeout_diag_;
+  using Super = CommandBridge;
   GearCommand::ConstSharedPtr gear_;
   TurnIndicatorsCommand::ConstSharedPtr turn_indicators_;
   HazardLightsCommand::ConstSharedPtr hazard_lights_;
+};
+
+class CommandSelector
+{
+public:
+  CommandSelector();
+
+private:
+  std::unordered_map<std::string, std::unique_ptr<CommandSource>> source_;
+  std::unique_ptr<CommandIgnore> ignore_;
+  CommandOutput * output_;
 };
 
 }  // namespace autoware::control_cmd_gate
