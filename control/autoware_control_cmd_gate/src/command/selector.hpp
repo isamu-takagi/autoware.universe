@@ -37,6 +37,7 @@ class CommandSource : public CommandBridge
 {
 public:
   explicit CommandSource(CommandOutput * output);
+  void set_output(CommandOutput * output);
 
 protected:
   void on_control(const Control::ConstSharedPtr msg);
@@ -45,7 +46,6 @@ protected:
   void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg);
 
 private:
-  using Super = CommandBridge;
   GearCommand::ConstSharedPtr gear_;
   TurnIndicatorsCommand::ConstSharedPtr turn_indicators_;
   HazardLightsCommand::ConstSharedPtr hazard_lights_;
@@ -55,11 +55,14 @@ class CommandSelector
 {
 public:
   CommandSelector();
+  CommandOutput * create(const std::string & name);
+  bool select(const std::string & name);
 
 private:
-  std::unordered_map<std::string, std::unique_ptr<CommandSource>> source_;
+  std::unordered_map<std::string, std::unique_ptr<CommandSource>> sources_;
   std::unique_ptr<CommandIgnore> ignore_;
-  CommandOutput * output_;
+  std::unique_ptr<CommandOutput> output_;
+  CommandSource * current_;
 };
 
 }  // namespace autoware::control_cmd_gate

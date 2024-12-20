@@ -14,6 +14,8 @@
 
 #include "control_cmd_gate.hpp"
 
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace autoware::control_cmd_gate
@@ -22,36 +24,46 @@ namespace autoware::control_cmd_gate
 ControlCmdGate::ControlCmdGate(const rclcpp::NodeOptions & options)
 : Node("control_cmd_gate", options), diag_(this)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "Test control_cmd_gate");
+  selector_ = std::make_unique<CommandSelector>();
   diag_.setHardwareID("none");
 
-  const auto params = diagnostic_utils::TimeoutDiag::Params{1.0, 2.0};
-
-  pub_ = std::make_unique<CommandPublisher>(*this);
-  abc_ = std::make_unique<CommandDiagnostics>(pub_.get(), diag_, params, *get_clock(), "sample");
-  sub_ = std::make_unique<CommandSubscription>(abc_.get(), *this, "sample");
-
-  // Create builtin command.
-  /*
-  {
-    const std::string name = "builtin";
-
-    sources_[build_in_stop] = std::make_unique<EmergencyCommand>(*this, name, diag_);
+  // const auto params = diagnostic_utils::TimeoutDiag::Params{1.0, 2.0};
+  const auto inputs = declare_parameter<std::vector<std::string>>("inputs");
+  if (std::find(inputs.begin(), inputs.end(), builtin) != inputs.end()) {
+    throw std::invalid_argument("input name '" + builtin + "' is reserved");
   }
-  */
 
   // Create command inputs.
   /*
-  const auto inputs = declare_parameter<std::vector<std::string>>("inputs");
   for (const auto & input : inputs) {
-    sources_[input] = std::make_unique<CommandSubscription>(*this, input, diag_);
+    auto source = std::make_unique<CommandSubscription>(*this, input);
+    auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), input);
+    source->add_filter(std::move(filter));
+    selector_->add_source(input, std::move(source));
   }
   */
 
-  // Select initial command.
-  // current_ = sources_.at(build_in_stop).get();
-  // current_->select(std::make_unique<CommandPublisher>(*this));
+  // Create builtin command source
+  /*
+  {
+    auto source = std::make_unique<CommandGenerator>(*this);
+    auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), builtin);
+    source->add_filter(std::move(filter));
+    selector_->add_source(builtin, std::move(source));
+  }*/
 
+  // Create command output.
+  /*
+  {
+    auto output = std::make_unique<CommandPublisher>(*this);
+    selector_.set_output(std::move(output));
+  }
+  */
+
+  // Select initial source.
+  selector_->select(builtin);
+
+  // Create selector interface.
   pub_source_ =
     create_publisher<std_msgs::msg::String>("~/current_source", rclcpp::QoS(1).transient_local());
   sub_source_ = create_subscription<std_msgs::msg::String>(
@@ -61,18 +73,12 @@ ControlCmdGate::ControlCmdGate(const rclcpp::NodeOptions & options)
 
 void ControlCmdGate::on_select_source(const std_msgs::msg::String & msg)
 {
-  (void)msg;
-  /*
-  const auto iter = sources_.find(msg.data);
-  if (iter == sources_.end()) {
-    RCLCPP_INFO_STREAM(get_logger(), "unknown command source: " << msg.data);
-  } else {
+  const auto result = selector_->select(msg.data);
+  if (result) {
     RCLCPP_INFO_STREAM(get_logger(), "changed command source: " << msg.data);
-    // auto previous = current_;
-    // current_ = iter->second.get();
-    // current_->select(*previous);
+  } else {
+    RCLCPP_INFO_STREAM(get_logger(), "unknown command source: " << msg.data);
   }
-  */
 }
 
 }  // namespace autoware::control_cmd_gate

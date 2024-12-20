@@ -14,7 +14,9 @@
 
 #include "selector.hpp"
 
+#include <memory>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace autoware::control_cmd_gate
@@ -24,52 +26,61 @@ CommandSource::CommandSource(CommandOutput * output) : CommandBridge(output)
 {
 }
 
-/*
-void CommandSource::select(std::unique_ptr<CommandOutput> && output)
+void CommandSource::set_output(CommandOutput * output)
 {
-  output_ = std::move(output);
-}
-
-void CommandSource::select(CommandSource & other)
-{
-  if (!other.output_) {
-    throw std::logic_error("command source with no output is specified");
-  }
-
-  output_ = std::move(other.output_);
+  CommandBridge::set_output(output);
   if (gear_) on_gear(gear_);
   if (turn_indicators_) on_turn_indicators(turn_indicators_);
   if (hazard_lights_) on_hazard_lights(hazard_lights_);
 }
-*/
 
 void CommandSource::on_control(const Control::ConstSharedPtr msg)
 {
   // NOTE: Control is not saved because it is sent periodically.
-  Super::on_control(msg);
+  CommandBridge::on_control(msg);
 }
 
 void CommandSource::on_gear(const GearCommand::ConstSharedPtr msg)
 {
   gear_ = msg;
-  Super::on_gear(msg);
+  CommandBridge::on_gear(msg);
 }
 
 void CommandSource::on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg)
 {
   turn_indicators_ = msg;
-  Super::on_turn_indicators(msg);
+  CommandBridge::on_turn_indicators(msg);
 }
 
 void CommandSource::on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg)
 {
   hazard_lights_ = msg;
-  Super::on_hazard_lights(msg);
+  CommandBridge::on_hazard_lights(msg);
 }
 
 CommandSelector::CommandSelector()
 {
   ignore_ = std::make_unique<CommandIgnore>();
+}
+
+CommandOutput * CommandSelector::create(const std::string & name)
+{
+  return sources_.emplace(name, std::make_unique<CommandSource>(ignore_.get())).first->second.get();
+}
+
+bool CommandSelector::select(const std::string & name)
+{
+  const auto iter = sources_.find(name);
+  if (iter == sources_.end()) {
+    return false;
+  }
+  if (current_) {
+    current_->set_output(ignore_.get());
+  }
+  current_ = iter->second.get();
+  current_->set_output(output_.get());
+
+  return true;
 }
 
 }  // namespace autoware::control_cmd_gate

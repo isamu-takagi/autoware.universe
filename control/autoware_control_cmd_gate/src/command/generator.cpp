@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "emergency.hpp"
+#include "generator.hpp"
 
 #include <memory>
 
 namespace autoware::control_cmd_gate
 {
 
-/*
-EmergencyCommand::EmergencyCommand(
-  rclcpp::Node & node, const std::string & name, diagnostic_updater::Updater & diag)
-: CommandSource(name, diag)
+CommandGenerator::CommandGenerator(CommandOutput * output, rclcpp::Node & node)
+: CommandInput(output)
 {
-  const auto acceleration = node.declare_parameter<double>("emergency_stop_acceleration");
+  const auto acceleration = node.declare_parameter<double>("builtin_stop_acceleration");
+
   control_ = std::make_shared<Control>();
   control_->lateral.steering_tire_rotation_rate = 0.0;
   control_->longitudinal.velocity = 0.0;
@@ -35,7 +34,7 @@ EmergencyCommand::EmergencyCommand(
   timer_ = rclcpp::create_timer(&node, clock_, period, [this]() { on_timer(); });
 }
 
-void EmergencyCommand::on_timer()
+void CommandGenerator::on_timer()
 {
   const auto stamp = clock_->now();
   control_->stamp = stamp;
@@ -43,8 +42,7 @@ void EmergencyCommand::on_timer()
   control_->lateral.stamp = stamp;
   // control_->lateral.steering_tire_angle =
   // control_->lateral.steering_tire_rotation_rate =
-  on_control(control_);
+  CommandInput::send_control(control_);
 }
-*/
 
 }  // namespace autoware::control_cmd_gate

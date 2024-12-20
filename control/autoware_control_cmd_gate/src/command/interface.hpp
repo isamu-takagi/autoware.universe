@@ -45,6 +45,7 @@ public:
   virtual ~CommandInput() = default;
 
 protected:
+  void set_output(CommandOutput * output);
   void send_control(const Control::ConstSharedPtr msg);
   void send_gear(const GearCommand::ConstSharedPtr msg);
   void send_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg);

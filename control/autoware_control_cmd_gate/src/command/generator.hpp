@@ -12,23 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMMAND__EMERGENCY_HPP_
-#define COMMAND__EMERGENCY_HPP_
+#ifndef COMMAND__GENERATOR_HPP_
+#define COMMAND__GENERATOR_HPP_
 
 #include "interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <string>
-
 namespace autoware::control_cmd_gate
 {
 
-class EmergencyCommand : public CommandSource
+class CommandGenerator : public CommandInput
 {
 public:
-  EmergencyCommand(
-    rclcpp::Node & node, const std::string & name, diagnostic_updater::Updater & diag);
+  CommandGenerator(CommandOutput * output, rclcpp::Node & node);
 
 private:
   void on_timer();
@@ -36,11 +33,11 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 
   Control::SharedPtr control_;
-  GearCommand gear_;
-  TurnIndicatorsCommand turn_indicators_;
-  HazardLightsCommand hazard_lights_;
+  GearCommand::SharedPtr gear_;
+  TurnIndicatorsCommand::SharedPtr turn_indicators_;
+  HazardLightsCommand::SharedPtr hazard_lights_;
 };
 
 }  // namespace autoware::control_cmd_gate
 
-#endif  // COMMAND__EMERGENCY_HPP_
+#endif  // COMMAND__GENERATOR_HPP_

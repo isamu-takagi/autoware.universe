@@ -19,6 +19,14 @@ namespace autoware::control_cmd_gate
 
 CommandInput::CommandInput(CommandOutput * output)
 {
+  set_output(output);
+}
+
+void CommandInput::set_output(CommandOutput * output)
+{
+  if (!output) {
+    throw std::logic_error("command output is nullptr");
+  }
   output_ = output;
 }
 

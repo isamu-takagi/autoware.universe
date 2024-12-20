@@ -16,8 +16,10 @@
 #define CONTROL_CMD_GATE_HPP_
 
 #include "command/diagnostics.hpp"
+#include "command/generator.hpp"
 #include "command/interface.hpp"
 #include "command/publisher.hpp"
+#include "command/selector.hpp"
 #include "command/subscription.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -25,7 +27,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 
 // DEBUG
 #include <std_msgs/msg/string.hpp>
@@ -39,19 +40,14 @@ public:
   explicit ControlCmdGate(const rclcpp::NodeOptions & options);
 
 private:
-  static constexpr char build_in_stop[] = "builtin";
+  static inline const std::string builtin = "builtin";
 
   void on_select_source(const std_msgs::msg::String & msg);
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr sub_source_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_source_;
 
   diagnostic_updater::Updater diag_;
-  std::unordered_map<std::string, std::unique_ptr<CommandSubscription>> subs_;
-  std::unique_ptr<CommandPublisher> pub_;
-
-  // TEMP
-  std::unique_ptr<CommandSubscription> sub_;
-  std::unique_ptr<CommandDiagnostics> abc_;
+  std::unique_ptr<CommandSelector> selector_;
 };
 
 }  // namespace autoware::control_cmd_gate
