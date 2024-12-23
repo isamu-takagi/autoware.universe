@@ -14,18 +14,10 @@
 
 #include "interface.hpp"
 
+#include <utility>
+
 namespace autoware::control_cmd_gate
 {
-
-CommandInput::CommandInput()
-{
-  output_ = nullptr;
-}
-
-CommandInput::CommandInput(CommandOutput * output)
-{
-  set_output(output);
-}
 
 void CommandInput::set_output(CommandOutput * output)
 {
@@ -35,87 +27,66 @@ void CommandInput::set_output(CommandOutput * output)
   output_ = output;
 }
 
-void CommandInput::send_control(const Control::ConstSharedPtr msg)
+void CommandInput::add_filter(std::unique_ptr<CommandFilter> && filter)
 {
+  if (!filter) {
+    throw std::logic_error("command filter is nullptr");
+  }
+  filters_.push_back(std::move(filter));
+}
+
+void CommandInput::send_control(Control::ConstSharedPtr msg)
+{
+  for (const auto & filter : filters_) {
+    msg = filter->on_control(msg);
+  }
   output_->on_control(msg);
 }
 
-void CommandInput::send_gear(const GearCommand::ConstSharedPtr msg)
+void CommandInput::send_gear(GearCommand::ConstSharedPtr msg)
 {
+  for (const auto & filter : filters_) {
+    msg = filter->on_gear(msg);
+  }
   output_->on_gear(msg);
 }
 
-void CommandInput::send_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg)
+void CommandInput::send_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr msg)
 {
+  for (const auto & filter : filters_) {
+    msg = filter->on_turn_indicators(msg);
+  }
   output_->on_turn_indicators(msg);
 }
 
-void CommandInput::send_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg)
+void CommandInput::send_hazard_lights(HazardLightsCommand::ConstSharedPtr msg)
 {
-  return output_->on_hazard_lights(msg);
-}
-
-void CommandBridge::on_control(const Control::ConstSharedPtr msg)
-{
-  return send_control(msg);
-}
-
-void CommandBridge::on_gear(const GearCommand::ConstSharedPtr msg)
-{
-  return send_gear(msg);
-}
-
-void CommandBridge::on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg)
-{
-  return send_turn_indicators(msg);
-}
-
-void CommandBridge::on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg)
-{
-  return send_hazard_lights(msg);
-}
-
-/*
-void CommandSource::select(std::unique_ptr<CommandOutput> && output)
-{
-  output_ = std::move(output);
-}
-
-void CommandSource::select(CommandSource & other)
-{
-  if (!other.output_) {
-    throw std::logic_error("command source with no output is specified");
+  for (const auto & filter : filters_) {
+    msg = filter->on_hazard_lights(msg);
   }
-
-  output_ = std::move(other.output_);
-  if (gear_) on_gear(gear_);
-  if (turn_indicators_) on_turn_indicators(turn_indicators_);
-  if (hazard_lights_) on_hazard_lights(hazard_lights_);
+  output_->on_hazard_lights(msg);
 }
 
-void CommandSource::on_control(const Control::ConstSharedPtr msg)
+Control::ConstSharedPtr CommandFilter::on_control(Control::ConstSharedPtr msg)
 {
-  // NOTE: Control is not saved because it is sent periodically.
-  if (output_) output_->on_control(msg);
+  return msg;
 }
 
-void CommandSource::on_gear(const GearCommand::ConstSharedPtr msg)
+GearCommand::ConstSharedPtr CommandFilter::on_gear(GearCommand::ConstSharedPtr msg)
 {
-  gear_ = msg;
-  if (output_) output_->on_gear(msg);
+  return msg;
 }
 
-void CommandSource::on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg)
+TurnIndicatorsCommand::ConstSharedPtr CommandFilter::on_turn_indicators(
+  TurnIndicatorsCommand::ConstSharedPtr msg)
 {
-  turn_indicators_ = msg;
-  if (output_) output_->on_turn_indicators(msg);
+  return msg;
 }
 
-void CommandSource::on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg)
+HazardLightsCommand::ConstSharedPtr CommandFilter::on_hazard_lights(
+  HazardLightsCommand::ConstSharedPtr msg)
 {
-  hazard_lights_ = msg;
-  if (output_) output_->on_hazard_lights(msg);
+  return msg;
 }
-*/
 
 }  // namespace autoware::control_cmd_gate

@@ -26,16 +26,14 @@ class CommandGenerator : public CommandInput
 {
 public:
   explicit CommandGenerator(rclcpp::Node & node);
+  void resend_last_command() override;
 
 private:
   void on_timer();
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Clock::SharedPtr clock_;
 
-  Control::SharedPtr control_;
-  GearCommand::SharedPtr gear_;
-  TurnIndicatorsCommand::SharedPtr turn_indicators_;
-  HazardLightsCommand::SharedPtr hazard_lights_;
+  double acceleration_;
 };
 
 }  // namespace autoware::control_cmd_gate

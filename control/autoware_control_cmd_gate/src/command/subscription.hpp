@@ -28,12 +28,22 @@ class CommandSubscription : public CommandInput
 {
 public:
   CommandSubscription(rclcpp::Node & node, const std::string & name);
+  void resend_last_command() override;
 
 private:
+  void on_control(Control::ConstSharedPtr msg);
+  void on_gear(GearCommand::ConstSharedPtr msg);
+  void on_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr msg);
+  void on_hazard_lights(HazardLightsCommand::ConstSharedPtr msg);
+
   rclcpp::Subscription<Control>::SharedPtr sub_control_;
   rclcpp::Subscription<GearCommand>::SharedPtr sub_gear_;
   rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr sub_turn_indicators_;
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr sub_hazard_lights_;
+
+  GearCommand::ConstSharedPtr last_gear_;
+  TurnIndicatorsCommand::ConstSharedPtr last_turn_indicators_;
+  HazardLightsCommand::ConstSharedPtr last_hazard_lights_;
 };
 
 }  // namespace autoware::control_cmd_gate

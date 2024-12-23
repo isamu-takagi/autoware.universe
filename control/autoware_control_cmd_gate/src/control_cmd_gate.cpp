@@ -14,6 +14,7 @@
 
 #include "control_cmd_gate.hpp"
 
+#include "command/diagnostics.hpp"
 #include "command/generator.hpp"
 #include "command/publisher.hpp"
 #include "command/subscription.hpp"
@@ -32,7 +33,10 @@ ControlCmdGate::ControlCmdGate(const rclcpp::NodeOptions & options)
   selector_ = std::make_unique<CommandSelector>();
   diag_.setHardwareID("none");
 
-  // const auto params = diagnostic_utils::TimeoutDiag::Params{1.0, 2.0};
+  diagnostic_utils::TimeoutDiag::Params params;
+  params.warn_duration_ = 1.0;
+  params.error_duration_ = 2.0;
+
   const auto inputs = declare_parameter<std::vector<std::string>>("inputs");
   if (std::find(inputs.begin(), inputs.end(), builtin) != inputs.end()) {
     throw std::invalid_argument("input name '" + builtin + "' is reserved");
@@ -41,16 +45,16 @@ ControlCmdGate::ControlCmdGate(const rclcpp::NodeOptions & options)
   // Create input command sources.
   for (const auto & input : inputs) {
     auto source = std::make_unique<CommandSubscription>(*this, input);
-    // auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), input);
-    // source->add_filter(std::move(filter));
+    auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), input);
+    source->add_filter(std::move(filter));
     selector_->add_source(input, std::move(source));
   }
 
   // Create builtin command source.
   {
     auto source = std::make_unique<CommandGenerator>(*this);
-    // auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), builtin);
-    // source->add_filter(std::move(filter));
+    auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), builtin);
+    source->add_filter(std::move(filter));
     selector_->add_source(builtin, std::move(source));
   }
 

@@ -25,15 +25,15 @@
 namespace autoware::control_cmd_gate
 {
 
-class CommandDiagnostics : public CommandBridge
+class CommandDiagnostics : public CommandFilter
 {
 public:
   using TimeoutDiag = autoware::diagnostic_utils::TimeoutDiag;
 
   CommandDiagnostics(
-    CommandOutput * output, diagnostic_updater::Updater & updater,
-    const TimeoutDiag::Params & params, const rclcpp::Clock & clock, const std::string & name);
-  void on_control(const Control::ConstSharedPtr msg) override;
+    diagnostic_updater::Updater & updater, const TimeoutDiag::Params & params,
+    const rclcpp::Clock & clock, const std::string & name);
+  Control::ConstSharedPtr on_control(Control::ConstSharedPtr msg) override;
 
 private:
   TimeoutDiag timeout_;

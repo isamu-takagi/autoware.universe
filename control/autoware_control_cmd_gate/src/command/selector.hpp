@@ -27,45 +27,24 @@ namespace autoware::control_cmd_gate
 class CommandIgnore : public CommandOutput
 {
 public:
-  void on_control(const Control::ConstSharedPtr) override {}
-  void on_gear(const GearCommand::ConstSharedPtr) override {}
-  void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr) override {}
-  void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr) override {}
-};
-
-class CommandSource : public CommandBridge
-{
-public:
-  explicit CommandSource(CommandOutput * output);
-  void set_output(CommandOutput * output);
-
-protected:
-  void on_control(const Control::ConstSharedPtr msg);
-  void on_gear(const GearCommand::ConstSharedPtr msg);
-  void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg);
-  void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg);
-
-private:
-  GearCommand::ConstSharedPtr gear_;
-  TurnIndicatorsCommand::ConstSharedPtr turn_indicators_;
-  HazardLightsCommand::ConstSharedPtr hazard_lights_;
+  void on_control(Control::ConstSharedPtr) override {}
+  void on_gear(GearCommand::ConstSharedPtr) override {}
+  void on_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr) override {}
+  void on_hazard_lights(HazardLightsCommand::ConstSharedPtr) override {}
 };
 
 class CommandSelector
 {
 public:
   CommandSelector();
-  bool add_source(const std::string & name, std::unique_ptr<CommandInput> && source);
+  void add_source(const std::string & name, std::unique_ptr<CommandInput> && source);
   void set_output(std::unique_ptr<CommandOutput> && output);
-
-  CommandOutput * create(const std::string & name);
   bool select(const std::string & name);
 
 private:
   std::unordered_map<std::string, std::unique_ptr<CommandInput>> sources_;
   std::unique_ptr<CommandIgnore> ignore_;
   std::unique_ptr<CommandOutput> output_;
-  CommandSource * current_;
 };
 
 }  // namespace autoware::control_cmd_gate

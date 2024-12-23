@@ -20,6 +20,8 @@
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 
+#include <vector>
+
 namespace autoware::control_cmd_gate
 {
 
@@ -28,42 +30,45 @@ using autoware_vehicle_msgs::msg::GearCommand;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 
+class CommandFilter
+{
+public:
+  virtual ~CommandFilter() = default;
+  virtual Control::ConstSharedPtr on_control(Control::ConstSharedPtr msg);
+  virtual GearCommand::ConstSharedPtr on_gear(GearCommand::ConstSharedPtr msg);
+  virtual TurnIndicatorsCommand::ConstSharedPtr on_turn_indicators(
+    TurnIndicatorsCommand::ConstSharedPtr msg);
+  virtual HazardLightsCommand::ConstSharedPtr on_hazard_lights(
+    HazardLightsCommand::ConstSharedPtr msg);
+};
+
 class CommandOutput
 {
 public:
   virtual ~CommandOutput() = default;
-  virtual void on_control(const Control::ConstSharedPtr msg) = 0;
-  virtual void on_gear(const GearCommand::ConstSharedPtr msg) = 0;
-  virtual void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg) = 0;
-  virtual void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg) = 0;
+  virtual void on_control(Control::ConstSharedPtr msg) = 0;
+  virtual void on_gear(GearCommand::ConstSharedPtr msg) = 0;
+  virtual void on_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr msg) = 0;
+  virtual void on_hazard_lights(HazardLightsCommand::ConstSharedPtr msg) = 0;
 };
 
 class CommandInput
 {
 public:
-  CommandInput();
-  explicit CommandInput(CommandOutput * output);
   virtual ~CommandInput() = default;
+  virtual void resend_last_command() = 0;
+  void set_output(CommandOutput * output);
+  void add_filter(std::unique_ptr<CommandFilter> && filter);
 
 protected:
-  void set_output(CommandOutput * output);
-  void send_control(const Control::ConstSharedPtr msg);
-  void send_gear(const GearCommand::ConstSharedPtr msg);
-  void send_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg);
-  void send_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg);
+  void send_control(Control::ConstSharedPtr msg);
+  void send_gear(GearCommand::ConstSharedPtr msg);
+  void send_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr msg);
+  void send_hazard_lights(HazardLightsCommand::ConstSharedPtr msg);
 
 private:
   CommandOutput * output_;
-};
-
-class CommandBridge : public CommandInput, public CommandOutput
-{
-public:
-  explicit CommandBridge(CommandOutput * output) : CommandInput(output) {}
-  void on_control(const Control::ConstSharedPtr msg) override;
-  void on_gear(const GearCommand::ConstSharedPtr msg) override;
-  void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg) override;
-  void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg) override;
+  std::vector<std::unique_ptr<CommandFilter>> filters_;
 };
 
 }  // namespace autoware::control_cmd_gate

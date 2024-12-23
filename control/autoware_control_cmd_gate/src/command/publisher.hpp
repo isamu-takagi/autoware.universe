@@ -28,10 +28,10 @@ class CommandPublisher : public CommandOutput
 {
 public:
   explicit CommandPublisher(rclcpp::Node & node);
-  void on_control(const Control::ConstSharedPtr msg) override;
-  void on_gear(const GearCommand::ConstSharedPtr msg) override;
-  void on_turn_indicators(const TurnIndicatorsCommand::ConstSharedPtr msg) override;
-  void on_hazard_lights(const HazardLightsCommand::ConstSharedPtr msg) override;
+  void on_control(Control::ConstSharedPtr msg) override;
+  void on_gear(GearCommand::ConstSharedPtr msg) override;
+  void on_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr msg) override;
+  void on_hazard_lights(HazardLightsCommand::ConstSharedPtr msg) override;
 
 private:
   rclcpp::Publisher<Control>::SharedPtr pub_control_;

@@ -19,15 +19,9 @@
 namespace autoware::control_cmd_gate
 {
 
-CommandGenerator::CommandGenerator(CommandOutput * output, rclcpp::Node & node)
-: CommandInput(output)
+CommandGenerator::CommandGenerator(rclcpp::Node & node)
 {
-  const auto acceleration = node.declare_parameter<double>("builtin_stop_acceleration");
-
-  control_ = std::make_shared<Control>();
-  control_->lateral.steering_tire_rotation_rate = 0.0;
-  control_->longitudinal.velocity = 0.0;
-  control_->longitudinal.acceleration = acceleration;
+  acceleration_ = node.declare_parameter<double>("builtin_stop_acceleration");
 
   const auto period = rclcpp::Rate(10.0).period();
   clock_ = node.get_clock();
@@ -37,12 +31,37 @@ CommandGenerator::CommandGenerator(CommandOutput * output, rclcpp::Node & node)
 void CommandGenerator::on_timer()
 {
   const auto stamp = clock_->now();
-  control_->stamp = stamp;
-  control_->longitudinal.stamp = stamp;
-  control_->lateral.stamp = stamp;
-  // control_->lateral.steering_tire_angle =
-  // control_->lateral.steering_tire_rotation_rate =
-  CommandInput::send_control(control_);
+  const auto control = std::make_shared<Control>();
+  control->stamp = stamp;
+  control->longitudinal.stamp = stamp;
+  control->longitudinal.velocity = 0.0;
+  control->longitudinal.acceleration = acceleration_;
+  control->lateral.stamp = stamp;
+  control->lateral.steering_tire_angle = 0.0;
+  control->lateral.steering_tire_rotation_rate = 0.0;
+  CommandInput::send_control(control);
+}
+
+void CommandGenerator::resend_last_command()
+{
+  const auto stamp = clock_->now();
+  const auto gear = std::make_shared<GearCommand>();
+  const auto turn_indicators = std::make_shared<TurnIndicatorsCommand>();
+  const auto hazard_lights = std::make_shared<HazardLightsCommand>();
+
+  gear->stamp = stamp;
+  gear->command = GearCommand::DRIVE;  // TODO(Takagi, Isamu): Use last_gear_
+
+  turn_indicators->stamp = stamp;
+  turn_indicators->command = TurnIndicatorsCommand::DISABLE;
+
+  hazard_lights->stamp = stamp;
+  hazard_lights->command = HazardLightsCommand::ENABLE;
+
+  // NOTE: Control does not need to be resent because it is sent periodically.
+  send_gear(gear);
+  send_turn_indicators(turn_indicators);
+  send_hazard_lights(hazard_lights);
 }
 
 }  // namespace autoware::control_cmd_gate

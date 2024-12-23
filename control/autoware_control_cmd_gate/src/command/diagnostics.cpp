@@ -14,21 +14,23 @@
 
 #include "diagnostics.hpp"
 
+#include <string>
+
 namespace autoware::control_cmd_gate
 {
 
 CommandDiagnostics::CommandDiagnostics(
-  CommandOutput * output, diagnostic_updater::Updater & updater, const TimeoutDiag::Params & params,
+  diagnostic_updater::Updater & updater, const TimeoutDiag::Params & params,
   const rclcpp::Clock & clock, const std::string & name)
-: CommandBridge(output), timeout_(params, clock, "timeout_" + name)
+: timeout_(params, clock, "timeout_" + name)
 {
   updater.add(timeout_);
 }
 
-void CommandDiagnostics::on_control(const Control::ConstSharedPtr msg)
+Control::ConstSharedPtr CommandDiagnostics::on_control(Control::ConstSharedPtr msg)
 {
   timeout_.update();
-  CommandBridge::on_control(msg);
+  return CommandFilter::on_control(msg);
 }
 
 }  // namespace autoware::control_cmd_gate

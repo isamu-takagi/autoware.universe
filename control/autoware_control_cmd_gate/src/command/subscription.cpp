@@ -27,15 +27,47 @@ CommandSubscription::CommandSubscription(rclcpp::Node & node, const std::string 
   const auto prefix = "~/inputs/" + name + "/";
 
   sub_control_ = node.create_subscription<Control>(
-    prefix + "control", control_qos, std::bind(&CommandSubscription::send_control, this, _1));
+    prefix + "control", control_qos, std::bind(&CommandSubscription::on_control, this, _1));
   sub_gear_ = node.create_subscription<GearCommand>(
-    prefix + "gear", durable_qos, std::bind(&CommandSubscription::send_gear, this, _1));
+    prefix + "gear", durable_qos, std::bind(&CommandSubscription::on_gear, this, _1));
   sub_turn_indicators_ = node.create_subscription<TurnIndicatorsCommand>(
     prefix + "turn_indicators", durable_qos,
-    std::bind(&CommandSubscription::send_turn_indicators, this, _1));
+    std::bind(&CommandSubscription::on_turn_indicators, this, _1));
   sub_hazard_lights_ = node.create_subscription<HazardLightsCommand>(
     prefix + "hazard_lights", durable_qos,
-    std::bind(&CommandSubscription::send_hazard_lights, this, _1));
+    std::bind(&CommandSubscription::on_hazard_lights, this, _1));
+}
+
+void CommandSubscription::on_control(Control::ConstSharedPtr msg)
+{
+  // NOTE: Control does not need to be saved because it is sent periodically.
+  send_control(msg);
+}
+
+void CommandSubscription::on_gear(GearCommand::ConstSharedPtr msg)
+{
+  last_gear_ = msg;
+  send_gear(msg);
+}
+
+void CommandSubscription::on_turn_indicators(TurnIndicatorsCommand::ConstSharedPtr msg)
+{
+  last_turn_indicators_ = msg;
+  send_turn_indicators(msg);
+}
+
+void CommandSubscription::on_hazard_lights(HazardLightsCommand::ConstSharedPtr msg)
+{
+  last_hazard_lights_ = msg;
+  send_hazard_lights(msg);
+}
+
+void CommandSubscription::resend_last_command()
+{
+  // NOTE: Control does not need to be resent because it is sent periodically.
+  if (last_gear_) send_gear(last_gear_);
+  if (last_turn_indicators_) send_turn_indicators(last_turn_indicators_);
+  if (last_hazard_lights_) send_hazard_lights(last_hazard_lights_);
 }
 
 }  // namespace autoware::control_cmd_gate
