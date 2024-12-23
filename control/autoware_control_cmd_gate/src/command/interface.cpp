@@ -17,6 +17,11 @@
 namespace autoware::control_cmd_gate
 {
 
+CommandInput::CommandInput()
+{
+  output_ = nullptr;
+}
+
 CommandInput::CommandInput(CommandOutput * output)
 {
   set_output(output);

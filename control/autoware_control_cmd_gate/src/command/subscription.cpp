@@ -14,12 +14,12 @@
 
 #include "subscription.hpp"
 
+#include <string>
+
 namespace autoware::control_cmd_gate
 {
 
-CommandSubscription::CommandSubscription(
-  CommandOutput * output, rclcpp::Node & node, const std::string & name)
-: CommandInput(output)
+CommandSubscription::CommandSubscription(rclcpp::Node & node, const std::string & name)
 {
   using std::placeholders::_1;
   const auto control_qos = rclcpp::QoS(5);

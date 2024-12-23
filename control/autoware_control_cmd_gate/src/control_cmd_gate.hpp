@@ -15,12 +15,8 @@
 #ifndef CONTROL_CMD_GATE_HPP_
 #define CONTROL_CMD_GATE_HPP_
 
-#include "command/diagnostics.hpp"
-#include "command/generator.hpp"
 #include "command/interface.hpp"
-#include "command/publisher.hpp"
 #include "command/selector.hpp"
-#include "command/subscription.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>

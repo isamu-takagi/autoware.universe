@@ -41,6 +41,7 @@ public:
 class CommandInput
 {
 public:
+  CommandInput();
   explicit CommandInput(CommandOutput * output);
   virtual ~CommandInput() = default;
 

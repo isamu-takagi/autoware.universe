@@ -63,6 +63,17 @@ CommandSelector::CommandSelector()
   ignore_ = std::make_unique<CommandIgnore>();
 }
 
+bool CommandSelector::add_source(const std::string & name, std::unique_ptr<CommandInput> && source)
+{
+  source->set_output(ignore_.get());
+  return sources_.emplace(name, std::move(source)).second;
+}
+
+void CommandSelector::set_output(std::unique_ptr<CommandOutput> && output)
+{
+  output_ = output;
+}
+
 CommandOutput * CommandSelector::create(const std::string & name)
 {
   return sources_.emplace(name, std::make_unique<CommandSource>(ignore_.get())).first->second.get();

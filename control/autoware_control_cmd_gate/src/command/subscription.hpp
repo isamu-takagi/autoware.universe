@@ -27,7 +27,7 @@ namespace autoware::control_cmd_gate
 class CommandSubscription : public CommandInput
 {
 public:
-  CommandSubscription(CommandOutput * output, rclcpp::Node & node, const std::string & name);
+  CommandSubscription(rclcpp::Node & node, const std::string & name);
 
 private:
   rclcpp::Subscription<Control>::SharedPtr sub_control_;

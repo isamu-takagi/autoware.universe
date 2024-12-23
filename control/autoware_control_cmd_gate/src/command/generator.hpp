@@ -25,7 +25,7 @@ namespace autoware::control_cmd_gate
 class CommandGenerator : public CommandInput
 {
 public:
-  CommandGenerator(CommandOutput * output, rclcpp::Node & node);
+  explicit CommandGenerator(rclcpp::Node & node);
 
 private:
   void on_timer();

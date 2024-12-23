@@ -55,11 +55,14 @@ class CommandSelector
 {
 public:
   CommandSelector();
+  bool add_source(const std::string & name, std::unique_ptr<CommandInput> && source);
+  void set_output(std::unique_ptr<CommandOutput> && output);
+
   CommandOutput * create(const std::string & name);
   bool select(const std::string & name);
 
 private:
-  std::unordered_map<std::string, std::unique_ptr<CommandSource>> sources_;
+  std::unordered_map<std::string, std::unique_ptr<CommandInput>> sources_;
   std::unique_ptr<CommandIgnore> ignore_;
   std::unique_ptr<CommandOutput> output_;
   CommandSource * current_;

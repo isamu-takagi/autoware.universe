@@ -14,8 +14,13 @@
 
 #include "control_cmd_gate.hpp"
 
+#include "command/generator.hpp"
+#include "command/publisher.hpp"
+#include "command/subscription.hpp"
+
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::control_cmd_gate
@@ -33,32 +38,27 @@ ControlCmdGate::ControlCmdGate(const rclcpp::NodeOptions & options)
     throw std::invalid_argument("input name '" + builtin + "' is reserved");
   }
 
-  // Create command inputs.
-  /*
+  // Create input command sources.
   for (const auto & input : inputs) {
     auto source = std::make_unique<CommandSubscription>(*this, input);
-    auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), input);
-    source->add_filter(std::move(filter));
+    // auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), input);
+    // source->add_filter(std::move(filter));
     selector_->add_source(input, std::move(source));
   }
-  */
 
-  // Create builtin command source
-  /*
+  // Create builtin command source.
   {
     auto source = std::make_unique<CommandGenerator>(*this);
-    auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), builtin);
-    source->add_filter(std::move(filter));
+    // auto filter = std::make_unique<CommandDiagnostics>(diag_, params, *get_clock(), builtin);
+    // source->add_filter(std::move(filter));
     selector_->add_source(builtin, std::move(source));
-  }*/
+  }
 
   // Create command output.
-  /*
   {
     auto output = std::make_unique<CommandPublisher>(*this);
-    selector_.set_output(std::move(output));
+    selector_->set_output(std::move(output));
   }
-  */
 
   // Select initial source.
   selector_->select(builtin);

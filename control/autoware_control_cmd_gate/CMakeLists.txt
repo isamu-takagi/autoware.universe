@@ -6,12 +6,12 @@ autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   "src/control_cmd_gate.cpp"
-  "src/command/interface.cpp"
-  "src/command/selector.cpp"
-  "src/command/diagnostics.cpp"
-  "src/command/publisher.cpp"
-  "src/command/subscription.cpp"
-  "src/command/generator.cpp"
+  #"src/command/interface.cpp"
+  #"src/command/selector.cpp"
+  #"src/command/diagnostics.cpp"
+  #"src/command/publisher.cpp"
+  #"src/command/subscription.cpp"
+  #"src/command/generator.cpp"
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
