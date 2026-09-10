@@ -73,7 +73,7 @@ AutowareMode DefaultPlugin::decide(const RequestModes & modes, const AutowareMod
 
   // Return EmergencyStop as a fallback if no available mode is found,
   return EmergencyStop;
-};
+}
 
 void DefaultPlugin::setup(DrivingModeConfigInterface & config) const
 {
