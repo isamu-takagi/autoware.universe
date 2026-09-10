@@ -49,6 +49,9 @@ if(BUILD_TESTING)
     "test/util/mock.cpp"
     "test/util/util.cpp"
     "test/test_transition.cpp"
+    "test/test_core_config.cpp"
+    "test/test_core_status.cpp"
+    "test/test_core_task.cpp"
   )
   target_include_directories(test_${PROJECT_NAME} PRIVATE
     "src"

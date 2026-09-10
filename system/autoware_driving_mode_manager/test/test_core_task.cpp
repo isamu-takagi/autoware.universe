@@ -67,17 +67,19 @@ public:
     ++platform_mode_call_count;
   }
 
-  void publish_operation_mode(const OperationModeState &) const override {}
-  void publish_mrm_state(const MrmState &) const override {}
-  void publish_driving_mode_request(const ModeRequest &) const override {}
-  void publish_driving_mode_info(const ModeInfo &) const override {}
-  void publish_debug_flags(const DebugFlags &) const override {}
-  void publish_debug_request(const RequestModes &) const override {}
+  void publish_operation_mode(const OperationModeState &) override {}
+  void publish_mrm_state(const MrmState &) override {}
+  void publish_driving_mode_request(const ModeRequest &) override {}
+  void publish_driving_mode_info(const ModeInfo &) override {}
+  void publish_diagnostics(bool, const std::string &) override {}
 
-  void log_info(const std::string &) const override {}
-  void log_warn(const std::string &) const override {}
-  void log_error(const std::string &) const override {}
-  void log_debug(const std::string &) const override {}
+  void publish_debug_flags(const DebugFlags &) override {}
+  void publish_debug_request(const DebugStatus &) override {}
+
+  void log_info(const std::string &) override {}
+  void log_warn(const std::string &) override {}
+  void log_error(const std::string &) override {}
+  void log_debug(const std::string &) override {}
 
   rclcpp::Time now_{seconds_to_time(0.0)};
   int trajectory_source_call_count{0};
