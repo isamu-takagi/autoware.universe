@@ -51,12 +51,6 @@ ManagerMain::ManagerMain(ManagerInit & init)
   interface_->log_debug("Driving mode manager is ready");
 }
 
-bool ManagerMain::is_ready() const
-{
-  if (!status_->is_ready()) return false;
-  return true;
-}
-
 void ManagerMain::update()
 {
   // Set true for ignored flags;

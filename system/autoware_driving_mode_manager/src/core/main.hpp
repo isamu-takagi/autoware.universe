@@ -35,7 +35,6 @@ class ManagerMain : public MainLogic
 {
 public:
   explicit ManagerMain(ManagerInit & init);
-  bool is_ready() const;
 
   void update() override;
   void on_trajectory_source(const TrajectorySource & source) override;
